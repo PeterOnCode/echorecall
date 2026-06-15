@@ -1,26 +1,37 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 2.1.0 → 2.2.0
-Bump rationale: MINOR — runtime model changed from split (Node web + Bun CLI)
-  back to unified Node.js LTS for both surfaces; Principle IV's Bun-specific
-  runtime-agnostic clause removed as unneeded (Principle V, YAGNI). CLI toolchain
-  (cac, chalk, ky, ts-pattern, nock) retained. Semantic change, not a typo fix.
-Modified principles:
-  - IV. Shared Core, Multiple Interfaces — dropped the Node/Bun runtime-agnostic
-    requirement; core remains framework-agnostic
-Added sections: none
-Removed sections: none
+Version change: 2.2.0 → 2.3.0
+Bump rationale: MINOR — the Technology Stack was materially changed to match
+  EchoRecall's actual architecture (rebuild of echoquize): the core AI capability
+  is OpenAI text-to-speech (not Claude), and persistence (SQLite + local
+  filesystem) and deployment (Docker / Docker Compose) tooling are now declared.
+  New/changed stack guidance = MINOR; this is not a typo (PATCH) nor a principle
+  change (MAJOR) — all five principles are untouched.
+Modified principles: none — all five core principles unchanged.
+Added sections: none (the Technology Stack section was expanded, not added).
+Removed sections: none.
+Changed stack entries:
+  - AI integration → Text-to-speech: replaced "Claude (Anthropic SDK,
+    claude-sonnet-4-6)" with "OpenAI TTS API (OpenAI SDK)".
+  - Added "Persistence": SQLite for generation metadata; local filesystem for
+    generated audio artifacts; the library MUST survive restarts.
+  - Added "Packaging & deployment": ships as a Docker image run via Docker Compose.
 Templates requiring updates:
-  ✅ plan-template.md   — Constitution Check gate is derived from this file at
-                          plan time; web + cli structure options already present
+  ✅ plan-template.md   — technology-agnostic; Constitution Check is derived from
+                          this file at plan time; web + cli structure options present
   ✅ spec-template.md   — technology-agnostic; no change required
-  ✅ tasks-template.md  — generic scaffold; web-app path conventions already present
+  ✅ tasks-template.md  — generic scaffold; no change required
+  (verified 2026-06-15: grep found no template references to the changed entries)
 Follow-up TODOs:
   - TODO(test-http-mocking): ky is fetch-based (undici on Node). Older nock
     releases only patch node:http and will NOT intercept fetch. Confirm the
     chosen nock version supports fetch interception, or switch to MSW /
     @mswjs/interceptors (fetch-native). Resolve before the first HTTP CLI test.
+  - TODO(openai-key-handling): OpenAI TTS requires an API key. Define how the key
+    is supplied (environment configuration) and ensure it is never persisted to
+    SQLite or written to logs. Resolve during the plan for the first generation
+    feature.
 -->
 
 # EchoRecall Constitution
@@ -110,13 +121,22 @@ impulses. This principle keeps the build focused and the codebase auditable.
 - **CLI styling**: chalk
 - **HTTP client**: ky (fetch-based)
 - **Control-flow dispatch**: ts-pattern (exhaustive command/result matching)
+- **Text-to-speech**: OpenAI TTS API via the official OpenAI SDK. Converting text
+  to spoken audio is EchoRecall's core capability; the API key MUST be supplied
+  via environment configuration and MUST NOT be persisted to storage or written
+  to logs.
+- **Persistence**: SQLite for generation metadata (text, voice, timestamps,
+  identifiers); the local filesystem for generated audio artifacts. The library
+  MUST persist across application and container restarts.
 - **Package manager**: pnpm (preferred) or npm
 - **Test framework**: Vitest; `@nuxt/test-utils` for web UI component/integration
   tests; nock for HTTP mocking in CLI/core tests (see Follow-up TODO in the Sync
   Impact Report — verify fetch interception)
 - **Linting/formatting**: ESLint + Prettier with project-shared config
 - **Build**: Nuxt build for the web app; tsup or tsc for the shared core and CLI
-- **AI integration**: Claude (via Anthropic SDK, model: `claude-sonnet-4-6`)
+- **Packaging & deployment**: ships as a Docker image run via Docker Compose;
+  persistent SQLite data and audio files MUST live on mounted volumes so they
+  survive container recreation.
 
 Technology choices outside this list MUST be approved as a constitution amendment.
 
@@ -149,4 +169,4 @@ All PRs and reviews MUST verify compliance with the five core principles. Any
 deviation requires a Complexity Tracking entry in `plan.md` with explicit
 justification.
 
-**Version**: 2.2.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-15
+**Version**: 2.3.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-15
