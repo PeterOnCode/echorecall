@@ -125,16 +125,16 @@ live network calls in the suite.
 
 ### Tests for User Story 3 (write first, confirm RED) ⚠️
 
-- [ ] T045 [P] [US3] Integration test `DELETE /api/generations/:id` (204; row + file removed; subsequent audio GET → 404; unknown id → 404) in `tests/integration/generations-delete.test.ts`
-- [ ] T046 [P] [US3] Integration test audio download (`?download=1` sets `Content-Disposition: attachment`) in `tests/integration/audio-download.test.ts`
-- [ ] T047 [P] [US3] Component test delete flow (`ConfirmDialog` confirm → delete; cancel → no-op) in `tests/component/LibraryItemActions.test.ts`
+- [X] T045 [P] [US3] Integration test `DELETE /api/generations/:id` (204; row + file removed; subsequent audio GET → 404; unknown id → 404) in `tests/integration/generations-delete.test.ts`
+- [X] T046 [P] [US3] Integration test audio download (`?download=1` sets `Content-Disposition: attachment`) in `tests/integration/audio-download.test.ts`
+- [X] T047 [P] [US3] Component test delete flow (`ConfirmDialog` confirm → delete; cancel → no-op) in `tests/component/LibraryItemActions.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T048 [US3] Implement `DELETE /api/generations/[id]` route (permanent delete via libraryService) in `server/api/generations/[id].delete.ts` (depends on T020, T014)
-- [ ] T049 [US3] Add `?download=1` attachment handling to `server/api/generations/[id]/audio.get.ts` (depends on T034)
-- [ ] T050 [P] [US3] Implement `ConfirmDialog.vue` (reusable confirm prompt) in `app/components/ConfirmDialog.vue`
-- [ ] T051 [US3] Add download + delete (with `ConfirmDialog`) actions to `LibraryList.vue` / `useLibrary.ts` (depends on T048, T049, T050, T043)
+- [X] T048 [US3] Implement `DELETE /api/generations/[id]` route (permanent delete via libraryService) in `server/api/generations/[id].delete.ts` (depends on T020, T014)
+- [X] T049 [US3] Add `?download=1` attachment handling to `server/api/generations/[id]/audio.get.ts` (depends on T034)
+- [X] T050 [P] [US3] Implement `ConfirmDialog.vue` (reusable confirm prompt) in `app/components/ConfirmDialog.vue`
+- [X] T051 [US3] Add download + delete (with `ConfirmDialog`) actions to `LibraryList.vue` / `useLibrary.ts` (depends on T048, T049, T050, T043)
 
 **Checkpoint**: All three user stories independently functional
 
