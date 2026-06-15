@@ -1,11 +1,17 @@
 <script setup lang="ts">
 const { voices, status, error, result, loadVoices, generate } = useGeneration()
+const { items: library, load: loadLibrary } = useLibrary()
 
-onMounted(loadVoices)
+onMounted(async () => {
+  await Promise.all([loadVoices(), loadLibrary()])
+})
 
 async function onSubmit(payload: { text: string; voiceId: string }) {
   try {
     await generate(payload.text, payload.voiceId)
+    // A successful generation is auto-saved server-side; refresh so it appears
+    // in the library immediately. On error nothing is persisted, so skip.
+    await loadLibrary()
   } catch {
     // Error message is surfaced via the `error` ref passed to the form.
   }
@@ -23,6 +29,8 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
       <h2>Result</h2>
       <AudioPlayer :src="result.audioUrl" />
     </section>
+
+    <LibraryList :generations="library" />
   </main>
 </template>
 
