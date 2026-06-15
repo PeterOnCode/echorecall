@@ -18,7 +18,9 @@ describe('audio download disposition', () => {
   })
 
   it('streams inline (no download) when the flag is absent or falsy', () => {
-    for (const value of [undefined, null, '', '0', 'false']) {
+    // Covers the string forms a query yields ('', '0', 'false') plus the
+    // non-string falsy values the `unknown`-typed helper should also reject.
+    for (const value of [undefined, null, '', '0', 'false', 0, false]) {
       expect(isDownloadRequested(value)).toBe(false)
     }
   })

@@ -10,7 +10,9 @@ export const AUDIO_CONTENT_TYPE = 'audio/mpeg'
  * absent/empty/`0`/`false` value streams inline.
  */
 export function isDownloadRequested(value: unknown): boolean {
-  return value !== undefined && value !== null && value !== '' && value !== '0' && value !== 'false'
+  if (value === undefined || value === null || value === '') return false
+  const flag = String(value).toLowerCase()
+  return flag !== '0' && flag !== 'false'
 }
 
 /** `Content-Disposition` value that makes the browser save the clip as <id>.mp3. */

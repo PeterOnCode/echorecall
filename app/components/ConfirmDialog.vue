@@ -29,8 +29,8 @@ const emit = defineEmits<{ confirm: []; cancel: [] }>()
     data-test="confirm-dialog"
     @click.self="emit('cancel')"
   >
-    <div class="dialog" role="dialog" aria-modal="true" :aria-label="title">
-      <h3 class="title">{{ title }}</h3>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+      <h3 id="confirm-dialog-title" class="title">{{ title }}</h3>
       <p v-if="message" class="message">{{ message }}</p>
       <div class="actions">
         <button type="button" data-test="confirm-cancel" @click="emit('cancel')">
