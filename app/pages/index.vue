@@ -1,11 +1,22 @@
 <script setup lang="ts">
 const { voices, status, error, result, loadVoices, generate } = useGeneration()
+const {
+  items: library,
+  loading: libraryLoading,
+  error: libraryError,
+  load: loadLibrary,
+} = useLibrary()
 
-onMounted(loadVoices)
+onMounted(async () => {
+  await Promise.all([loadVoices(), loadLibrary()])
+})
 
 async function onSubmit(payload: { text: string; voiceId: string }) {
   try {
     await generate(payload.text, payload.voiceId)
+    // A successful generation is auto-saved server-side; refresh so it appears
+    // in the library immediately. On error nothing is persisted, so skip.
+    await loadLibrary()
   } catch {
     // Error message is surfaced via the `error` ref passed to the form.
   }
@@ -23,6 +34,12 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
       <h2>Result</h2>
       <AudioPlayer :src="result.audioUrl" />
     </section>
+
+    <p v-if="libraryError" role="alert" class="library-error">{{ libraryError }}</p>
+    <p v-else-if="libraryLoading && library.length === 0" class="library-loading">
+      Loading library…
+    </p>
+    <LibraryList v-else :generations="library" />
   </main>
 </template>
 
@@ -38,5 +55,13 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
 }
 .result {
   margin-top: 1.5rem;
+}
+.library-loading {
+  margin-top: 2rem;
+  color: #555;
+}
+.library-error {
+  margin-top: 2rem;
+  color: #b60205;
 }
 </style>

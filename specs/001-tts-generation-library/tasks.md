@@ -73,10 +73,10 @@ live network calls in the suite.
 ### Tests for User Story 1 (write first, confirm RED) ⚠️
 
 - [X] T024 [P] [US1] Unit test for generate use-case (validation + mocked `TtsProvider`: empty→EmptyInput, >4096→InputTooLong, bad voice→InvalidVoice, provider throw→ProviderUnavailable, success→MP3 bytes) in `tests/unit/generate.test.ts`
-- [ ] T025 [P] [US1] Integration test `POST /api/generations` (201 + saved entry; 400 EMPTY_INPUT/INPUT_TOO_LONG/INVALID_VOICE; 502 PROVIDER_UNAVAILABLE with nothing persisted) in `tests/integration/generations-post.test.ts`
-- [ ] T026 [P] [US1] Integration test `GET /api/voices` returns non-empty catalog in `tests/integration/voices-get.test.ts`
-- [ ] T027 [P] [US1] Integration test `GET /api/generations/:id/audio` returns `audio/mpeg` and makes NO provider call in `tests/integration/audio-get.test.ts`
-- [ ] T028 [P] [US1] Component test `GenerateForm` (submit shows progress; error preserves text+voice) in `tests/component/GenerateForm.test.ts`
+- [X] T025 [P] [US1] Integration test `POST /api/generations` (201 + saved entry; 400 EMPTY_INPUT/INPUT_TOO_LONG/INVALID_VOICE; 502 PROVIDER_UNAVAILABLE with nothing persisted) in `tests/integration/generations-post.test.ts`
+- [X] T026 [P] [US1] Integration test `GET /api/voices` returns non-empty catalog in `tests/integration/voices-get.test.ts`
+- [X] T027 [P] [US1] Integration test `GET /api/generations/:id/audio` returns `audio/mpeg` and makes NO provider call in `tests/integration/audio-get.test.ts`
+- [X] T028 [P] [US1] Component test `GenerateForm` (submit shows progress; error preserves text+voice) in `tests/component/GenerateForm.test.ts`
 
 ### Implementation for User Story 1
 
@@ -103,15 +103,15 @@ live network calls in the suite.
 
 ### Tests for User Story 2 (write first, confirm RED) ⚠️
 
-- [ ] T039 [P] [US2] Integration test `GET /api/generations` (newest-first ordering; entries persist across a fresh repository/process) in `tests/integration/generations-get.test.ts`
-- [ ] T040 [P] [US2] Component test `LibraryList` (renders entries; empty-state message; replay triggers AudioPlayer) in `tests/component/LibraryList.test.ts`
+- [X] T039 [P] [US2] Integration test `GET /api/generations` (newest-first ordering; entries persist across a fresh repository/process) in `tests/integration/generations-get.test.ts`
+- [X] T040 [P] [US2] Component test `LibraryList` (renders entries; empty-state message; replay triggers AudioPlayer) in `tests/component/LibraryList.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T041 [US2] Implement `GET /api/generations` route (list newest-first) in `server/api/generations.get.ts` (depends on T020, T014)
-- [ ] T042 [US2] Implement `useLibrary` composable (fetch list, select item for replay) in `app/composables/useLibrary.ts` (depends on T041)
-- [ ] T043 [P] [US2] Implement `LibraryList.vue` (list of past generations, empty-state, replay button reusing `AudioPlayer`) in `app/components/LibraryList.vue` (depends on T042, T037)
-- [ ] T044 [US2] Integrate `LibraryList` into `app/pages/index.vue` and refresh it after a successful generation (depends on T043, T038)
+- [X] T041 [US2] Implement `GET /api/generations` route (list newest-first) in `server/api/generations.get.ts` (depends on T020, T014)
+- [X] T042 [US2] Implement `useLibrary` composable (fetch list, select item for replay) in `app/composables/useLibrary.ts` (depends on T041)
+- [X] T043 [P] [US2] Implement `LibraryList.vue` (list of past generations, empty-state, replay button reusing `AudioPlayer`) in `app/components/LibraryList.vue` (depends on T042, T037)
+- [X] T044 [US2] Integrate `LibraryList` into `app/pages/index.vue` and refresh it after a successful generation (depends on T043, T038)
 
 **Checkpoint**: US1 + US2 work — generate, persist, browse, and replay
 
