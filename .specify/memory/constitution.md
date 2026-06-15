@@ -1,50 +1,152 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 2.1.0 → 2.2.0
+Bump rationale: MINOR — runtime model changed from split (Node web + Bun CLI)
+  back to unified Node.js LTS for both surfaces; Principle IV's Bun-specific
+  runtime-agnostic clause removed as unneeded (Principle V, YAGNI). CLI toolchain
+  (cac, chalk, ky, ts-pattern, nock) retained. Semantic change, not a typo fix.
+Modified principles:
+  - IV. Shared Core, Multiple Interfaces — dropped the Node/Bun runtime-agnostic
+    requirement; core remains framework-agnostic
+Added sections: none
+Removed sections: none
+Templates requiring updates:
+  ✅ plan-template.md   — Constitution Check gate is derived from this file at
+                          plan time; web + cli structure options already present
+  ✅ spec-template.md   — technology-agnostic; no change required
+  ✅ tasks-template.md  — generic scaffold; web-app path conventions already present
+Follow-up TODOs:
+  - TODO(test-http-mocking): ky is fetch-based (undici on Node). Older nock
+    releases only patch node:http and will NOT intercept fetch. Confirm the
+    chosen nock version supports fetch interception, or switch to MSW /
+    @mswjs/interceptors (fetch-native). Resolve before the first HTTP CLI test.
+-->
+
+# EchoRecall Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. TypeScript-First
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The project MUST be written in strict TypeScript, including Vue single-file
+components (`<script setup lang="ts">`). `any` is forbidden without an explicit,
+documented justification comment. All public APIs and shared-core exports MUST
+carry full type signatures. `tsconfig.json` and Nuxt's generated TypeScript
+config MUST run in `strict` mode with no weakening overrides.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Type safety catches entire classes of bugs at compile time and
+makes the codebase self-documenting — critical when rebuilding an existing tool
+and when the same core is consumed by two independent interfaces.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Test-First (NON-NEGOTIABLE)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+TDD is mandatory:
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+1. Write tests. Get user/reviewer approval.
+2. Confirm tests fail (red).
+3. Implement until tests pass (green).
+4. Refactor.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+The Red-Green-Refactor cycle MUST be respected. No implementation task is
+accepted without a preceding failing test or an explicit documented exemption.
+Shared-core logic MUST be covered by unit tests; web UI behaviour MUST be
+covered by component/integration tests (via `@nuxt/test-utils`); HTTP
+interactions MUST be tested against mocked network responses, never live calls.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: Rebuilding echoquize means the acceptance criteria are known
+upfront. Tests encode that knowledge before code can drift, and a tested core
+keeps the web UI and CLI in agreement.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### III. Modular Architecture
+
+Features MUST be implemented as self-contained modules with clear boundaries.
+Each module MUST be independently importable, testable, and replaceable without
+touching other modules. Domain logic lives in the shared core (see Principle IV);
+cross-cutting utilities live in a dedicated `src/core/shared/` location only.
+No ad-hoc cross-module imports, and no presentation layer (web or CLI) may import
+from another presentation layer — both depend only on the core.
+
+**Rationale**: Modular boundaries prevent the second-system effect when porting
+an existing application; they also make incremental delivery per user story
+possible and keep the two interfaces decoupled.
+
+### IV. Shared Core, Multiple Interfaces
+
+EchoRecall ships two user-facing surfaces — a Nuxt web UI and a native
+command-line interface — over a single framework-agnostic core.
+
+- All domain/business logic MUST live in a shared core (`src/core/` or a
+  dedicated `core` package) that has NO dependency on Nuxt, Vue, Nitro, or any
+  terminal/CLI library.
+- The Nuxt web app and the CLI MUST be thin adapters: Vue components,
+  composables, Nitro routes, and CLI command handlers translate input/output but
+  MUST NOT contain domain logic.
+- Every capability MUST be reachable from the core programmatically. A feature
+  exposed in one interface SHOULD be reachable from the other unless the spec
+  explicitly scopes it to a single surface.
+- The CLI MUST follow stdin/args → stdout, errors → stderr, and support both
+  JSON and human-readable output via a `--format` flag.
+
+**Rationale**: A headless core lets logic be unit-tested without a browser or a
+spawned process, keeps the two interfaces at feature parity, and prevents domain
+rules from leaking into presentation code where they cannot be reused.
+
+### V. Simplicity & YAGNI
+
+Complexity MUST be justified in writing. Abstractions are added only when the
+same pattern appears three or more times. Features not required by the current
+specification are deferred, not anticipated. No premature generalisation.
+
+**Rationale**: Porting projects accumulate scope creep from "while we're at it"
+impulses. This principle keeps the build focused and the codebase auditable.
+
+## Technology Stack
+
+- **Language**: TypeScript (latest stable, strict mode)
+- **Web framework**: Nuxt 4 (Vue 3, Nitro server, Vite) for the web UI
+- **Runtime**: Node.js LTS for both the Nuxt web app / Nitro server and the CLI
+- **CLI command parser**: cac (commander is an acceptable alternative)
+- **CLI styling**: chalk
+- **HTTP client**: ky (fetch-based)
+- **Control-flow dispatch**: ts-pattern (exhaustive command/result matching)
+- **Package manager**: pnpm (preferred) or npm
+- **Test framework**: Vitest; `@nuxt/test-utils` for web UI component/integration
+  tests; nock for HTTP mocking in CLI/core tests (see Follow-up TODO in the Sync
+  Impact Report — verify fetch interception)
+- **Linting/formatting**: ESLint + Prettier with project-shared config
+- **Build**: Nuxt build for the web app; tsup or tsc for the shared core and CLI
+- **AI integration**: Claude (via Anthropic SDK, model: `claude-sonnet-4-6`)
+
+Technology choices outside this list MUST be approved as a constitution amendment.
+
+## Development Workflow
+
+- All work begins from a feature branch created with `/speckit-git-feature`.
+- Specs (`/speckit-specify`) and plans (`/speckit-plan`) are required before any
+  implementation begins.
+- Tasks (`/speckit-tasks`) drive implementation; each task maps to one user story.
+- Web UI and CLI changes both follow the spec → plan → tasks flow; neither
+  surface may introduce domain logic outside the shared core (Principle IV).
+- Commits are made via `/speckit-git-commit` after each logical unit of work.
+- No direct pushes to `main`. All changes arrive via pull request.
+- Constitution Check in `plan.md` MUST be completed before Phase 0 research.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other practices and informal agreements.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment procedure**:
+1. Open a spec (`/speckit-specify`) describing the proposed change and rationale.
+2. Update this file and increment `CONSTITUTION_VERSION` per semantic versioning:
+   - MAJOR: principle removed or redefined in a backward-incompatible way.
+   - MINOR: new principle or section added.
+   - PATCH: wording clarification, typo fix, non-semantic refinement.
+3. All open plans and task lists MUST be reviewed for conflicts after amendment.
+4. Compliance is reviewed at the start of each plan phase (Constitution Check).
+
+All PRs and reviews MUST verify compliance with the five core principles. Any
+deviation requires a Complexity Tracking entry in `plan.md` with explicit
+justification.
+
+**Version**: 2.2.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-15
