@@ -29,5 +29,20 @@ export function useLibrary() {
     }
   }
 
-  return { items, loading, error, load }
+  /**
+   * Permanently delete an entry (FR-015) and drop it from the local list on
+   * success, so the library updates without a full reload. The caller is
+   * responsible for confirming the action first.
+   */
+  async function remove(id: string) {
+    error.value = null
+    try {
+      await $fetch(`/api/generations/${id}`, { method: 'DELETE' })
+      items.value = items.value.filter((item) => item.id !== id)
+    } catch {
+      error.value = 'Could not delete that item. Please try again.'
+    }
+  }
+
+  return { items, loading, error, load, remove }
 }

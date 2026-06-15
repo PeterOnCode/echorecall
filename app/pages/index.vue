@@ -5,6 +5,7 @@ const {
   loading: libraryLoading,
   error: libraryError,
   load: loadLibrary,
+  remove: removeLibraryItem,
 } = useLibrary()
 
 onMounted(async () => {
@@ -39,7 +40,7 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
     <p v-else-if="libraryLoading && library.length === 0" class="library-loading">
       Loading library…
     </p>
-    <LibraryList v-else :generations="library" />
+    <LibraryList v-else :generations="library" @delete="removeLibraryItem" />
   </main>
 </template>
 
