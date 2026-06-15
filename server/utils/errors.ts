@@ -28,6 +28,9 @@ export function respondError(event: EventLike, err: unknown): ApiErrorBody {
     event.node.res.statusCode = STATUS_BY_CODE[err.code]
     return { error: { code: err.code, message: err.message } }
   }
+  // Unexpected (non-domain) error: log it server-side so production failures are
+  // debuggable, but never leak internals/secrets in the client response.
+  console.error('[respondError] Unhandled server error:', err)
   event.node.res.statusCode = 500
   return { error: { code: 'INTERNAL', message: 'Internal server error.' } }
 }

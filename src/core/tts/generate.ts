@@ -21,7 +21,7 @@ export async function generateSpeech(
 ): Promise<Buffer> {
   const text = (input.text ?? '').trim()
   if (text.length === 0) throw new EmptyInputError()
-  if (input.text.length > MAX_INPUT_LENGTH) throw new InputTooLongError(MAX_INPUT_LENGTH)
+  if (text.length > MAX_INPUT_LENGTH) throw new InputTooLongError(MAX_INPUT_LENGTH)
   if (!isKnownVoice(input.voiceId)) throw new InvalidVoiceError(input.voiceId)
 
   try {

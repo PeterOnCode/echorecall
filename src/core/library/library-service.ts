@@ -28,7 +28,13 @@ export class LibraryService {
     try {
       this.repo.insert({ id, text: input.text, voiceId: input.voiceId, createdAt })
     } catch (err) {
-      await this.audio.delete(id)
+      // Best-effort cleanup of the orphan audio; never let a cleanup failure
+      // (e.g. filesystem error) mask the original metadata-insert error.
+      try {
+        await this.audio.delete(id)
+      } catch {
+        // intentionally ignored — `err` below is the meaningful failure
+      }
       throw err
     }
     return { id, text: input.text, voiceId: input.voiceId, createdAt }

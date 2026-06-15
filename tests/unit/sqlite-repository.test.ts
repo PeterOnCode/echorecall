@@ -1,4 +1,8 @@
 import { describe, it, expect } from 'vitest'
+import { existsSync } from 'node:fs'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { SqliteGenerationRepository } from '../../src/core/library/sqlite-repository'
 
 function makeRepo() {
@@ -36,5 +40,21 @@ describe('SqliteGenerationRepository', () => {
     expect(repo.delete('a')).toBe(true)
     expect(repo.get('a')).toBeUndefined()
     expect(repo.delete('a')).toBe(false)
+  })
+
+  it('creates missing parent directories for a file-backed DB', async () => {
+    const base = await mkdtemp(join(tmpdir(), 'echorecall-db-'))
+    // Nested path whose parent dirs do NOT exist yet — mirrors a fresh checkout
+    // where the gitignored data/ directory has not been created.
+    const dbPath = join(base, 'nested', 'data', 'echorecall.db')
+    const repo = new SqliteGenerationRepository(dbPath)
+    try {
+      repo.insert({ id: 'a', text: 'x', voiceId: 'alloy', createdAt: '2026-06-15T10:00:00.000Z' })
+      expect(existsSync(dbPath)).toBe(true)
+      expect(repo.get('a')?.id).toBe('a')
+    } finally {
+      repo.close()
+      await rm(base, { recursive: true, force: true })
+    }
   })
 })

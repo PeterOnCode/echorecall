@@ -1,3 +1,5 @@
+import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 import Database from 'better-sqlite3'
 import type { Generation } from '../shared/types'
 import type { GenerationRepository, NewGenerationRecord } from './repository'
@@ -7,6 +9,13 @@ export class SqliteGenerationRepository implements GenerationRepository {
   private readonly db: Database.Database
 
   constructor(dbPath: string) {
+    // better-sqlite3 opens a file-backed DB but will not create missing parent
+    // directories, so a fresh checkout (where gitignored `data/` does not yet
+    // exist) would 500 on first write. Create the parent up front. ':memory:'
+    // and '' are special non-file paths with nothing to create.
+    if (dbPath !== ':memory:' && dbPath !== '') {
+      mkdirSync(dirname(dbPath), { recursive: true })
+    }
     this.db = new Database(dbPath)
     this.db.pragma('journal_mode = WAL')
     this.db.exec(`
