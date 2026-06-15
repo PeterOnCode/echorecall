@@ -27,14 +27,14 @@ live network calls in the suite.
 
 **Purpose**: Project initialization and tooling
 
-- [ ] T001 Initialize Nuxt 4 + strict TypeScript project with pnpm at repo root (`package.json`, `nuxt.config.ts`, `tsconfig.json` with `strict: true`)
-- [ ] T002 [P] Install runtime dependencies: `openai`, `better-sqlite3`, `@types/better-sqlite3`
-- [ ] T003 [P] Install and configure Vitest + `@nuxt/test-utils` (`vitest.config.ts`, `tests/setup.ts`)
-- [ ] T004 [P] Configure ESLint + Prettier shared config (`eslint.config.mjs`, `.prettierrc`)
-- [ ] T005 [P] Add `.gitignore` for `data/`, `node_modules/`, `.nuxt/`, `.output/`, `.env`
-- [ ] T006 Create source tree skeleton: `src/core/{tts,library,shared}/`, `app/{components,composables,pages}/`, `server/{api,utils}/`, `tests/{unit,integration,component}/`, `data/audio/`
-- [ ] T007 Configure TS path alias `~~/core` → `src/core` in `tsconfig.json` and `nuxt.config.ts`
-- [ ] T008 Configure Nitro `runtimeConfig.openaiApiKey` from `NUXT_OPENAI_API_KEY` (server-only) in `nuxt.config.ts`
+- [X] T001 Initialize Nuxt 4 + strict TypeScript project with pnpm at repo root (`package.json`, `nuxt.config.ts`, `tsconfig.json` with `strict: true`)
+- [X] T002 [P] Install runtime dependencies: `openai`, `better-sqlite3`, `@types/better-sqlite3`
+- [X] T003 [P] Install and configure Vitest + `@nuxt/test-utils` (`vitest.config.ts`, `tests/setup.ts`)
+- [X] T004 [P] Configure ESLint + Prettier shared config (`eslint.config.mjs`, `.prettierrc`)
+- [X] T005 [P] Add `.gitignore` for `data/`, `node_modules/`, `.nuxt/`, `.output/`, `.env`
+- [X] T006 Create source tree skeleton: `src/core/{tts,library,shared}/`, `app/{components,composables,pages}/`, `server/{api,utils}/`, `tests/{unit,integration,component}/`, `data/audio/`
+- [X] T007 Configure TS path alias `~~/core` → `src/core` in `tsconfig.json` and `nuxt.config.ts`
+- [X] T008 Configure Nitro `runtimeConfig.openaiApiKey` from `NUXT_OPENAI_API_KEY` (server-only) in `nuxt.config.ts`
 
 ---
 
@@ -44,21 +44,21 @@ live network calls in the suite.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 [P] Define shared domain types (`Generation`, `Voice`, `GenerationInput`) in `src/core/shared/types.ts`
-- [ ] T010 [P] Define typed domain errors (`EmptyInput`, `InputTooLong`, `InvalidVoice`, `ProviderUnavailable`, `NotFound`) in `src/core/shared/errors.ts`
-- [ ] T011 [P] Implement UUID id generation (`crypto.randomUUID` wrapper) in `src/core/shared/ids.ts`
-- [ ] T012 [P] Define `TtsProvider` port + `VOICES` catalog constant in `src/core/tts/provider.ts`
-- [ ] T013 [P] Define `GenerationRepository` port in `src/core/library/repository.ts`
-- [ ] T014 Implement domain-error → `ApiError` envelope/status mapper in `server/utils/errors.ts` (depends on T010)
-- [ ] T015 [P] Unit test (RED) for SQLite repository — save/get/list newest-first/delete — in `tests/unit/sqlite-repository.test.ts`
-- [ ] T016 [P] Unit test (RED) for audio-store — write/read/delete + missing-file — in `tests/unit/audio-store.test.ts`
-- [ ] T017 [P] Unit test (RED) for library-service — atomic save, cascade delete, orphan cleanup on failure — in `tests/unit/library-service.test.ts`
-- [ ] T018 Implement `better-sqlite3` repository (connection, schema+index bootstrap, CRUD, newest-first) in `src/core/library/sqlite-repository.ts` (depends on T013, T015)
-- [ ] T019 Implement filesystem audio-store (read/write/delete MP3 under `data/audio/`) in `src/core/library/audio-store.ts` (depends on T010, T016)
-- [ ] T020 Implement `library-service` (save/list/get/delete; atomic file-then-row save, cascade delete) in `src/core/library/library-service.ts` (depends on T017, T018, T019)
-- [ ] T021 [P] Implement public core API exports in `src/core/index.ts`
-- [ ] T022 Implement DI container singletons (repository, audioStore, libraryService, ttsProvider) in `server/utils/container.ts` (depends on T020, T021)
-- [ ] T023 Create base app shell (`app/app.vue`, `app/pages/index.vue` skeleton) (depends on T007)
+- [X] T009 [P] Define shared domain types (`Generation`, `Voice`, `GenerationInput`) in `src/core/shared/types.ts`
+- [X] T010 [P] Define typed domain errors (`EmptyInput`, `InputTooLong`, `InvalidVoice`, `ProviderUnavailable`, `NotFound`) in `src/core/shared/errors.ts`
+- [X] T011 [P] Implement UUID id generation (`crypto.randomUUID` wrapper) in `src/core/shared/ids.ts`
+- [X] T012 [P] Define `TtsProvider` port + `VOICES` catalog constant in `src/core/tts/provider.ts`
+- [X] T013 [P] Define `GenerationRepository` port in `src/core/library/repository.ts`
+- [X] T014 Implement domain-error → `ApiError` envelope/status mapper in `server/utils/errors.ts` (depends on T010)
+- [X] T015 [P] Unit test (RED) for SQLite repository — save/get/list newest-first/delete — in `tests/unit/sqlite-repository.test.ts`
+- [X] T016 [P] Unit test (RED) for audio-store — write/read/delete + missing-file — in `tests/unit/audio-store.test.ts`
+- [X] T017 [P] Unit test (RED) for library-service — atomic save, cascade delete, orphan cleanup on failure — in `tests/unit/library-service.test.ts`
+- [X] T018 Implement `better-sqlite3` repository (connection, schema+index bootstrap, CRUD, newest-first) in `src/core/library/sqlite-repository.ts` (depends on T013, T015)
+- [X] T019 Implement filesystem audio-store (read/write/delete MP3 under `data/audio/`) in `src/core/library/audio-store.ts` (depends on T010, T016)
+- [X] T020 Implement `library-service` (save/list/get/delete; atomic file-then-row save, cascade delete) in `src/core/library/library-service.ts` (depends on T017, T018, T019)
+- [X] T021 [P] Implement public core API exports in `src/core/index.ts`
+- [X] T022 Implement DI container singletons (repository, audioStore, libraryService, ttsProvider) in `server/utils/container.ts` (depends on T020, T021)
+- [X] T023 Create base app shell (`app/app.vue`, `app/pages/index.vue` skeleton) (depends on T007)
 
 **Checkpoint**: Foundation ready — persistence, ports, DI, and app shell exist
 
@@ -72,7 +72,7 @@ live network calls in the suite.
 
 ### Tests for User Story 1 (write first, confirm RED) ⚠️
 
-- [ ] T024 [P] [US1] Unit test for generate use-case (validation + mocked `TtsProvider`: empty→EmptyInput, >4096→InputTooLong, bad voice→InvalidVoice, provider throw→ProviderUnavailable, success→MP3 bytes) in `tests/unit/generate.test.ts`
+- [X] T024 [P] [US1] Unit test for generate use-case (validation + mocked `TtsProvider`: empty→EmptyInput, >4096→InputTooLong, bad voice→InvalidVoice, provider throw→ProviderUnavailable, success→MP3 bytes) in `tests/unit/generate.test.ts`
 - [ ] T025 [P] [US1] Integration test `POST /api/generations` (201 + saved entry; 400 EMPTY_INPUT/INPUT_TOO_LONG/INVALID_VOICE; 502 PROVIDER_UNAVAILABLE with nothing persisted) in `tests/integration/generations-post.test.ts`
 - [ ] T026 [P] [US1] Integration test `GET /api/voices` returns non-empty catalog in `tests/integration/voices-get.test.ts`
 - [ ] T027 [P] [US1] Integration test `GET /api/generations/:id/audio` returns `audio/mpeg` and makes NO provider call in `tests/integration/audio-get.test.ts`
@@ -80,16 +80,16 @@ live network calls in the suite.
 
 ### Implementation for User Story 1
 
-- [ ] T029 [US1] Implement OpenAI TTS adapter (`gpt-4o-mini-tts`, `response_format: mp3`, key from injected config) in `src/core/tts/openai-provider.ts` (depends on T012)
-- [ ] T030 [US1] Implement generate use-case (validate input → call provider → return MP3 bytes; map errors) in `src/core/tts/generate.ts` (depends on T024, T029)
-- [ ] T031 [US1] Wire `ttsProvider` (OpenAI adapter) into `server/utils/container.ts` (depends on T029)
-- [ ] T032 [US1] Implement `GET /api/voices` route in `server/api/voices.get.ts` (depends on T012)
-- [ ] T033 [US1] Implement `POST /api/generations` route (generate → auto-save via libraryService → return `Generation`) in `server/api/generations.post.ts` (depends on T030, T020, T014)
-- [ ] T034 [US1] Implement `GET /api/generations/[id]/audio` route (stream stored MP3, `audio/mpeg`, no provider call) in `server/api/generations/[id]/audio.get.ts` (depends on T020, T014)
-- [ ] T035 [US1] Implement `useGeneration` composable (call voices + POST, track idle/submitting/success/error) in `app/composables/useGeneration.ts` (depends on T032, T033)
-- [ ] T036 [P] [US1] Implement `GenerateForm.vue` (text input w/ 4096 counter, voice select, submit, progress, error display preserving input) in `app/components/GenerateForm.vue` (depends on T035)
-- [ ] T037 [P] [US1] Implement `AudioPlayer.vue` (HTML5 audio for the returned `audioUrl`) in `app/components/AudioPlayer.vue`
-- [ ] T038 [US1] Wire `GenerateForm` + `AudioPlayer` into `app/pages/index.vue` (depends on T036, T037)
+- [X] T029 [US1] Implement OpenAI TTS adapter (`gpt-4o-mini-tts`, `response_format: mp3`, key from injected config) in `src/core/tts/openai-provider.ts` (depends on T012)
+- [X] T030 [US1] Implement generate use-case (validate input → call provider → return MP3 bytes; map errors) in `src/core/tts/generate.ts` (depends on T024, T029)
+- [X] T031 [US1] Wire `ttsProvider` (OpenAI adapter) into `server/utils/container.ts` (depends on T029)
+- [X] T032 [US1] Implement `GET /api/voices` route in `server/api/voices.get.ts` (depends on T012)
+- [X] T033 [US1] Implement `POST /api/generations` route (generate → auto-save via libraryService → return `Generation`) in `server/api/generations.post.ts` (depends on T030, T020, T014)
+- [X] T034 [US1] Implement `GET /api/generations/[id]/audio` route (stream stored MP3, `audio/mpeg`, no provider call) in `server/api/generations/[id]/audio.get.ts` (depends on T020, T014)
+- [X] T035 [US1] Implement `useGeneration` composable (call voices + POST, track idle/submitting/success/error) in `app/composables/useGeneration.ts` (depends on T032, T033)
+- [X] T036 [P] [US1] Implement `GenerateForm.vue` (text input w/ 4096 counter, voice select, submit, progress, error display preserving input) in `app/components/GenerateForm.vue` (depends on T035)
+- [X] T037 [P] [US1] Implement `AudioPlayer.vue` (HTML5 audio for the returned `audioUrl`) in `app/components/AudioPlayer.vue`
+- [X] T038 [US1] Wire `GenerateForm` + `AudioPlayer` into `app/pages/index.vue` (depends on T036, T037)
 
 **Checkpoint**: US1 fully functional — generate + listen works end-to-end (MVP)
 
