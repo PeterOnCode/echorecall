@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# nuxt build output
+.nuxt/
+.output/
+.data/
+dist/
+
+# runtime data (SQLite DB + generated audio) — mounted as a Docker volume
+data/
+
+# logs & env
+*.log
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
