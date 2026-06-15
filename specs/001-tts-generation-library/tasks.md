@@ -73,10 +73,10 @@ live network calls in the suite.
 ### Tests for User Story 1 (write first, confirm RED) ⚠️
 
 - [X] T024 [P] [US1] Unit test for generate use-case (validation + mocked `TtsProvider`: empty→EmptyInput, >4096→InputTooLong, bad voice→InvalidVoice, provider throw→ProviderUnavailable, success→MP3 bytes) in `tests/unit/generate.test.ts`
-- [ ] T025 [P] [US1] Integration test `POST /api/generations` (201 + saved entry; 400 EMPTY_INPUT/INPUT_TOO_LONG/INVALID_VOICE; 502 PROVIDER_UNAVAILABLE with nothing persisted) in `tests/integration/generations-post.test.ts`
-- [ ] T026 [P] [US1] Integration test `GET /api/voices` returns non-empty catalog in `tests/integration/voices-get.test.ts`
-- [ ] T027 [P] [US1] Integration test `GET /api/generations/:id/audio` returns `audio/mpeg` and makes NO provider call in `tests/integration/audio-get.test.ts`
-- [ ] T028 [P] [US1] Component test `GenerateForm` (submit shows progress; error preserves text+voice) in `tests/component/GenerateForm.test.ts`
+- [X] T025 [P] [US1] Integration test `POST /api/generations` (201 + saved entry; 400 EMPTY_INPUT/INPUT_TOO_LONG/INVALID_VOICE; 502 PROVIDER_UNAVAILABLE with nothing persisted) in `tests/integration/generations-post.test.ts`
+- [X] T026 [P] [US1] Integration test `GET /api/voices` returns non-empty catalog in `tests/integration/voices-get.test.ts`
+- [X] T027 [P] [US1] Integration test `GET /api/generations/:id/audio` returns `audio/mpeg` and makes NO provider call in `tests/integration/audio-get.test.ts`
+- [X] T028 [P] [US1] Component test `GenerateForm` (submit shows progress; error preserves text+voice) in `tests/component/GenerateForm.test.ts`
 
 ### Implementation for User Story 1
 
