@@ -1,6 +1,11 @@
 <script setup lang="ts">
 const { voices, status, error, result, loadVoices, generate } = useGeneration()
-const { items: library, load: loadLibrary } = useLibrary()
+const {
+  items: library,
+  loading: libraryLoading,
+  error: libraryError,
+  load: loadLibrary,
+} = useLibrary()
 
 onMounted(async () => {
   await Promise.all([loadVoices(), loadLibrary()])
@@ -30,7 +35,11 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
       <AudioPlayer :src="result.audioUrl" />
     </section>
 
-    <LibraryList :generations="library" />
+    <p v-if="libraryError" role="alert" class="library-error">{{ libraryError }}</p>
+    <p v-else-if="libraryLoading && library.length === 0" class="library-loading">
+      Loading library…
+    </p>
+    <LibraryList v-else :generations="library" />
   </main>
 </template>
 
@@ -46,5 +55,13 @@ async function onSubmit(payload: { text: string; voiceId: string }) {
 }
 .result {
   margin-top: 1.5rem;
+}
+.library-loading {
+  margin-top: 2rem;
+  color: #555;
+}
+.library-error {
+  margin-top: 2rem;
+  color: #b60205;
 }
 </style>
