@@ -1,9 +1,13 @@
 <script setup lang="ts">
 // Reusable confirmation prompt for destructive actions (e.g. permanent delete,
 // FR-015). Purely presentational: the parent owns the `open` state and decides
-// what `confirm`/`cancel` do. Richer focus/keyboard handling is layered on in the
-// accessibility pass.
-withDefaults(
+// what `confirm`/`cancel` do.
+//
+// Accessibility: it's a modal dialog (role="dialog" aria-modal), so when it
+// opens we move focus into it (the least-destructive Cancel button), trap Tab
+// focus inside it, let Escape cancel, and restore focus to whatever was focused
+// before it opened when it closes.
+const props = withDefaults(
   defineProps<{
     open: boolean
     title?: string
@@ -20,6 +24,65 @@ withDefaults(
 )
 
 const emit = defineEmits<{ confirm: []; cancel: [] }>()
+
+const dialog = ref<HTMLElement | null>(null)
+// The element focused before the dialog opened, so focus can return there on close.
+let previouslyFocused: HTMLElement | null = null
+
+const FOCUSABLE =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
+function focusable(): HTMLElement[] {
+  return dialog.value ? Array.from(dialog.value.querySelectorAll<HTMLElement>(FOCUSABLE)) : []
+}
+
+watch(
+  () => props.open,
+  async (open) => {
+    if (typeof document === 'undefined') return
+    if (open) {
+      previouslyFocused = document.activeElement as HTMLElement | null
+      await nextTick()
+      focusable()[0]?.focus()
+    } else if (previouslyFocused) {
+      previouslyFocused.focus()
+      previouslyFocused = null
+    }
+  },
+  // `immediate` covers the case where the dialog is mounted already-open
+  // (e.g. behind a `v-if` on the component itself).
+  { immediate: true },
+)
+
+// If the parent unmounts the dialog while it's still open, return focus to
+// whatever had it before, so focus is never lost to a detached element.
+onUnmounted(() => {
+  if (previouslyFocused?.isConnected) previouslyFocused.focus()
+})
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    emit('cancel')
+    return
+  }
+  if (e.key !== 'Tab') return
+
+  const items = focusable()
+  if (items.length === 0) return
+  const first = items[0]!
+  const last = items[items.length - 1]!
+  const index = items.indexOf(document.activeElement as HTMLElement)
+
+  // Wrap focus so Tab/Shift+Tab never leave the open dialog.
+  if (e.shiftKey && index <= 0) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && (index === -1 || index === items.length - 1)) {
+    e.preventDefault()
+    first.focus()
+  }
+}
 </script>
 
 <template>
@@ -28,10 +91,18 @@ const emit = defineEmits<{ confirm: []; cancel: [] }>()
     class="backdrop"
     data-test="confirm-dialog"
     @click.self="emit('cancel')"
+    @keydown="onKeydown"
   >
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+    <div
+      ref="dialog"
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      :aria-describedby="message ? 'confirm-dialog-message' : undefined"
+    >
       <h3 id="confirm-dialog-title" class="title">{{ title }}</h3>
-      <p v-if="message" class="message">{{ message }}</p>
+      <p v-if="message" id="confirm-dialog-message" class="message">{{ message }}</p>
       <div class="actions">
         <button type="button" data-test="confirm-cancel" @click="emit('cancel')">
           {{ cancelLabel }}
