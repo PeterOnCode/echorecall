@@ -49,7 +49,16 @@ watch(
       previouslyFocused = null
     }
   },
+  // `immediate` covers the case where the dialog is mounted already-open
+  // (e.g. behind a `v-if` on the component itself).
+  { immediate: true },
 )
+
+// If the parent unmounts the dialog while it's still open, return focus to
+// whatever had it before, so focus is never lost to a detached element.
+onUnmounted(() => {
+  if (previouslyFocused?.isConnected) previouslyFocused.focus()
+})
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {

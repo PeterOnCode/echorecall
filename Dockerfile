@@ -9,15 +9,17 @@ WORKDIR /app
 # Pin pnpm to match the committed lockfile (lockfileVersion 9.0).
 RUN corepack enable && corepack prepare pnpm@10.30.2 --activate
 
-# Copy the whole source before install: the `postinstall` hook runs
-# `nuxt prepare`, which needs nuxt.config.ts and the app sources present.
-# `.dockerignore` keeps node_modules/, .output/, data/, and secrets out.
-COPY . .
+# Copy only the manifest + config the postinstall `nuxt prepare` needs, so the
+# dependency layer (including the slow better-sqlite3 native build) stays cached
+# when only app code changes. `.dockerignore` keeps node_modules/, .output/,
+# data/, and secrets out of the build context.
+COPY package.json pnpm-lock.yaml nuxt.config.ts tsconfig.json ./
 
 # Frozen install (build scripts enabled so better-sqlite3 builds its binary).
 RUN pnpm install --frozen-lockfile
 
-# Produce the self-contained Nitro server bundle under .output/.
+# Copy the rest of the source and produce the self-contained Nitro bundle.
+COPY . .
 RUN pnpm build
 
 # ---- Runtime stage ---------------------------------------------------------

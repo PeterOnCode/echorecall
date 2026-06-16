@@ -42,6 +42,7 @@ function onSubmit() {
       v-model="text"
       rows="6"
       :maxlength="MAX_INPUT_LENGTH"
+      :aria-invalid="error ? 'true' : undefined"
       aria-describedby="text-counter"
       placeholder="Enter text to convert to speech…"
     />
