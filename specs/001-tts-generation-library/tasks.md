@@ -144,12 +144,12 @@ live network calls in the suite.
 
 **Purpose**: Deployment packaging, accessibility, and end-to-end validation
 
-- [ ] T052 [P] Add `Dockerfile` (Node LTS build of the Nuxt app)
-- [ ] T053 Add `docker-compose.yml` mounting `./data` as a volume (SQLite + audio persistence) and passing `NUXT_OPENAI_API_KEY`
-- [ ] T054 [P] Accessibility pass: form labels, audio controls, focus/keyboard on dialog (`app/components/*`)
-- [ ] T055 [P] Add `README.md` with setup + run instructions referencing `quickstart.md`
-- [ ] T056 Run full `quickstart.md` validation end-to-end (all contract-checklist items + US1–US3 acceptance)
-- [ ] T057 Final lint + typecheck + full test suite green (`pnpm lint`, `pnpm typecheck`, `pnpm test`)
+- [X] T052 [P] Add `Dockerfile` (Node LTS build of the Nuxt app)
+- [X] T053 Add `docker-compose.yml` mounting `./data` as a volume (SQLite + audio persistence) and passing `NUXT_OPENAI_API_KEY`
+- [X] T054 [P] Accessibility pass: form labels, audio controls, focus/keyboard on dialog (`app/components/*`)
+- [X] T055 [P] Add `README.md` with setup + run instructions referencing `quickstart.md`
+- [X] T056 Run full `quickstart.md` validation end-to-end (all contract-checklist items + US1–US3 acceptance)
+- [X] T057 Final lint + typecheck + full test suite green (`pnpm lint`, `pnpm typecheck`, `pnpm test`)
 
 ---
 

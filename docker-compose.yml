@@ -1,0 +1,14 @@
+services:
+  echorecall:
+    build: .
+    image: echorecall
+    ports:
+      # host:container — visit http://localhost:3102 (same port as `pnpm dev`).
+      - "3102:3000"
+    environment:
+      # Pulled from the project .env (server-only secret; never baked into the image).
+      NUXT_OPENAI_API_KEY: ${NUXT_OPENAI_API_KEY:?set NUXT_OPENAI_API_KEY in .env}
+    volumes:
+      # Persist the SQLite DB + generated MP3s across container recreation.
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,7 +1,12 @@
 <script setup lang="ts">
-defineProps<{ src: string }>()
+// `label` gives the native audio element an accessible name so screen readers
+// announce what the clip is (e.g. which library entry) rather than a generic
+// "audio" control.
+withDefaults(defineProps<{ src: string; label?: string }>(), {
+  label: 'Generated speech audio',
+})
 </script>
 
 <template>
-  <audio controls :src="src" />
+  <audio controls :src="src" :aria-label="label" />
 </template>

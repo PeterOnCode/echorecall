@@ -42,16 +42,19 @@ function onSubmit() {
       v-model="text"
       rows="6"
       :maxlength="MAX_INPUT_LENGTH"
+      aria-describedby="text-counter"
       placeholder="Enter text to convert to speech…"
     />
-    <p class="counter" :class="{ warn: tooLong }">{{ remaining }} characters remaining</p>
+    <p id="text-counter" class="counter" :class="{ warn: tooLong }">
+      {{ remaining }} characters remaining
+    </p>
 
     <label for="voice">Voice</label>
     <select id="voice" v-model="voiceId">
       <option v-for="v in voices" :key="v.id" :value="v.id">{{ v.label }}</option>
     </select>
 
-    <button type="submit" :disabled="!canSubmit">
+    <button type="submit" :disabled="!canSubmit" :aria-busy="submitting">
       {{ submitting ? 'Generating…' : 'Generate' }}
     </button>
 
