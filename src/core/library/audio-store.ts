@@ -1,32 +1,43 @@
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 
-/** Filesystem store for generated MP3 audio artifacts. */
+/**
+ * Filesystem store for generated audio, addressed by a path **relative to the
+ * data dir** (e.g. `audio/2026/06/17/<slug>.mp3`, or the legacy `audio/<id>.mp3`).
+ */
 export class FileAudioStore {
-  constructor(private readonly audioDir: string) {}
+  constructor(private readonly baseDir: string) {}
 
-  private path(id: string): string {
-    return join(this.audioDir, `${id}.mp3`)
+  private abs(relPath: string): string {
+    return join(this.baseDir, relPath)
   }
 
-  async save(id: string, mp3: Buffer): Promise<void> {
-    await mkdir(this.audioDir, { recursive: true })
-    await writeFile(this.path(id), mp3)
+  async saveAt(relPath: string, bytes: Buffer): Promise<void> {
+    const target = this.abs(relPath)
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, bytes)
   }
 
-  async read(id: string): Promise<Buffer> {
-    return readFile(this.path(id))
+  async readAt(relPath: string): Promise<Buffer> {
+    return readFile(this.abs(relPath))
   }
 
-  async exists(id: string): Promise<boolean> {
-    return existsSync(this.path(id))
+  async existsAt(relPath: string): Promise<boolean> {
+    return existsSync(this.abs(relPath))
+  }
+
+  /** Move/rename an artifact; creates the destination directory if needed. */
+  async rename(fromRel: string, toRel: string): Promise<void> {
+    const to = this.abs(toRel)
+    await mkdir(dirname(to), { recursive: true })
+    await rename(this.abs(fromRel), to)
   }
 
   /** Delete the artifact if present; tolerate a missing file. */
-  async delete(id: string): Promise<void> {
+  async deleteAt(relPath: string): Promise<void> {
     try {
-      await unlink(this.path(id))
+      await unlink(this.abs(relPath))
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code
       if (code !== 'ENOENT') throw err

@@ -1,0 +1,15 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "tabs": {
+      "generate": "Generate",
+      "library": "Library",
+      "settings": "Settings"
+    }
+  },
+  "generate": {},
+  "library": {},
+  "settings": {
+    "comingSoon": "Settings are coming soon."
+  }
+}

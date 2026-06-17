@@ -5,6 +5,19 @@
 export * from './shared/types'
 export * from './shared/errors'
 
-export { VOICES, isKnownVoice } from './tts/provider'
+export {
+  VOICES,
+  MODELS,
+  FORMATS,
+  INSTRUCTIONS_MODEL,
+  MAX_UPLOAD_BYTES,
+  isKnownVoice,
+  isKnownModel,
+  isKnownFormat,
+  formatInfo,
+} from './tts/provider'
 export type { TtsProvider } from './tts/provider'
 export { MAX_INPUT_LENGTH } from './tts/generate'
+
+// Naming rules (slug) — shared so the client preview matches the server result.
+export { slugify } from './naming/slug'

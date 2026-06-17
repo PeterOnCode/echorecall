@@ -16,12 +16,10 @@ import { FileAudioStore } from '../../src/core/library/audio-store'
 
 let dir: string
 let dbPath: string
-let audioDir: string
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'echorecall-get-'))
   dbPath = join(dir, 'echorecall.db')
-  audioDir = join(dir, 'audio')
 })
 
 afterEach(async () => {
@@ -37,7 +35,7 @@ function steppingClock(startMs = Date.parse('2026-06-15T10:00:00.000Z')) {
 
 function makeService(clock = steppingClock()): LibraryService {
   const repo = new SqliteGenerationRepository(dbPath)
-  const audio = new FileAudioStore(audioDir)
+  const audio = new FileAudioStore(dir)
   return new LibraryService(repo, audio, clock)
 }
 

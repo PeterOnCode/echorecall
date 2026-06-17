@@ -20,7 +20,10 @@ export function getLibraryService(): LibraryService {
   if (!libraryService) {
     const dir = dataDir()
     const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
-    const audio = new FileAudioStore(join(dir, 'audio'))
+    // Audio store is rooted at the data dir; stored paths are relative
+    // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
+    // US2 will inject an AudioTagger and US8 a per-request provider here.
+    const audio = new FileAudioStore(dir)
     libraryService = new LibraryService(repo, audio)
   }
   return libraryService

@@ -39,7 +39,7 @@ let provider: FakeProvider
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'echorecall-audio-'))
   const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
-  audioStore = new FileAudioStore(join(dir, 'audio'))
+  audioStore = new FileAudioStore(dir)
   service = new LibraryService(repo, audioStore)
   provider = new FakeProvider(Buffer.from('audio-bytes'))
 })
@@ -73,7 +73,7 @@ describe('GET /api/generations/:id/audio', () => {
 
   it('row exists but audio file is missing -> 404 NOT_FOUND', async () => {
     const entry = await createOne('echo')
-    await audioStore.delete(entry.id) // file gone, metadata row remains
+    await audioStore.deleteAt(entry.path) // file gone, metadata row remains
 
     const err = await service.readAudio(entry.id).catch((e) => e)
     expect(mapError(err)).toEqual({ status: 404, code: 'NOT_FOUND' })

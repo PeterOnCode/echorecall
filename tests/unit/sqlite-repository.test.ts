@@ -4,21 +4,42 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { SqliteGenerationRepository } from '../../src/core/library/sqlite-repository'
+import type { NewGenerationRecord } from '../../src/core/library/repository'
 
 function makeRepo() {
   // In-memory DB → isolated per test.
   return new SqliteGenerationRepository(':memory:')
 }
 
+/** Build a full record with sensible defaults, overridable per test. */
+function rec(over: Partial<NewGenerationRecord> & { id: string }): NewGenerationRecord {
+  return {
+    text: 'hello',
+    voiceId: 'alloy',
+    model: null,
+    format: 'mp3',
+    speed: null,
+    createdAt: '2026-06-15T10:00:00.000Z',
+    path: `audio/${over.id}.mp3`,
+    metadata: {},
+    ...over,
+  }
+}
+
 describe('SqliteGenerationRepository', () => {
   it('inserts and gets a generation by id', () => {
     const repo = makeRepo()
-    repo.insert({ id: 'a', text: 'hello', voiceId: 'alloy', createdAt: '2026-06-15T10:00:00.000Z' })
+    repo.insert(rec({ id: 'a' }))
     expect(repo.get('a')).toEqual({
       id: 'a',
       text: 'hello',
       voiceId: 'alloy',
+      model: null,
+      format: 'mp3',
+      speed: null,
       createdAt: '2026-06-15T10:00:00.000Z',
+      path: 'audio/a.mp3',
+      metadata: {},
     })
   })
 
@@ -28,15 +49,15 @@ describe('SqliteGenerationRepository', () => {
 
   it('lists newest-first by createdAt', () => {
     const repo = makeRepo()
-    repo.insert({ id: 'old', text: 't1', voiceId: 'alloy', createdAt: '2026-06-15T09:00:00.000Z' })
-    repo.insert({ id: 'new', text: 't2', voiceId: 'nova', createdAt: '2026-06-15T11:00:00.000Z' })
-    repo.insert({ id: 'mid', text: 't3', voiceId: 'echo', createdAt: '2026-06-15T10:00:00.000Z' })
+    repo.insert(rec({ id: 'old', createdAt: '2026-06-15T09:00:00.000Z' }))
+    repo.insert(rec({ id: 'new', createdAt: '2026-06-15T11:00:00.000Z' }))
+    repo.insert(rec({ id: 'mid', createdAt: '2026-06-15T10:00:00.000Z' }))
     expect(repo.list().map((g) => g.id)).toEqual(['new', 'mid', 'old'])
   })
 
   it('deletes a row and reports whether it existed', () => {
     const repo = makeRepo()
-    repo.insert({ id: 'a', text: 'x', voiceId: 'alloy', createdAt: '2026-06-15T10:00:00.000Z' })
+    repo.insert(rec({ id: 'a' }))
     expect(repo.delete('a')).toBe(true)
     expect(repo.get('a')).toBeUndefined()
     expect(repo.delete('a')).toBe(false)
@@ -49,7 +70,7 @@ describe('SqliteGenerationRepository', () => {
     const dbPath = join(base, 'nested', 'data', 'echorecall.db')
     const repo = new SqliteGenerationRepository(dbPath)
     try {
-      repo.insert({ id: 'a', text: 'x', voiceId: 'alloy', createdAt: '2026-06-15T10:00:00.000Z' })
+      repo.insert(rec({ id: 'a' }))
       expect(existsSync(dbPath)).toBe(true)
       expect(repo.get('a')?.id).toBe('a')
     } finally {
