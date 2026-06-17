@@ -25,16 +25,14 @@ function mapError(err: unknown): { status: number; code: string } {
 
 let dir: string
 let dbPath: string
-let audioDir: string
 let audioStore: FileAudioStore
 let service: LibraryService
 
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'echorecall-delete-'))
   dbPath = join(dir, 'echorecall.db')
-  audioDir = join(dir, 'audio')
   const repo = new SqliteGenerationRepository(dbPath)
-  audioStore = new FileAudioStore(audioDir)
+  audioStore = new FileAudioStore(dir)
   service = new LibraryService(repo, audioStore)
 })
 
@@ -49,12 +47,12 @@ async function createOne(text = 'hi', voiceId = 'alloy') {
 describe('DELETE /api/generations/:id', () => {
   it('removes both the metadata row and the audio file', async () => {
     const entry = await createOne()
-    expect(await audioStore.exists(entry.id)).toBe(true)
+    expect(await audioStore.existsAt(entry.path)).toBe(true)
 
     await service.delete(entry.id)
 
     expect(service.list()).toEqual([])
-    expect(await audioStore.exists(entry.id)).toBe(false)
+    expect(await audioStore.existsAt(entry.path)).toBe(false)
   })
 
   it('after delete, reading the audio -> 404 NOT_FOUND', async () => {
@@ -80,7 +78,7 @@ describe('DELETE /api/generations/:id', () => {
     // A brand-new service/repository over the same files — simulates a restart.
     const reopened = new LibraryService(
       new SqliteGenerationRepository(dbPath),
-      new FileAudioStore(audioDir),
+      new FileAudioStore(dir),
     )
     expect(reopened.list()).toEqual([])
     const err = await reopened.readAudio(entry.id).catch((e) => e)

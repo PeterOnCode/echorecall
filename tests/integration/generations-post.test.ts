@@ -50,7 +50,9 @@ beforeEach(async () => {
   dbPath = join(dir, 'echorecall.db')
   audioDir = join(dir, 'audio')
   repo = new SqliteGenerationRepository(dbPath)
-  service = new LibraryService(repo, new FileAudioStore(audioDir))
+  // Store rooted at the data dir; Phase-2 flat path is `audio/<id>.mp3`, so the
+  // files still land under `audioDir` for audioFileCount() below.
+  service = new LibraryService(repo, new FileAudioStore(dir))
 })
 
 afterEach(async () => {

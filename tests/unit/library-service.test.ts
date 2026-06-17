@@ -16,7 +16,7 @@ let audio: FileAudioStore
 beforeEach(async () => {
   dir = await mkdtemp(join(tmpdir(), 'echorecall-lib-'))
   repo = new SqliteGenerationRepository(':memory:')
-  audio = new FileAudioStore(join(dir, 'audio'))
+  audio = new FileAudioStore(dir)
   service = new LibraryService(repo, audio)
 })
 afterEach(async () => {
@@ -54,7 +54,7 @@ describe('LibraryService', () => {
     const entry = await service.save({ text: 'bye', voiceId: 'echo' }, Buffer.from('x'))
     await service.delete(entry.id)
     expect(repo.get(entry.id)).toBeUndefined()
-    expect(await audio.exists(entry.id)).toBe(false)
+    expect(await audio.existsAt(entry.path)).toBe(false)
     await expect(service.delete(entry.id)).rejects.toBeInstanceOf(NotFoundError)
   })
 
@@ -70,6 +70,6 @@ describe('LibraryService', () => {
     const svc = new LibraryService(failingRepo, audio, () => new Date(), () => 'fixed-id')
     await expect(svc.save({ text: 'x', voiceId: 'alloy' }, Buffer.from('y'))).rejects.toThrow('db down')
     // The audio written before the failed insert must be cleaned up (no orphan).
-    expect(await audio.exists('fixed-id')).toBe(false)
+    expect(await audio.existsAt('audio/fixed-id.mp3')).toBe(false)
   })
 })

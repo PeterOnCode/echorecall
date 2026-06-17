@@ -1,6 +1,15 @@
 {
-  "common": {},
+  "common": {
+    "loading": "Betöltés…",
+    "tabs": {
+      "generate": "Létrehozás",
+      "library": "Könyvtár",
+      "settings": "Beállítások"
+    }
+  },
   "generate": {},
   "library": {},
-  "settings": {}
+  "settings": {
+    "comingSoon": "A beállítások hamarosan elérhetők."
+  }
 }

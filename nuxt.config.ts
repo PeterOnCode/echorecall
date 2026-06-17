@@ -15,6 +15,8 @@ export default defineNuxtConfig({
   // @nuxt/ui auto-registers @nuxt/icon, @nuxt/fonts and @nuxtjs/color-mode (default: system).
   modules: ['@nuxt/eslint', '@nuxt/test-utils/module', '@nuxt/ui', '@nuxtjs/i18n'],
   css: ['~/assets/css/main.css'],
+  // Flat component names regardless of subdirectory (e.g. components/common/AppHeader.vue → <AppHeader>).
+  components: [{ path: '~/components', pathPrefix: false }],
   typescript: {
     strict: true,
   },

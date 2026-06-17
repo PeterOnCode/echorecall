@@ -17,3 +17,7 @@ export type { GenerationRepository, NewGenerationRecord } from './library/reposi
 export { SqliteGenerationRepository } from './library/sqlite-repository'
 export { FileAudioStore } from './library/audio-store'
 export { LibraryService } from './library/library-service'
+
+// Naming (filesystem-safe slug + dated, collision-safe filename allocation).
+export { MAX_SLUG_LENGTH } from './naming/slug'
+export { datedDir, allocateFilename } from './naming/filename'
