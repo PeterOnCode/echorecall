@@ -106,6 +106,30 @@ describe('SqliteGenerationRepository migration', () => {
     }
   })
 
+  it('degrades gracefully when tags_extra is malformed JSON (no crash on list/get)', () => {
+    const writer = new SqliteGenerationRepository(dbPath)
+    writer.insert(fullRecord)
+    writer.close()
+
+    // Corrupt the stored JSON directly, as manual editing/corruption would.
+    const raw = new Database(dbPath)
+    raw.prepare('UPDATE generations SET tags_extra = ? WHERE id = ?').run('{not valid json', 'new-1')
+    raw.close()
+
+    const repo = new SqliteGenerationRepository(dbPath)
+    try {
+      const got = repo.get('new-1')
+      expect(got).toBeDefined()
+      // Base tags survive; the corrupt extra block is skipped, not thrown.
+      expect(got!.metadata.title).toBe('Fresh Clip')
+      expect(got!.metadata.languages).toBeUndefined()
+      expect(got!.metadata.customText).toBeUndefined()
+      expect(() => repo.list()).not.toThrow()
+    } finally {
+      repo.close()
+    }
+  })
+
   it('creates the app_config table', () => {
     const repo = new SqliteGenerationRepository(dbPath)
     try {

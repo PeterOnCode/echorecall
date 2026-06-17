@@ -103,16 +103,21 @@ export class SqliteGenerationRepository implements GenerationRepository {
         (c) => c.name,
       ),
     )
+    let migrated = false
     for (const col of NEW_COLUMNS) {
       if (!existing.has(col.name)) {
         this.db.exec(`ALTER TABLE generations ADD COLUMN ${col.ddl}`)
+        migrated = true
       }
     }
-    // 001 only ever produced MP3 at audio/<id>.mp3 (relative to the data dir).
-    this.db.exec(
-      `UPDATE generations SET path = 'audio/' || id || '.mp3' WHERE path IS NULL OR path = ''`,
-    )
-    this.db.exec(`UPDATE generations SET format = 'mp3' WHERE format IS NULL OR format = ''`)
+    // Backfill legacy (001) rows only when columns were actually added — avoids a
+    // full-table scan on every construction. 001 only produced MP3 at audio/<id>.mp3.
+    if (migrated) {
+      this.db.exec(
+        `UPDATE generations SET path = 'audio/' || id || '.mp3' WHERE path IS NULL OR path = ''`,
+      )
+      this.db.exec(`UPDATE generations SET format = 'mp3' WHERE format IS NULL OR format = ''`)
+    }
   }
 
   insert(record: NewGenerationRecord): void {
@@ -184,10 +189,15 @@ function rowToGeneration(row: GenerationRow): Generation {
   if (row.tag_recorded_at) metadata.recordedAt = row.tag_recorded_at
   if (row.tag_track) metadata.track = row.tag_track
   if (row.tags_extra) {
-    const extra = JSON.parse(row.tags_extra) as ExtraTags
-    if (extra.languages?.length) metadata.languages = extra.languages
-    if (extra.customText?.length) metadata.customText = extra.customText
-    if (extra.customUrl?.length) metadata.customUrl = extra.customUrl
+    try {
+      const extra = JSON.parse(row.tags_extra) as ExtraTags
+      if (extra.languages?.length) metadata.languages = extra.languages
+      if (extra.customText?.length) metadata.customText = extra.customText
+      if (extra.customUrl?.length) metadata.customUrl = extra.customUrl
+    } catch (err) {
+      // Degrade gracefully: a corrupt tags_extra payload must not break listing.
+      console.error(`[sqlite-repository] malformed tags_extra for row ${row.id}`, err)
+    }
   }
   return {
     id: row.id,
