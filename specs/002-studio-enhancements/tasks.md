@@ -73,27 +73,27 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 1 ⚠️ (write first, must fail)
 
-- [ ] T018 [P] [US1] Unit test `tests/unit/parse-upload.test.ts`: `parseUploadText` yields one item per trimmed non-blank line in file order; blank lines skipped; >4,096-char lines rejected; returns `{ added, skippedBlank, rejectedTooLong }`
-- [ ] T019 [P] [US1] Extend `tests/unit/generate.test.ts`: `generateSpeech` validates voice/model/format/length and the instructions rule; throws (no provider call) on invalid input
-- [ ] T020 [P] [US1] Extend `tests/integration/generations-post.test.ts`: valid `POST` → 201 `Generation` with `format`/`filename`/`audioUrl`, saved under `YYYY/MM/DD/<slug>.<ext>` and listed; empty / >4,096 / bad voice|model|format → 400, nothing saved; provider failure → 502 with no orphan file
-- [ ] T021 [P] [US1] Integration test `tests/integration/generations-archive.test.ts`: `POST /api/generations/archive { ids }` → `application/zip`, entries named by each item's filename, duplicate names disambiguated
-- [ ] T022 [P] [US1] Component test `tests/component/Generate.test.ts`: typing+Add appends a row; `.txt` upload appends one row per valid line after existing rows and shows the added/skipped/rejected summary; a ≥5 MB file is rejected; a single Generate shows per-item progress and isolates one failure
+- [X] T018 [P] [US1] Unit test `tests/unit/parse-upload.test.ts`: `parseUploadText` yields one item per trimmed non-blank line in file order; blank lines skipped; >4,096-char lines rejected; returns `{ added, skippedBlank, rejectedTooLong }`
+- [X] T019 [P] [US1] Extend `tests/unit/generate.test.ts`: `generateSpeech` validates voice/model/format/length and the instructions rule; throws (no provider call) on invalid input
+- [X] T020 [P] [US1] Extend `tests/integration/generations-post.test.ts`: valid `POST` → 201 `Generation` with `format`/`filename`/`audioUrl`, saved under `YYYY/MM/DD/<slug>.<ext>` and listed; empty / >4,096 / bad voice|model|format → 400, nothing saved; provider failure → 502 with no orphan file
+- [X] T021 [P] [US1] Integration test `tests/integration/generations-archive.test.ts`: `POST /api/generations/archive { ids }` → `application/zip`, entries named by each item's filename, duplicate names disambiguated
+- [X] T022 [P] [US1] Component test `tests/component/Generate.test.ts`: typing+Add appends a row; `.txt` upload appends one row per valid line after existing rows and shows the added/skipped/rejected summary; a ≥5 MB file is rejected; a single Generate shows per-item progress and isolates one failure
 
 ### Implementation for User Story 1
 
-- [ ] T023 [P] [US1] Create `src/core/batch/parse-upload.ts` (pure `parseUploadText`) and export it from `src/core/client.ts`
-- [ ] T024 [US1] Extend the `TtsProvider` port in `src/core/tts/provider.ts` to accept `model`, `format`, `speed`, `instructions?`
-- [ ] T025 [US1] Extend `src/core/tts/openai-provider.ts`: forward `model`/`format`/`speed`, send `instructions` only for `gpt-4o-mini-tts`, construct the client per request from the resolved `apiKey`
-- [ ] T026 [US1] Extend validation in `src/core/tts/generate.ts` (voice/model/format/length + instructions rule; no network on invalid input) — depends on T024
-- [ ] T027 [US1] Extend `LibraryService.save` in `src/core/library/library-service.ts` to allocate a dated slug path (naming module), write-then-insert atomically with orphan cleanup on failure; add `archive(ids)` via `archiver` — depends on T011, T013, T015
-- [ ] T028 [US1] Extend `server/api/generations.post.ts`: accept `text/voice/model/format/speed/instructions`, resolve a per-request provider, map provider failure → 502, return the saved `Generation` — depends on T026, T027
-- [ ] T029 [US1] Create `server/api/generations/archive.post.ts` streaming the zip — depends on T027
-- [ ] T030 [US1] Update `server/api/generations/[id]/audio.get.ts` to set `Content-Type` per format (audio/mpeg, audio/wav, audio/flac, audio/opus, audio/aac, audio/L16)
-- [ ] T031 [P] [US1] Create `app/composables/useQueue.ts`: ephemeral queue (add/remove rows, upload→`parseUploadText`, form-level voice/model/format/speed); never persisted
-- [ ] T032 [US1] Update `app/composables/useGeneration.ts`: per-item generate loop with progress + isolated failures, then batch zip download — depends on T031
-- [ ] T033 [P] [US1] Create `app/components/generate/UploadDropzone.vue` (.txt upload, 5 MB guard, calls `parseUploadText`, renders the summary)
-- [ ] T034 [US1] Build the Generate page in `app/pages/index.vue` with `app/components/generate/GenerateForm.vue` (voice/model/format/speed) + `app/components/generate/QueueList.vue` (row status) + single Generate + Download-all (.zip) — depends on T031, T032, T033
-- [ ] T035 [US1] Add `generate` i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T023 [P] [US1] Create `src/core/batch/parse-upload.ts` (pure `parseUploadText`) and export it from `src/core/client.ts`
+- [X] T024 [US1] Extend the `TtsProvider` port in `src/core/tts/provider.ts` to accept `model`, `format`, `speed`, `instructions?`
+- [X] T025 [US1] Extend `src/core/tts/openai-provider.ts`: forward `model`/`format`/`speed`, send `instructions` only for `gpt-4o-mini-tts`, construct the client per request from the resolved `apiKey`
+- [X] T026 [US1] Extend validation in `src/core/tts/generate.ts` (voice/model/format/length + instructions rule; no network on invalid input) — depends on T024
+- [X] T027 [US1] Extend `LibraryService.save` in `src/core/library/library-service.ts` to allocate a dated slug path (naming module), write-then-insert atomically with orphan cleanup on failure; add `archive(ids)` via `archiver` — depends on T011, T013, T015
+- [X] T028 [US1] Extend `server/api/generations.post.ts`: accept `text/voice/model/format/speed/instructions`, resolve a per-request provider, map provider failure → 502, return the saved `Generation` — depends on T026, T027
+- [X] T029 [US1] Create `server/api/generations/archive.post.ts` streaming the zip — depends on T027
+- [X] T030 [US1] Update `server/api/generations/[id]/audio.get.ts` to set `Content-Type` per format (audio/mpeg, audio/wav, audio/flac, audio/opus, audio/aac, audio/L16)
+- [X] T031 [P] [US1] Create `app/composables/useQueue.ts`: ephemeral queue (add/remove rows, upload→`parseUploadText`, form-level voice/model/format/speed); never persisted
+- [X] T032 [US1] Update `app/composables/useGeneration.ts`: per-item generate loop with progress + isolated failures, then batch zip download — depends on T031
+- [X] T033 [P] [US1] Create `app/components/generate/UploadDropzone.vue` (.txt upload, 5 MB guard, calls `parseUploadText`, renders the summary)
+- [X] T034 [US1] Build the Generate page in `app/pages/index.vue` with `app/components/generate/GenerateForm.vue` (voice/model/format/speed) + `app/components/generate/QueueList.vue` (row status) + single Generate + Download-all (.zip) — depends on T031, T032, T033
+- [X] T035 [US1] Add `generate` i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: US1 is independently demoable — the batch studio works end-to-end (untagged audio, slug-named, saved, zipped).
 

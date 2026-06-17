@@ -129,4 +129,63 @@ describe('POST /api/generations', () => {
     expect(await audioFileCount()).toBe(0) // and no orphan file was left behind
     expect(mapError(err)).toEqual({ status: 502, code: 'PROVIDER_UNAVAILABLE' })
   })
+
+  it('saves under a dated, title-slug path with the chosen format', async () => {
+    const provider = new FakeProvider('ok', Buffer.from('flac-bytes'))
+    const input = { text: 'Hello world', voiceId: 'alloy', model: 'tts-1-hd', format: 'flac' as const }
+
+    const bytes = await generateSpeech(provider, input)
+    const entry = await service.save({ ...input, metadata: { title: 'Hello World' } }, bytes)
+
+    expect(entry.format).toBe('flac')
+    expect(entry.path).toMatch(/^audio\/\d{4}\/\d{2}\/\d{2}\/hello-world\.flac$/)
+    expect(entry.path.split('/').pop()).toBe('hello-world.flac') // derived filename
+    expect(Buffer.compare(await service.readAudio(entry.id), Buffer.from('flac-bytes'))).toBe(0)
+    expect(service.list().map((g) => g.id)).toContain(entry.id)
+  })
+
+  it('disambiguates two same-title items under the same day (no overwrite)', async () => {
+    const provider = new FakeProvider('ok')
+    const mk = async (body: Buffer) => {
+      const bytes = await generateSpeech(provider, { text: 'x', voiceId: 'alloy' })
+      void bytes
+      return service.save({ text: 'x', voiceId: 'alloy', format: 'mp3', metadata: { title: 'Same' } }, body)
+    }
+    const a = await mk(Buffer.from('aaa'))
+    const b = await mk(Buffer.from('bbb'))
+
+    expect(a.path).toMatch(/\/same\.mp3$/)
+    expect(b.path).toMatch(/\/same_2\.mp3$/)
+    // Neither file was overwritten: each reads back its own bytes.
+    expect(Buffer.compare(await service.readAudio(a.id), Buffer.from('aaa'))).toBe(0)
+    expect(Buffer.compare(await service.readAudio(b.id), Buffer.from('bbb'))).toBe(0)
+  })
+
+  it('unknown model -> 400 INVALID_MODEL, provider untouched, nothing persisted', async () => {
+    const provider = new FakeProvider('ok')
+    const err = await generateSpeech(provider, {
+      text: 'hi',
+      voiceId: 'alloy',
+      model: 'gpt-9000',
+    }).catch((e) => e)
+
+    expect(provider.calls).toBe(0)
+    expect(service.list()).toHaveLength(0)
+    expect(await audioFileCount()).toBe(0)
+    expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_MODEL' })
+  })
+
+  it('unknown format -> 400 INVALID_FORMAT, provider untouched, nothing persisted', async () => {
+    const provider = new FakeProvider('ok')
+    const err = await generateSpeech(provider, {
+      text: 'hi',
+      voiceId: 'alloy',
+      format: 'm4b',
+    }).catch((e) => e)
+
+    expect(provider.calls).toBe(0)
+    expect(service.list()).toHaveLength(0)
+    expect(await audioFileCount()).toBe(0)
+    expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_FORMAT' })
+  })
 })

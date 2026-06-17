@@ -8,7 +8,6 @@ import {
 } from '#core'
 
 let libraryService: LibraryService | undefined
-let ttsProvider: TtsProvider | undefined
 
 function dataDir(): string {
   const config = useRuntimeConfig()
@@ -29,11 +28,12 @@ export function getLibraryService(): LibraryService {
   return libraryService
 }
 
-/** Lazily-constructed singleton TTS provider (OpenAI). */
+/**
+ * Resolve a TTS provider per request from the active OpenAI key. US1 sources the
+ * key from the environment; US8 layers in the encrypted in-app key (UI→env
+ * precedence) and a NO_API_KEY failure when neither is set.
+ */
 export function getTtsProvider(): TtsProvider {
-  if (!ttsProvider) {
-    const config = useRuntimeConfig()
-    ttsProvider = new OpenAiTtsProvider({ apiKey: config.openaiApiKey as string })
-  }
-  return ttsProvider
+  const config = useRuntimeConfig()
+  return new OpenAiTtsProvider({ apiKey: config.openaiApiKey as string })
 }

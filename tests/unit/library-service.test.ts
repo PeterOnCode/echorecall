@@ -67,9 +67,18 @@ describe('LibraryService', () => {
       get: () => undefined,
       delete: () => false,
     }
-    const svc = new LibraryService(failingRepo, audio, () => new Date(), () => 'fixed-id')
-    await expect(svc.save({ text: 'x', voiceId: 'alloy' }, Buffer.from('y'))).rejects.toThrow('db down')
-    // The audio written before the failed insert must be cleaned up (no orphan).
-    expect(await audio.existsAt('audio/fixed-id.mp3')).toBe(false)
+    // Fixed clock + id make the dated, UUID-fallback path deterministic.
+    const svc = new LibraryService(
+      failingRepo,
+      audio,
+      () => new Date('2026-06-17T12:00:00.000Z'),
+      () => 'fixed-id',
+    )
+    await expect(svc.save({ text: 'x', voiceId: 'alloy' }, Buffer.from('y'))).rejects.toThrow(
+      'db down',
+    )
+    // The audio written before the failed insert (dated, slug-named path) must be
+    // cleaned up so no orphan is left behind.
+    expect(await audio.existsAt('audio/2026/06/17/fixed-id.mp3')).toBe(false)
   })
 })

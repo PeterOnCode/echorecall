@@ -56,16 +56,20 @@ export function formatInfo(format: string): FormatInfo | undefined {
 /** Port: anything that can turn text into audio bytes for a given format. */
 export interface TtsProvider {
   /**
-   * Synthesize speech for the given text and voice.
-   * @returns audio bytes in the requested format (defaults to MP3 in 001 callers).
+   * Synthesize speech for the given text and voice. Validation (voice/model/
+   * format/length, instructions rule) happens upstream in `generateSpeech`, so a
+   * provider receives an already-validated, fully-resolved request.
+   *
+   * @returns audio bytes in the requested format.
    * @throws on provider/network failure (mapped to ProviderUnavailableError upstream).
    */
   synthesize(input: {
     text: string
     voiceId: string
-    model?: Model
-    format?: Format
-    speed?: number
+    model: Model
+    format: Format
+    speed: number
+    /** Applied only for `gpt-4o-mini-tts`. */
     instructions?: string
   }): Promise<Buffer>
 }

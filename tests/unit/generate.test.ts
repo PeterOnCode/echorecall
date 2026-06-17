@@ -3,12 +3,26 @@ import { generateSpeech, MAX_INPUT_LENGTH } from '../../src/core/tts/generate'
 import {
   EmptyInputError,
   InputTooLongError,
+  InvalidFormatError,
+  InvalidModelError,
   InvalidVoiceError,
   ProviderUnavailableError,
 } from '../../src/core/shared/errors'
 import type { TtsProvider } from '../../src/core/tts/provider'
 
 const okProvider: TtsProvider = { synthesize: async () => Buffer.from('mp3-bytes') }
+
+/** Records the last input the provider was asked to synthesize. */
+function recordingProvider() {
+  const calls: Parameters<TtsProvider['synthesize']>[0][] = []
+  const provider: TtsProvider = {
+    synthesize: async (input) => {
+      calls.push(input)
+      return Buffer.from('mp3-bytes')
+    },
+  }
+  return { provider, calls }
+}
 
 describe('generateSpeech', () => {
   it('returns MP3 bytes for valid input', async () => {
@@ -58,5 +72,53 @@ describe('generateSpeech', () => {
     await expect(
       generateSpeech(failProvider, { text: 'hi', voiceId: 'alloy' }),
     ).rejects.toBeInstanceOf(ProviderUnavailableError)
+  })
+
+  it('rejects an unknown model WITHOUT calling the provider', async () => {
+    const { provider, calls } = recordingProvider()
+    await expect(
+      generateSpeech(provider, { text: 'hi', voiceId: 'alloy', model: 'gpt-9000' }),
+    ).rejects.toBeInstanceOf(InvalidModelError)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('rejects an unknown format WITHOUT calling the provider', async () => {
+    const { provider, calls } = recordingProvider()
+    await expect(
+      generateSpeech(provider, { text: 'hi', voiceId: 'alloy', format: 'm4b' }),
+    ).rejects.toBeInstanceOf(InvalidFormatError)
+    expect(calls).toHaveLength(0)
+  })
+
+  it('accepts a valid model + format and forwards them to the provider', async () => {
+    const { provider, calls } = recordingProvider()
+    await generateSpeech(provider, {
+      text: 'hi',
+      voiceId: 'alloy',
+      model: 'tts-1-hd',
+      format: 'flac',
+      speed: 1.5,
+    })
+    expect(calls[0]).toMatchObject({ model: 'tts-1-hd', format: 'flac', speed: 1.5 })
+  })
+
+  it('forwards instructions only for gpt-4o-mini-tts', async () => {
+    const mini = recordingProvider()
+    await generateSpeech(mini.provider, {
+      text: 'hi',
+      voiceId: 'alloy',
+      model: 'gpt-4o-mini-tts',
+      instructions: 'Speak slowly',
+    })
+    expect(mini.calls[0]!.instructions).toBe('Speak slowly')
+
+    const plain = recordingProvider()
+    await generateSpeech(plain.provider, {
+      text: 'hi',
+      voiceId: 'alloy',
+      model: 'tts-1',
+      instructions: 'Speak slowly',
+    })
+    expect(plain.calls[0]!.instructions).toBeUndefined()
   })
 })
