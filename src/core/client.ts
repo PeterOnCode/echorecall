@@ -17,7 +17,7 @@ export {
   formatInfo,
 } from './tts/provider'
 export type { TtsProvider } from './tts/provider'
-export { MAX_INPUT_LENGTH } from './tts/generate'
+export { MAX_INPUT_LENGTH, normalizeSpeed } from './tts/generate'
 
 // Naming rules (slug) — shared so the client preview matches the server result.
 export { slugify } from './naming/slug'

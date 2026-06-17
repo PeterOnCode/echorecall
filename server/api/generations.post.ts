@@ -1,4 +1,4 @@
-import { generateSpeech } from '#core'
+import { generateSpeech, normalizeSpeed } from '#core'
 import type { Format, Metadata, Model } from '#core'
 import { getLibraryService, getTtsProvider } from '../utils/container'
 import { respondError } from '../utils/errors'
@@ -39,7 +39,9 @@ export default defineEventHandler(async (event) => {
         voiceId: input.voiceId,
         model: (input.model as Model | undefined) ?? null,
         format: input.format as Format | undefined,
-        speed: input.speed ?? null,
+        // Persist the speed actually used for synthesis (clamped), not the raw
+        // request value, so the library row matches the produced clip.
+        speed: normalizeSpeed(input.speed),
         metadata: body?.metadata ?? {},
       },
       bytes,

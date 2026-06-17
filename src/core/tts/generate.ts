@@ -56,7 +56,7 @@ export async function generateSpeech(
   const format = (input.format ?? 'mp3') as Format
   if (!isKnownFormat(format)) throw new InvalidFormatError(input.format ?? '')
 
-  const speed = clampSpeed(input.speed)
+  const speed = normalizeSpeed(input.speed)
   const instructions = model === INSTRUCTIONS_MODEL ? input.instructions : undefined
 
   try {
@@ -67,8 +67,13 @@ export async function generateSpeech(
   }
 }
 
-/** Clamp a requested speed into the supported range; default 1.0 when unset/invalid. */
-function clampSpeed(speed?: number): number {
+/**
+ * Resolve a requested speed to the value actually used for synthesis: clamped to
+ * [0.25, 4.0], defaulting to 1.0 when unset/invalid. Shared so the persisted
+ * `speed` matches what was synthesized (no impossible values like 99 in the
+ * library) — see `server/api/generations.post.ts`.
+ */
+export function normalizeSpeed(speed?: number): number {
   if (typeof speed !== 'number' || !Number.isFinite(speed)) return DEFAULT_SPEED
   return Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed))
 }

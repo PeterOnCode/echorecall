@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateSpeech, MAX_INPUT_LENGTH } from '../../src/core/tts/generate'
+import { generateSpeech, MAX_INPUT_LENGTH, normalizeSpeed } from '../../src/core/tts/generate'
 import {
   EmptyInputError,
   InputTooLongError,
@@ -102,6 +102,16 @@ describe('generateSpeech', () => {
     expect(calls[0]).toMatchObject({ model: 'tts-1-hd', format: 'flac', speed: 1.5 })
   })
 
+  it('forwards the normalized (clamped) speed, not the raw request value', async () => {
+    const over = recordingProvider()
+    await generateSpeech(over.provider, { text: 'hi', voiceId: 'alloy', model: 'tts-1', speed: 99 })
+    expect(over.calls[0]!.speed).toBe(4)
+
+    const under = recordingProvider()
+    await generateSpeech(under.provider, { text: 'hi', voiceId: 'alloy', model: 'tts-1', speed: 0.1 })
+    expect(under.calls[0]!.speed).toBe(0.25)
+  })
+
   it('forwards instructions only for gpt-4o-mini-tts', async () => {
     const mini = recordingProvider()
     await generateSpeech(mini.provider, {
@@ -120,5 +130,15 @@ describe('generateSpeech', () => {
       instructions: 'Speak slowly',
     })
     expect(plain.calls[0]!.instructions).toBeUndefined()
+  })
+})
+
+describe('normalizeSpeed', () => {
+  it('clamps to [0.25, 4.0] and defaults to 1.0 when unset/invalid', () => {
+    expect(normalizeSpeed(1.5)).toBe(1.5)
+    expect(normalizeSpeed(99)).toBe(4)
+    expect(normalizeSpeed(0.1)).toBe(0.25)
+    expect(normalizeSpeed(undefined)).toBe(1)
+    expect(normalizeSpeed(Number.NaN)).toBe(1)
   })
 })

@@ -119,7 +119,10 @@ export class LibraryService {
       zip.append(bytes, { name: entry.name })
     }
     // Finalize without awaiting: the caller (route / test) drains the stream.
-    void zip.finalize()
+    // Swallow the finalize promise so a failure can't surface as an unhandled
+    // rejection — any real error still reaches the consumer via the stream's
+    // 'error' event.
+    zip.finalize().catch(() => {})
     return zip
   }
 
