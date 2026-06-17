@@ -27,6 +27,15 @@ export class FileAudioStore {
     return existsSync(this.abs(relPath))
   }
 
+  /**
+   * Synchronous existence check, used for collision-safe filename allocation
+   * (`allocateFilename` takes a sync predicate so it can probe candidates without
+   * interleaving awaits during a single save).
+   */
+  existsAtSync(relPath: string): boolean {
+    return existsSync(this.abs(relPath))
+  }
+
   /** Move/rename an artifact; creates the destination directory if needed. */
   async rename(fromRel: string, toRel: string): Promise<void> {
     const to = this.abs(toRel)

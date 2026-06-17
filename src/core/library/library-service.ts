@@ -1,14 +1,30 @@
-import type { Generation } from '../shared/types'
+import type { Readable } from 'node:stream'
+import { ZipArchive } from 'archiver'
+import type { Format, Generation, Metadata, Model } from '../shared/types'
 import { newId } from '../shared/ids'
 import { NotFoundError } from '../shared/errors'
+import { formatInfo } from '../tts/provider'
+import { slugify } from '../naming/slug'
+import { allocateFilename, datedDir } from '../naming/filename'
+import { resolveArchiveEntries } from '../batch/archive'
 import type { GenerationRepository } from './repository'
 import type { FileAudioStore } from './audio-store'
 
+/** Input for persisting a successful generation. */
+export interface SaveInput {
+  text: string
+  voiceId: string
+  model?: Model | null
+  format?: Format
+  speed?: number | null
+  metadata?: Metadata
+}
+
 /**
  * Composes the metadata repository and the path-based audio store into the
- * library use-cases (save / list / get / read audio / delete). Audio is resolved
- * by the stored `path`, so legacy `audio/<id>.mp3` files and new dated files both
- * work.
+ * library use-cases (save / list / get / read audio / delete / archive). Audio is
+ * resolved by the stored `path`, so legacy `audio/<id>.mp3` files and new dated
+ * files both work.
  */
 export class LibraryService {
   constructor(
@@ -19,28 +35,39 @@ export class LibraryService {
   ) {}
 
   /**
-   * Persist a successful generation. Writes the audio file first, then the
-   * metadata row; if the row insert fails, the orphan audio file is removed so a
-   * saved entry always has a readable audio file.
+   * Persist a successful generation. The (already-tagged in US2) audio is written
+   * to a dated, collision-safe, title-slug path first, then the metadata row is
+   * inserted referencing that `path`; if the insert fails, the orphan audio file
+   * is removed so a saved entry always has a readable audio file.
    *
-   * 002 foundational scope: flat `audio/<id>.mp3` path, mp3, no tags. US1/US4
-   * upgrade this to dated, title-slug paths and US2 adds tagging + metadata.
+   * The filename is the title slug under `audio/YYYY/MM/DD/`, with a numeric
+   * suffix on same-day collisions and a UUID fallback when the title yields no
+   * usable slug (FR-025/029).
    */
-  async save(input: { text: string; voiceId: string }, bytes: Buffer): Promise<Generation> {
+  async save(input: SaveInput, bytes: Buffer): Promise<Generation> {
     const id = this.idFn()
-    const createdAt = this.clock().toISOString()
-    const path = `audio/${id}.mp3`
+    const createdAt = this.clock()
+    const format: Format = input.format ?? 'mp3'
+    const ext = formatInfo(format)?.ext ?? format
+    const dir = `audio/${datedDir(createdAt)}`
+    const slug = slugify(input.metadata?.title ?? '') || id
+    const filename = allocateFilename(slug, ext, (name) =>
+      this.audio.existsAtSync(`${dir}/${name}`),
+    )
+    const path = `${dir}/${filename}`
+
     const generation: Generation = {
       id,
       text: input.text,
       voiceId: input.voiceId,
-      model: null,
-      format: 'mp3',
-      speed: null,
-      createdAt,
+      model: input.model ?? null,
+      format,
+      speed: input.speed ?? null,
+      createdAt: createdAt.toISOString(),
       path,
-      metadata: {},
+      metadata: input.metadata ?? {},
     }
+
     await this.audio.saveAt(path, bytes)
     try {
       this.repo.insert(generation)
@@ -72,6 +99,31 @@ export class LibraryService {
     const generation = this.repo.get(id)
     if (!generation || !(await this.audio.existsAt(generation.path))) throw new NotFoundError(id)
     return this.audio.readAt(generation.path)
+  }
+
+  /**
+   * Bundle the given generations into a single `.zip` stream (FR-008). Entries are
+   * named by each item's filename, with duplicate basenames disambiguated. Unknown
+   * ids are skipped; if none resolve, NotFound is thrown (the caller maps to 404).
+   */
+  async archive(ids: string[]): Promise<Readable> {
+    const generations = ids
+      .map((id) => this.repo.get(id))
+      .filter((g): g is Generation => g !== undefined)
+    if (generations.length === 0) throw new NotFoundError(ids.join(', ') || '(none)')
+
+    const byId = new Map(generations.map((g) => [g.id, g]))
+    const zip = new ZipArchive({ zlib: { level: 9 } })
+    for (const entry of resolveArchiveEntries(generations)) {
+      const bytes = await this.audio.readAt(byId.get(entry.id)!.path)
+      zip.append(bytes, { name: entry.name })
+    }
+    // Finalize without awaiting: the caller (route / test) drains the stream.
+    // Swallow the finalize promise so a failure can't surface as an unhandled
+    // rejection — any real error still reaches the consumer via the stream's
+    // 'error' event.
+    zip.finalize().catch(() => {})
+    return zip
   }
 
   /** Permanently delete an entry and its audio. */

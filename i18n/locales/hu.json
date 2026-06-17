@@ -7,7 +7,33 @@
       "settings": "Beállítások"
     }
   },
-  "generate": {},
+  "generate": {
+    "form": {
+      "voice": "Hang",
+      "model": "Modell",
+      "format": "Formátum",
+      "speed": "Sebesség",
+      "text": "Szöveg",
+      "textPlaceholder": "Írd be a beszéddé alakítandó szöveget…",
+      "add": "Hozzáadás a listához"
+    },
+    "upload": {
+      "label": ".txt feltöltése (soronként egy tétel)",
+      "added": "hozzáadva",
+      "blank": "üres kihagyva",
+      "tooLong": "túl hosszú",
+      "tooLarge": "A fájl túl nagy (legfeljebb 5 MB)."
+    },
+    "queue": {
+      "empty": "Még nincs tétel — írj be szöveget vagy tölts fel egy .txt fájlt a lista összeállításához.",
+      "remove": "Tétel eltávolítása",
+      "download": "Letöltés"
+    },
+    "actions": {
+      "generate": "Létrehozás",
+      "downloadAll": "Összes letöltése (.zip)"
+    }
+  },
   "library": {},
   "settings": {
     "comingSoon": "A beállítások hamarosan elérhetők."

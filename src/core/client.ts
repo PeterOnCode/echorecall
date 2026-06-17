@@ -17,7 +17,11 @@ export {
   formatInfo,
 } from './tts/provider'
 export type { TtsProvider } from './tts/provider'
-export { MAX_INPUT_LENGTH } from './tts/generate'
+export { MAX_INPUT_LENGTH, normalizeSpeed } from './tts/generate'
 
 // Naming rules (slug) — shared so the client preview matches the server result.
 export { slugify } from './naming/slug'
+
+// .txt batch parsing — pure, reused client-side so the upload is never persisted.
+export { parseUploadText } from './batch/parse-upload'
+export type { ParsedUpload } from './batch/parse-upload'

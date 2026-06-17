@@ -7,7 +7,33 @@
       "settings": "Settings"
     }
   },
-  "generate": {},
+  "generate": {
+    "form": {
+      "voice": "Voice",
+      "model": "Model",
+      "format": "Format",
+      "speed": "Speed",
+      "text": "Text",
+      "textPlaceholder": "Enter text to convert to speech…",
+      "add": "Add to list"
+    },
+    "upload": {
+      "label": "Upload a .txt (one item per line)",
+      "added": "added",
+      "blank": "blank skipped",
+      "tooLong": "too long",
+      "tooLarge": "That file is too large (max 5 MB)."
+    },
+    "queue": {
+      "empty": "No items yet — type text or upload a .txt to build your list.",
+      "remove": "Remove item",
+      "download": "Download"
+    },
+    "actions": {
+      "generate": "Generate",
+      "downloadAll": "Download all (.zip)"
+    }
+  },
   "library": {},
   "settings": {
     "comingSoon": "Settings are coming soon."
