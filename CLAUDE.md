@@ -14,5 +14,5 @@ current plan and its design artifacts:
 Stack: TypeScript (strict) on Node.js LTS; Nuxt 4 (Vue 3 + Nitro) web adapter over a
 framework-agnostic `src/core/`; OpenAI TTS (MP3); SQLite (`better-sqlite3`) + filesystem
 audio under `data/`; Vitest + `@nuxt/test-utils`; Docker Compose. Governed by the
-constitution at `.specify/memory/constitution.md` (v2.3.0).
+constitution at `.specify/memory/constitution.md` (v2.4.0).
 <!-- SPECKIT END -->

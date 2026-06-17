@@ -1,37 +1,37 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 2.2.0 → 2.3.0
-Bump rationale: MINOR — the Technology Stack was materially changed to match
-  EchoRecall's actual architecture (rebuild of echoquize): the core AI capability
-  is OpenAI text-to-speech (not Claude), and persistence (SQLite + local
-  filesystem) and deployment (Docker / Docker Compose) tooling are now declared.
-  New/changed stack guidance = MINOR; this is not a typo (PATCH) nor a principle
-  change (MAJOR) — all five principles are untouched.
+Version change: 2.3.0 → 2.4.0
+Bump rationale: MINOR — the Technology Stack's Text-to-speech secret-handling clause
+  was relaxed to permit an in-app, encrypted, server-only OpenAI API key (set via the
+  Settings UI) in ADDITION to environment configuration, with a UI-set key taking
+  precedence over the env var (which remains a fallback). This expands stack guidance
+  without adding, removing, or redefining any core principle — MINOR, consistent with
+  how the 2.2.0→2.3.0 stack change was classified.
 Modified principles: none — all five core principles unchanged.
-Added sections: none (the Technology Stack section was expanded, not added).
+Modified sections:
+  - Technology Stack → Text-to-speech: the API key MAY now be supplied via environment
+    configuration OR set in-app via the Settings UI; an in-app key MUST be persisted
+    encrypted at rest (server-side secret) and takes precedence over OPENAI_API_KEY,
+    which remains a fallback. The key MUST stay server-only — never sent to the client,
+    never written to logs, never echoed in error messages.
+Added sections: none.
 Removed sections: none.
-Changed stack entries:
-  - AI integration → Text-to-speech: replaced "Claude (Anthropic SDK,
-    claude-sonnet-4-6)" with "OpenAI TTS API (OpenAI SDK)".
-  - Added "Persistence": SQLite for generation metadata; local filesystem for
-    generated audio artifacts; the library MUST survive restarts.
-  - Added "Packaging & deployment": ships as a Docker image run via Docker Compose.
 Templates requiring updates:
-  ✅ plan-template.md   — technology-agnostic; Constitution Check is derived from
-                          this file at plan time; web + cli structure options present
+  ✅ plan-template.md   — technology-agnostic; Constitution Check derived at plan time; no change
   ✅ spec-template.md   — technology-agnostic; no change required
   ✅ tasks-template.md  — generic scaffold; no change required
-  (verified 2026-06-15: grep found no template references to the changed entries)
+  (verified 2026-06-17: no template hardcodes the OpenAI key / secret-handling clause)
+Runtime docs:
+  ⚠ README.md — still documents env-only key (NUXT_OPENAI_API_KEY via .env), which
+    remains accurate for the shipped app. Update to describe the in-app Settings key
+    + .env fallback WHEN the Settings-tab feature ships (specs/specs-plan.md), not before.
 Follow-up TODOs:
-  - TODO(test-http-mocking): ky is fetch-based (undici on Node). Older nock
-    releases only patch node:http and will NOT intercept fetch. Confirm the
-    chosen nock version supports fetch interception, or switch to MSW /
-    @mswjs/interceptors (fetch-native). Resolve before the first HTTP CLI test.
-  - TODO(openai-key-handling): OpenAI TTS requires an API key. Define how the key
-    is supplied (environment configuration) and ensure it is never persisted to
-    SQLite or written to logs. Resolve during the plan for the first generation
-    feature.
+  - RESOLVED TODO(openai-key-handling): key handling is now fully defined — environment
+    OR in-app encrypted (server-only), UI precedence with env fallback. The encryption
+    secret and store location are owned by the Settings feature's plan.
+  - TODO(test-http-mocking): unchanged — confirm fetch interception (MSW /
+    @mswjs/interceptors vs nock) before the first HTTP CLI test.
 -->
 
 # EchoRecall Constitution
@@ -122,9 +122,12 @@ impulses. This principle keeps the build focused and the codebase auditable.
 - **HTTP client**: ky (fetch-based)
 - **Control-flow dispatch**: ts-pattern (exhaustive command/result matching)
 - **Text-to-speech**: OpenAI TTS API via the official OpenAI SDK. Converting text
-  to spoken audio is EchoRecall's core capability; the API key MUST be supplied
-  via environment configuration and MUST NOT be persisted to storage or written
-  to logs.
+  to spoken audio is EchoRecall's core capability. The API key MAY be supplied via
+  environment configuration OR set in-app via the Settings UI; a UI-set key takes
+  precedence over the `OPENAI_API_KEY` environment variable, which remains a
+  fallback. A key set in-app MUST be persisted encrypted at rest using a server-side
+  secret. In all cases the key MUST remain server-only: it MUST NOT be sent to the
+  client, MUST NOT be written to logs, and MUST NOT be echoed in error messages.
 - **Persistence**: SQLite for generation metadata (text, voice, timestamps,
   identifiers); the local filesystem for generated audio artifacts. The library
   MUST persist across application and container restarts.
@@ -169,4 +172,4 @@ All PRs and reviews MUST verify compliance with the five core principles. Any
 deviation requires a Complexity Tracking entry in `plan.md` with explicit
 justification.
 
-**Version**: 2.3.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-15
+**Version**: 2.4.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-17
