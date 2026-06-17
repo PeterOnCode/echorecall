@@ -34,11 +34,11 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 **Purpose**: Add the 002 dependencies and wire the Nuxt modules so all later work has a foundation.
 
-- [ ] T001 Add runtime + dev dependencies and engine pin in `package.json`: install `@nuxt/ui`, `@nuxtjs/i18n`, `taglib-wasm`, `archiver`, `@sindresorhus/slugify`, and dev `bumpp` (`mise exec node@22.22.2 -- pnpm add …`); set `engines.node` to `">=22.6"`; add scripts `bumpp`, `test:component`, `test:adapters`
-- [ ] T002 [P] Register modules and config in `nuxt.config.ts`: add `@nuxt/ui` (+ bundled `@nuxtjs/color-mode`, default `system`) and `@nuxtjs/i18n` (locales `en`/`hu`, `defaultLocale: 'hu'`, `strategy: 'no_prefix'`, cookie-persisted); set `runtimeConfig.public.appVersion` by reading `version` from `package.json`; keep dev port 3102
-- [ ] T003 [P] Create `app/app.config.ts` with Nuxt UI theme tokens (primary/neutral color aliases)
-- [ ] T004 [P] Add new keys to `.env.example`: `NUXT_APP_SECRET`, `NUXT_DEFAULT_TAG_ARTIST`, `NUXT_DEFAULT_TAG_ALBUM`, `NUXT_DEFAULT_TAG_GENRE`, `NUXT_DEFAULT_TAG_COMMENT`, `NUXT_DEFAULT_TAG_LANGUAGES` (with explanatory comments)
-- [ ] T005 [P] Create i18n catalog skeletons `app/i18n/locales/en.json` and `app/i18n/locales/hu.json` (empty namespaced structure: `generate`, `library`, `settings`, `common`)
+- [X] T001 Add runtime + dev dependencies and engine pin in `package.json`: install `@nuxt/ui`, `@nuxtjs/i18n`, `taglib-wasm`, `archiver`, `@sindresorhus/slugify`, and dev `bumpp` (`mise exec node@22.22.2 -- pnpm add …`); set `engines.node` to `">=22.6"`; add scripts `bumpp`, `test:component`, `test:adapters`
+- [X] T002 [P] Register modules and config in `nuxt.config.ts`: add `@nuxt/ui` (+ bundled `@nuxtjs/color-mode`, default `system`) and `@nuxtjs/i18n` (locales `en`/`hu`, `defaultLocale: 'hu'`, `strategy: 'no_prefix'`, cookie-persisted); set `runtimeConfig.public.appVersion` by reading `version` from `package.json`; keep dev port 3102
+- [X] T003 [P] Create `app/app.config.ts` with Nuxt UI theme tokens (primary/neutral color aliases)
+- [X] T004 [P] Add new keys to `.env.example`: `NUXT_APP_SECRET`, `NUXT_DEFAULT_TAG_ARTIST`, `NUXT_DEFAULT_TAG_ALBUM`, `NUXT_DEFAULT_TAG_GENRE`, `NUXT_DEFAULT_TAG_COMMENT`, `NUXT_DEFAULT_TAG_LANGUAGES` (with explanatory comments)
+- [X] T005 [P] Create i18n catalog skeletons `i18n/locales/en.json` and `i18n/locales/hu.json` (empty namespaced structure: `generate`, `library`, `settings`, `common`)
 
 ---
 
@@ -93,7 +93,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T032 [US1] Update `app/composables/useGeneration.ts`: per-item generate loop with progress + isolated failures, then batch zip download — depends on T031
 - [ ] T033 [P] [US1] Create `app/components/generate/UploadDropzone.vue` (.txt upload, 5 MB guard, calls `parseUploadText`, renders the summary)
 - [ ] T034 [US1] Build the Generate page in `app/pages/index.vue` with `app/components/generate/GenerateForm.vue` (voice/model/format/speed) + `app/components/generate/QueueList.vue` (row status) + single Generate + Download-all (.zip) — depends on T031, T032, T033
-- [ ] T035 [US1] Add `generate` i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T035 [US1] Add `generate` i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: US1 is independently demoable — the batch studio works end-to-end (untagged audio, slug-named, saved, zipped).
 
@@ -122,7 +122,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T045 [US2] Extend `server/api/generations.post.ts` to accept `metadata` and return `skippedTags` — depends on T043
 - [ ] T046 [US2] Initialize `TagLibAudioTagger` once and inject it into `LibraryService` in `server/utils/container.ts` — depends on T041, T043
 - [ ] T047 [US2] Create `app/components/generate/MetadataFields.vue` (title/artist/album/genre/comment/recordedAt/track/languages multi + repeatable customText/customUrl) and wire it into the form/queue; show the `skippedTags` notice — depends on T034
-- [ ] T048 [US2] Add metadata i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T048 [US2] Add metadata i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: US1 + US2 work — batches generate with full, standards-based, persisted tags.
 
@@ -143,7 +143,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T050 [US3] Add `updateItem(clientId, patch)` to `app/composables/useQueue.ts` with per-row text revalidation, instruction retention across model changes, and untaggable-format detection — depends on T031
 - [ ] T051 [US3] Create `app/components/generate/QueueItemEditor.vue` (edit text/voice/model/format/instructions/metadata for a single row, immediate reflection, skip warning) — depends on T047, T050
 - [ ] T052 [US3] Wire the editor into `app/components/generate/QueueList.vue` (open/close per row) — depends on T051
-- [ ] T053 [US3] Add per-item-edit i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T053 [US3] Add per-item-edit i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Queue rows are individually editable before generation.
 
@@ -165,7 +165,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T056 [US4] Confirm/complete dated-slug allocation + UUID fallback path in `LibraryService.save` (`src/core/library/library-service.ts`) against the US4 tests — depends on T027, T054
 - [ ] T057 [US4] Add `?download=1` real-filename `Content-Disposition` to `server/api/generations/[id]/audio.get.ts` — depends on T030
 - [ ] T058 [US4] Show a live slug-based filename preview in the form/queue using `slugify` from `#core/client` (`app/components/generate/MetadataFields.vue` or `QueueList.vue`) — depends on T047
-- [ ] T059 [US4] Add filename/preview i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T059 [US4] Add filename/preview i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Generated files are human-readable, dated, collision-safe, and downloadable by real name.
 
@@ -191,7 +191,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T066 [US5] Create `app/components/library/LibraryItemEditor.vue` (filename field + `MetadataFields`; extension shown non-editable) — depends on T047
 - [ ] T067 [US5] Add `rename`/`updateMetadata`/`delete` (with `ConfirmDialog`) to `app/composables/useLibrary.ts` — depends on T065
 - [ ] T068 [US5] Build the Library page in `app/pages/library.vue` to list items, open the editor, and delete with confirmation — depends on T066, T067
-- [ ] T069 [US5] Add library-management i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T069 [US5] Add library-management i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Saved items are renamable, retaggable, and deletable from the library.
 
@@ -218,7 +218,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T077 [US6] Create `server/api/library/bulk-clean.post.ts` (requires ≥1 filter) — depends on T075
 - [ ] T078 [US6] Build `app/components/library/LibrarySearchBar.vue`, `LibraryTable.vue` (sort/filter/paginate), and `BulkCleanDialog.vue`; add query state to `app/composables/useLibrary.ts` and wire into `app/pages/library.vue` — depends on T068, T076, T077
 - [ ] T079 [US6] Render an "unavailable" state for a row whose stored file is missing (edge case) in `app/components/library/LibraryTable.vue` — depends on T078
-- [ ] T080 [US6] Add discovery/bulk-clean i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T080 [US6] Add discovery/bulk-clean i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: A growing library stays searchable, sortable, filterable, paginated, and cleanable.
 
@@ -238,7 +238,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 - [ ] T082 [P] [US7] Create `app/components/settings/AppearanceSettings.vue` (color-mode light/dark/system)
 - [ ] T083 [US7] Create `app/components/settings/LanguageSettings.vue` (i18n locale switch) and wire both into `app/pages/settings.vue` — depends on T082
-- [ ] T084 [US7] Complete the `en`/`hu` catalogs in `app/i18n/locales/` for all shipped UI strings (consolidating keys added per story)
+- [ ] T084 [US7] Complete the `en`/`hu` catalogs in `i18n/locales/` for all shipped UI strings (consolidating keys added per story)
 
 **Checkpoint**: Appearance and language are user-selectable and persisted, with no effect on content.
 
@@ -264,7 +264,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 - [ ] T091 [US8] Create `server/api/settings/openai-key.get.ts`, `openai-key.put.ts`, `openai-key.delete.ts`, and `openai-key/test.post.ts` (masked status; 409 when secret unset; active-key test) — depends on T090
 - [ ] T092 [US8] Wire `resolveApiKey` into the per-request `OpenAiTtsProvider` in `server/utils/container.ts` and raise `NO_API_KEY` (nothing saved) in the generate path — depends on T090, T028
 - [ ] T093 [US8] Create `app/components/settings/OpenAiKeySettings.vue` and `app/composables/useSettings.ts` (masked status, set/clear/test, disabled state when `secretConfigured:false`); wire into `app/pages/settings.vue` — depends on T091, T083
-- [ ] T094 [US8] Add OpenAI-key i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T094 [US8] Add OpenAI-key i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: The OpenAI key is fully manageable in-app, encrypted, server-only, with env fallback.
 
@@ -304,7 +304,7 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 - [ ] T100 [US10] Create `server/api/settings/defaults.get.ts` reading `NUXT_DEFAULT_TAG_*` safely (omit/blank on invalid config) — depends on T009
 - [ ] T101 [US10] Apply defaults on form load and new-row creation in `app/composables/useQueue.ts` / `app/components/generate/MetadataFields.vue` (Title never defaulted) — depends on T047, T100
-- [ ] T102 [US10] Add default-tags i18n keys to `app/i18n/locales/en.json` and `hu.json`
+- [ ] T102 [US10] Add default-tags i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: All ten user stories are independently functional.
 
