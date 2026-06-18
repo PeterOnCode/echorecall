@@ -9,7 +9,7 @@ import {
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id') ?? ''
   try {
-    const service = getLibraryService()
+    const service = await getLibraryService()
     // Resolve the row first (404 if unknown) so we can set the right media type
     // for the stored format (FR-019/SC); then stream the bytes by stored path.
     const generation = service.get(id)

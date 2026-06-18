@@ -107,22 +107,22 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 2 ⚠️ (write first, must fail)
 
-- [ ] T036 [P] [US2] Unit test `tests/unit/tag-audio.test.ts` with a **fake** `AudioTagger`: AAC/PCM → `skipped=['*']`; FLAC/Opus → `customUrl` in `skipped`; MP3/WAV → full set mapped; `tagAudio` returns `{ bytes, skipped }`
-- [ ] T037 [P] [US2] Gated adapter test `tests/adapters/taglib-tagger.test.ts`: real `taglib-wasm` writes ID3v2.4 for MP3 (title/artist/TXXX/TLAN), Vorbis for FLAC/Opus; confirms the research spike — ID3v2 save version is 2.4, WAV written as an ID3v2.4 chunk (not only RIFF INFO), customUrl round-trips as WXXX (or documented TXXX fallback)
-- [ ] T038 [P] [US2] Integration test `tests/integration/generations-metadata.test.ts`: `POST` with full metadata → MP3 carries tags; `recordedAt` accepts year-only and full timestamp; FLAC/Opus → `skippedTags` includes customUrl; AAC/PCM → still 201 with all tags skipped; values persist and reopen after a fresh repository instance
-- [ ] T039 [P] [US2] Component test `tests/component/MetadataFields.test.ts`: full set incl. multi-value `languages` and repeatable `customText`/`customUrl`
+- [X] T036 [P] [US2] Unit test `tests/unit/tag-audio.test.ts` with a **fake** `AudioTagger`: AAC/PCM → `skipped=['*']`; FLAC/Opus → `customUrl` in `skipped`; MP3/WAV → full set mapped; `tagAudio` returns `{ bytes, skipped }`
+- [X] T037 [P] [US2] Gated adapter test `tests/adapters/taglib-tagger.test.ts`: real `taglib-wasm` writes ID3v2.4 for MP3 (title/artist/TXXX/TLAN), Vorbis for FLAC/Opus; confirms the research spike — ID3v2 save version is 2.4, WAV written as an ID3v2.4 chunk (not only RIFF INFO), customUrl round-trips as WXXX (or documented TXXX fallback)
+- [X] T038 [P] [US2] Integration test `tests/integration/generations-metadata.test.ts`: `POST` with full metadata → MP3 carries tags; `recordedAt` accepts year-only and full timestamp; FLAC/Opus → `skippedTags` includes customUrl; AAC/PCM → still 201 with all tags skipped; values persist and reopen after a fresh repository instance
+- [X] T039 [P] [US2] Component test `tests/component/MetadataFields.test.ts`: full set incl. multi-value `languages` and repeatable `customText`/`customUrl`
 
 ### Implementation for User Story 2
 
-- [ ] T040 [P] [US2] Create `src/core/tagging/tagger.ts`: `AudioTagger` port, `TagResult` type, and the per-format applicability map
-- [ ] T041 [US2] Create `src/core/tagging/taglib-tagger.ts`: `TagLibAudioTagger.create()` (load WASM once) and `tag()` (openFile → map Metadata→PropertyMap → save → getFileBuffer → dispose) — depends on T040
-- [ ] T042 [US2] Create `src/core/tagging/tag-audio.ts` (`tagAudio` use-case mapping `Metadata` → properties per format, collecting `skipped`) — depends on T040
-- [ ] T043 [US2] Insert the tagging step into `LibraryService.save` (tag before write; tagging failure fails only that item; surface `skippedTags`) in `src/core/library/library-service.ts` — depends on T027, T042
-- [ ] T044 [US2] Wire metadata serialize/deserialize (single `tag_*` columns + `tags_extra` JSON for languages/customText/customUrl) in `src/core/library/sqlite-repository.ts` — depends on T013
-- [ ] T045 [US2] Extend `server/api/generations.post.ts` to accept `metadata` and return `skippedTags` — depends on T043
-- [ ] T046 [US2] Initialize `TagLibAudioTagger` once and inject it into `LibraryService` in `server/utils/container.ts` — depends on T041, T043
-- [ ] T047 [US2] Create `app/components/generate/MetadataFields.vue` (title/artist/album/genre/comment/recordedAt/track/languages multi + repeatable customText/customUrl) and wire it into the form/queue; show the `skippedTags` notice — depends on T034
-- [ ] T048 [US2] Add metadata i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T040 [P] [US2] Create `src/core/tagging/tagger.ts`: `AudioTagger` port, `TagResult` type, and the per-format applicability map
+- [X] T041 [US2] Create `src/core/tagging/taglib-tagger.ts`: `TagLibAudioTagger.create()` (load WASM once) and `tag()` (openFile → map Metadata→PropertyMap → save → getFileBuffer → dispose) — depends on T040
+- [X] T042 [US2] Create `src/core/tagging/tag-audio.ts` (`tagAudio` use-case mapping `Metadata` → properties per format, collecting `skipped`) — depends on T040
+- [X] T043 [US2] Insert the tagging step into `LibraryService.save` (tag before write; tagging failure fails only that item; surface `skippedTags`) in `src/core/library/library-service.ts` — depends on T027, T042
+- [X] T044 [US2] Wire metadata serialize/deserialize (single `tag_*` columns + `tags_extra` JSON for languages/customText/customUrl) in `src/core/library/sqlite-repository.ts` — depends on T013
+- [X] T045 [US2] Extend `server/api/generations.post.ts` to accept `metadata` and return `skippedTags` — depends on T043
+- [X] T046 [US2] Initialize `TagLibAudioTagger` once and inject it into `LibraryService` in `server/utils/container.ts` — depends on T041, T043
+- [X] T047 [US2] Create `app/components/generate/MetadataFields.vue` (title/artist/album/genre/comment/recordedAt/track/languages multi + repeatable customText/customUrl) and wire it into the form/queue; show the `skippedTags` notice — depends on T034
+- [X] T048 [US2] Add metadata i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: US1 + US2 work — batches generate with full, standards-based, persisted tags.
 

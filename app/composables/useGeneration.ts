@@ -24,22 +24,26 @@ export function useGeneration() {
     item.status = 'generating'
     item.error = undefined
     try {
-      const entry = await $fetch<{ id: string; audioUrl?: string }>('/api/generations', {
-        method: 'POST',
-        body: {
-          text: item.text,
-          voiceId: item.voiceId,
-          model: item.model,
-          format: item.format,
-          speed,
-          instructions: item.instructions,
-          metadata: item.metadata,
+      const entry = await $fetch<{ id: string; audioUrl?: string; skippedTags?: string[] }>(
+        '/api/generations',
+        {
+          method: 'POST',
+          body: {
+            text: item.text,
+            voiceId: item.voiceId,
+            model: item.model,
+            format: item.format,
+            speed,
+            instructions: item.instructions,
+            metadata: item.metadata,
+          },
         },
-      })
+      )
       item.status = 'done'
       item.result = {
         id: entry.id,
         audioUrl: entry.audioUrl ?? `/api/generations/${entry.id}/audio`,
+        skippedTags: entry.skippedTags,
       }
     } catch (e) {
       item.status = 'failed'

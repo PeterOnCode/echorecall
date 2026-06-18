@@ -4,28 +4,47 @@ import {
   LibraryService,
   OpenAiTtsProvider,
   SqliteGenerationRepository,
+  TagLibAudioTagger,
   type TtsProvider,
 } from '#core'
 
-let libraryService: LibraryService | undefined
+// Memoise the in-flight construction promise (not just the resolved service) so
+// concurrent first requests share a single repo/tagger rather than racing to
+// build their own — the taglib-wasm module is loaded exactly once.
+let libraryServicePromise: Promise<LibraryService> | undefined
 
 function dataDir(): string {
   const config = useRuntimeConfig()
   return (config.dataDir as string) || join(process.cwd(), 'data')
 }
 
-/** Lazily-constructed singleton library service (SQLite + filesystem). */
-export function getLibraryService(): LibraryService {
-  if (!libraryService) {
-    const dir = dataDir()
-    const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
-    // Audio store is rooted at the data dir; stored paths are relative
-    // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
-    // US2 will inject an AudioTagger and US8 a per-request provider here.
-    const audio = new FileAudioStore(dir)
-    libraryService = new LibraryService(repo, audio)
+/**
+ * Lazily-constructed singleton library service (SQLite + filesystem + tagger).
+ * Async because the taglib-wasm `AudioTagger` initialises its WASM module once;
+ * it is injected so `save()` embeds metadata before writing. US8 will layer a
+ * per-request provider into this wiring.
+ */
+export function getLibraryService(): Promise<LibraryService> {
+  if (!libraryServicePromise) {
+    libraryServicePromise = (async () => {
+      try {
+        const dir = dataDir()
+        const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
+        // Audio store is rooted at the data dir; stored paths are relative
+        // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
+        const audio = new FileAudioStore(dir)
+        const tagger = await TagLibAudioTagger.create()
+        return new LibraryService(repo, audio, undefined, undefined, tagger)
+      } catch (err) {
+        // Don't cache a rejected promise: clear it so a transient failure (WASM
+        // load, fs lock, SQLite init) can self-recover on the next request
+        // instead of wedging every request until a restart.
+        libraryServicePromise = undefined
+        throw err
+      }
+    })()
   }
-  return libraryService
+  return libraryServicePromise
 }
 
 /**

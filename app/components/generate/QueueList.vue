@@ -13,6 +13,12 @@ const STATUS_COLOR: Record<QueueItem['status'], string> = {
   done: 'text-success',
   failed: 'text-error',
 }
+
+/** Human notice for tags skipped by the chosen format (FR-021). */
+function skippedLabel(skipped: string[]): string {
+  if (skipped.includes('*')) return t('generate.metadata.skippedAll')
+  return t('generate.metadata.skipped', { fields: skipped.join(', ') })
+}
 </script>
 
 <template>
@@ -62,6 +68,16 @@ const STATUS_COLOR: Record<QueueItem['status'], string> = {
             :aria-label="t('generate.queue.download')"
           />
         </div>
+
+        <!-- Tags the chosen format couldn't carry (FR-021) — informational, the
+             clip still generated and saved. -->
+        <p
+          v-if="item.status === 'done' && item.result?.skippedTags?.length"
+          data-test="item-skipped"
+          class="text-xs text-warning"
+        >
+          {{ skippedLabel(item.result.skippedTags) }}
+        </p>
       </li>
     </ul>
   </div>
