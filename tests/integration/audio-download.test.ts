@@ -27,6 +27,12 @@ describe('audio download disposition', () => {
     )
   })
 
+  it('strips characters that could break out of / inject the header', () => {
+    // Quotes and CR/LF are removed so the value stays a single safe quoted token.
+    expect(attachmentDisposition('evil".mp3')).toBe('attachment; filename="evil.mp3"')
+    expect(attachmentDisposition('a\r\nb.mp3')).toBe('attachment; filename="ab.mp3"')
+  })
+
   it('streams inline (no download) when the flag is absent or falsy', () => {
     // Covers the string forms a query yields ('', '0', 'false') plus the
     // non-string falsy values the `unknown`-typed helper should also reject.

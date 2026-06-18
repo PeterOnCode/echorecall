@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { formatInfo, slugify } from '#core/client'
-import type { Voice } from '#core/client'
+import type { Metadata, Voice } from '#core/client'
 import type { ItemPatch, QueueItem } from '../../composables/useQueue'
 
 // Renders the ephemeral queue with each row's live generation status. A row that
 // hasn't generated yet (queued/failed) can be expanded into a per-row editor
-// (US3); rows can also be removed.
-defineProps<{ items: QueueItem[]; voices: Voice[] }>()
+// (US3); rows can also be removed. `sharedMetadata` is the form-level tag set
+// that gets stamped onto un-edited rows at generation, used here for an accurate
+// filename preview (US4).
+const props = defineProps<{ items: QueueItem[]; voices: Voice[]; sharedMetadata?: Metadata }>()
 const emit = defineEmits<{ remove: [clientId: string]; update: [clientId: string, patch: ItemPatch] }>()
 const { t } = useI18n()
 
@@ -39,10 +41,16 @@ function skippedLabel(skipped: string[]): string {
  * same `slugify` the server uses so the preview is accurate; an empty/un-sluggable
  * title shows the unique-name fallback (the server substitutes a UUID). The
  * collision suffix is not predictable client-side and is omitted.
+ *
+ * The effective title is the shared form metadata for an un-edited row — that is
+ * what `applyMetadataToPending()` stamps on it at generation — and the row's own
+ * title once it has been edited individually (US3), so the preview tracks what the
+ * file will actually be named in both flows.
  */
 function filenamePreview(item: QueueItem): string {
   const ext = formatInfo(item.format)?.ext ?? item.format
-  const slug = slugify(item.metadata.title ?? '')
+  const title = item.metadataEdited ? item.metadata.title : props.sharedMetadata?.title
+  const slug = slugify(title ?? '')
   const name = slug ? `${slug}.${ext}` : t('generate.queue.filenameFallback', { ext })
   return t('generate.queue.filenamePreview', { name })
 }
