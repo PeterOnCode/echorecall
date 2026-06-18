@@ -55,3 +55,32 @@ function isPresent(field: string, metadata: Metadata): boolean {
   const value = (metadata as Record<string, unknown>)[field]
   return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
 }
+
+/** Every Metadata field a tagger can embed on at least one tagging path. */
+const EMBEDDABLE_FIELDS = [
+  'title',
+  'artist',
+  'album',
+  'genre',
+  'comment',
+  'recordedAt',
+  'track',
+  'languages',
+  'customText',
+  'customUrl',
+] as const
+
+/**
+ * Whether `metadata` has at least one field that would actually be embedded for
+ * `format`. False for an untaggable container, an empty set, or a set whose only
+ * present fields are unsupported by the format (e.g. just `customUrl` on Vorbis).
+ * Lets {@link import('./tag-audio').tagAudio} skip opening the tagger entirely and
+ * return the original bytes — so a no-metadata generation is neither rewritten nor
+ * exposed to a spurious tagging failure.
+ */
+export function hasEmbeddableTags(format: Format, metadata: Metadata): boolean {
+  const taggable = formatInfo(format)?.taggable ?? 'none'
+  if (taggable === 'none') return false
+  const unsupported = UNSUPPORTED_FIELDS[taggable]
+  return EMBEDDABLE_FIELDS.some((field) => !unsupported.includes(field) && isPresent(field, metadata))
+}

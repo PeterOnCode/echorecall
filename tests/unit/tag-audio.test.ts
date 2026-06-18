@@ -75,11 +75,25 @@ describe('tagAudio', () => {
     }
   })
 
-  it('empty metadata on a taggable format still runs and skips nothing', async () => {
+  it('empty metadata on a taggable format never opens the tagger and returns bytes unchanged', async () => {
+    // No tags to write → don't rewrite the audio or risk a spurious TAGGING_FAILED.
     const tagger = new FakeTagger()
     const res = await tagAudio(tagger, 'mp3', Buffer.from('audio'), {})
-    expect(tagger.calls).toHaveLength(1)
+    expect(tagger.calls).toHaveLength(0)
+    expect(res.bytes.toString()).toBe('audio')
     expect(res.skipped).toEqual([])
+  })
+
+  it('a taggable format whose only present field is unsupported skips the tagger but still notices it', async () => {
+    // customUrl can't be embedded on Vorbis, so there is nothing to write — the
+    // tagger stays closed, yet the skip notice is still reported.
+    const tagger = new FakeTagger()
+    const res = await tagAudio(tagger, 'flac', Buffer.from('audio'), {
+      customUrl: [{ description: 'source', url: 'https://example.com' }],
+    })
+    expect(tagger.calls).toHaveLength(0)
+    expect(res.bytes.toString()).toBe('audio')
+    expect(res.skipped).toEqual(['customUrl'])
   })
 })
 
