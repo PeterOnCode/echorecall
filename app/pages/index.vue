@@ -68,7 +68,13 @@ async function onDownloadAll() {
 
     <MetadataFields v-model="metadata" />
 
-    <QueueList :items="items" :voices="voices" @remove="removeItem" @update="updateItem" />
+    <QueueList
+      :items="items"
+      :voices="voices"
+      :shared-metadata="metadata"
+      @remove="removeItem"
+      @update="updateItem"
+    />
 
     <div class="flex gap-3">
       <UButton

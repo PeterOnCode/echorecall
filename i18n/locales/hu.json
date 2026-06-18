@@ -51,7 +51,9 @@
       "empty": "Még nincs tétel — írj be szöveget vagy tölts fel egy .txt fájlt a lista összeállításához.",
       "remove": "Tétel eltávolítása",
       "edit": "Tétel szerkesztése",
-      "download": "Letöltés"
+      "download": "Letöltés",
+      "filenamePreview": "Mentés néven: {name}",
+      "filenameFallback": "egyedi név (.{ext})"
     },
     "edit": {
       "instructions": "Hangutasítások",

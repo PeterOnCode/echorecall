@@ -31,7 +31,16 @@ export function isDownloadRequested(value: unknown): boolean {
   return flag !== '0' && flag !== 'false'
 }
 
-/** `Content-Disposition` value that makes the browser save the clip as <id>.mp3. */
-export function attachmentDisposition(id: string): string {
-  return `attachment; filename="${id}.mp3"`
+/**
+ * `Content-Disposition` value that makes the browser save the clip under its real
+ * human-readable filename (US4) — the basename of the stored path, e.g.
+ * `my-great-clip.flac` or a legacy `<id>.mp3`. Filenames are ASCII by
+ * construction (slugs are transliterated; ids are UUIDs), so no RFC 5987 encoding
+ * is required. As defense-in-depth at the header boundary, anything outside the
+ * safe set is stripped, so an unexpected value can never inject CRLF or break out
+ * of the quoted value (a no-op for valid filenames).
+ */
+export function attachmentDisposition(filename: string): string {
+  const safe = filename.replace(/[^A-Za-z0-9._-]/g, '')
+  return `attachment; filename="${safe}"`
 }

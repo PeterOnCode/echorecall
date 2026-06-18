@@ -17,9 +17,11 @@ export default defineEventHandler(async (event) => {
     setHeader(event, 'Content-Type', contentTypeFor(generation.format))
     // `?download=1` → tell the browser to save the file instead of playing it
     // inline (FR-014). Replay/download both serve the stored file with no
-    // provider call (SC-003). The real-filename download lands in US4.
+    // provider call (SC-003). The download uses the real human-readable filename
+    // (US4) — the basename of the stored path (dated slug, or a legacy <id>.mp3).
     if (isDownloadRequested(getQuery(event).download)) {
-      setHeader(event, 'Content-Disposition', attachmentDisposition(id))
+      const filename = generation.path.split('/').pop() ?? generation.path
+      setHeader(event, 'Content-Disposition', attachmentDisposition(filename))
     }
     return bytes
   } catch (err) {

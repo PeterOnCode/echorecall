@@ -157,15 +157,15 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 4 ⚠️ (write first, must fail)
 
-- [ ] T054 [P] [US4] Integration test `tests/integration/naming-storage.test.ts`: two same-title generations → `<slug>.<ext>` and `<slug>_2.<ext>`, neither overwritten, both under today's UTC `YYYY/MM/DD`; empty/emoji-only title → UUID fallback; a legacy `audio/<id>.mp3` row still lists/plays/downloads
-- [ ] T055 [P] [US4] Extend `tests/integration/audio-download.test.ts`: `?download=1` sets `Content-Disposition: attachment; filename="<real filename>"`
+- [X] T054 [P] [US4] Integration test `tests/integration/naming-storage.test.ts`: two same-title generations → `<slug>.<ext>` and `<slug>_2.<ext>`, neither overwritten, both under today's UTC `YYYY/MM/DD`; empty/emoji-only title → UUID fallback; a legacy `audio/<id>.mp3` row still lists/plays/downloads
+- [X] T055 [P] [US4] Extend `tests/integration/audio-download.test.ts`: `?download=1` sets `Content-Disposition: attachment; filename="<real filename>"`
 
 ### Implementation for User Story 4
 
-- [ ] T056 [US4] Confirm/complete dated-slug allocation + UUID fallback path in `LibraryService.save` (`src/core/library/library-service.ts`) against the US4 tests — depends on T027, T054
-- [ ] T057 [US4] Add `?download=1` real-filename `Content-Disposition` to `server/api/generations/[id]/audio.get.ts` — depends on T030
-- [ ] T058 [US4] Show a live slug-based filename preview in the form/queue using `slugify` from `#core/client` (`app/components/generate/MetadataFields.vue` or `QueueList.vue`) — depends on T047
-- [ ] T059 [US4] Add filename/preview i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T056 [US4] Confirm/complete dated-slug allocation + UUID fallback path in `LibraryService.save` (`src/core/library/library-service.ts`) against the US4 tests — depends on T027, T054
+- [X] T057 [US4] Add `?download=1` real-filename `Content-Disposition` to `server/api/generations/[id]/audio.get.ts` — depends on T030
+- [X] T058 [US4] Show a live slug-based filename preview in the form/queue using `slugify` from `#core/client` (`app/components/generate/MetadataFields.vue` or `QueueList.vue`) — depends on T047
+- [X] T059 [US4] Add filename/preview i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Generated files are human-readable, dated, collision-safe, and downloadable by real name.
 
