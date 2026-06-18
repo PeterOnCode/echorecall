@@ -136,14 +136,14 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 3 ⚠️ (write first, must fail)
 
-- [ ] T049 [P] [US3] Component test `tests/component/QueueItemEditor.test.ts`: per-row edit isolates changes; empty/>4,096 text rejected with previous kept; model change off `gpt-4o-mini-tts` retains instructions; switching to AAC/PCM shows the skip warning and retains entered metadata
+- [X] T049 [P] [US3] Component test `tests/component/QueueItemEditor.test.ts`: per-row edit isolates changes; empty/>4,096 text rejected with previous kept; model change off `gpt-4o-mini-tts` retains instructions; switching to AAC/PCM shows the skip warning and retains entered metadata
 
 ### Implementation for User Story 3
 
-- [ ] T050 [US3] Add `updateItem(clientId, patch)` to `app/composables/useQueue.ts` with per-row text revalidation, instruction retention across model changes, and untaggable-format detection — depends on T031
-- [ ] T051 [US3] Create `app/components/generate/QueueItemEditor.vue` (edit text/voice/model/format/instructions/metadata for a single row, immediate reflection, skip warning) — depends on T047, T050
-- [ ] T052 [US3] Wire the editor into `app/components/generate/QueueList.vue` (open/close per row) — depends on T051
-- [ ] T053 [US3] Add per-item-edit i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T050 [US3] Add `updateItem(clientId, patch)` to `app/composables/useQueue.ts` with per-row text revalidation, instruction retention across model changes, and untaggable-format detection — depends on T031
+- [X] T051 [US3] Create `app/components/generate/QueueItemEditor.vue` (edit text/voice/model/format/instructions/metadata for a single row, immediate reflection, skip warning) — depends on T047, T050
+- [X] T052 [US3] Wire the editor into `app/components/generate/QueueList.vue` (open/close per row) — depends on T051
+- [X] T053 [US3] Add per-item-edit i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Queue rows are individually editable before generation.
 
