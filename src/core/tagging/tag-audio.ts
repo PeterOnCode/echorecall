@@ -1,17 +1,17 @@
 import type { Format, Metadata } from '../shared/types'
-import { formatInfo } from '../tts/provider'
 import type { AudioTagger, TagResult } from './tagger'
-import { skippedFields } from './tagger'
+import { hasEmbeddableTags, skippedFields } from './tagger'
 
 /**
  * Embed `metadata` into `audio` for `format` (FR-018..021).
  *
- * Untaggable containers (AAC/PCM) are never opened: the input bytes are returned
- * unchanged with `skipped=['*']`, so generation still completes (US2 scenario 4).
- * For taggable formats the concrete tagger embeds the mappable fields; the
- * `skipped` list is computed here from the format's applicability so it is
- * independent of the backend (a fake tagger yields the same notices as the real
- * one).
+ * The tagger is opened only when there is something to embed. Untaggable
+ * containers (AAC/PCM), empty metadata, and sets whose only present fields are
+ * unsupported by the format all return the input bytes unchanged (US2 scenario 4)
+ * — so a no-metadata generation is never needlessly rewritten and can't fail with
+ * a spurious tagging error. The `skipped` list is computed here from the format's
+ * applicability so it is independent of the backend (a fake tagger yields the same
+ * notices as the real one).
  */
 export async function tagAudio(
   tagger: AudioTagger,
@@ -20,7 +20,7 @@ export async function tagAudio(
   metadata: Metadata,
 ): Promise<TagResult> {
   const skipped = skippedFields(format, metadata)
-  if (formatInfo(format)?.taggable === 'none') {
+  if (!hasEmbeddableTags(format, metadata)) {
     return { bytes: audio, skipped }
   }
   const { bytes } = await tagger.tag(format, audio, metadata)
