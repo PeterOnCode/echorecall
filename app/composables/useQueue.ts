@@ -7,7 +7,7 @@ export type ItemStatus = 'queued' | 'generating' | 'done' | 'failed'
 export interface QueueItem extends ListItem {
   status: ItemStatus
   error?: string
-  result?: { id: string; audioUrl: string }
+  result?: { id: string; audioUrl: string; skippedTags?: string[] }
 }
 
 export interface UploadSummary {
@@ -27,6 +27,9 @@ export function useQueue() {
   const model = ref<Model>('gpt-4o-mini-tts')
   const format = ref<Format>('mp3')
   const speed = ref(1)
+  // Form-level metadata applied to every newly-added row (US2). Each row gets its
+  // own deep copy so later per-row edits (US3) never mutate the shared defaults.
+  const metadata = ref<Metadata>({})
 
   function makeItem(text: string): QueueItem {
     return {
@@ -35,7 +38,7 @@ export function useQueue() {
       voiceId: voiceId.value,
       model: model.value,
       format: format.value,
-      metadata: {} as Metadata,
+      metadata: cloneMetadata(metadata.value),
       status: 'queued',
     }
   }
@@ -72,5 +75,22 @@ export function useQueue() {
     items.value = []
   }
 
-  return { items, voiceId, model, format, speed, addItem, addItems, addFromUpload, removeItem, clear }
+  return {
+    items,
+    voiceId,
+    model,
+    format,
+    speed,
+    metadata,
+    addItem,
+    addItems,
+    addFromUpload,
+    removeItem,
+    clear,
+  }
+}
+
+/** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
+function cloneMetadata(metadata: Metadata): Metadata {
+  return JSON.parse(JSON.stringify(metadata)) as Metadata
 }

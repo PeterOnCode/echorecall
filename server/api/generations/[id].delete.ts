@@ -6,7 +6,8 @@ import { respondError } from '../../utils/errors'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id') ?? ''
   try {
-    await getLibraryService().delete(id)
+    const service = await getLibraryService()
+    await service.delete(id)
     setResponseStatus(event, 204)
     return null
   } catch (err) {

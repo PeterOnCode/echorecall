@@ -4,7 +4,8 @@ import type { UploadSummary } from '../composables/useQueue'
 // US1 batch studio: build a generation list (typed and/or uploaded), then a
 // single Generate produces audio per item with isolated failures, each saved to
 // the library, with a batch `.zip` download of the successful items.
-const { items, voiceId, model, format, speed, addItem, addFromUpload, removeItem } = useQueue()
+const { items, voiceId, model, format, speed, metadata, addItem, addFromUpload, removeItem } =
+  useQueue()
 const { voices, generating, loadVoices, generateAll, downloadArchive } = useGeneration()
 const { t } = useI18n()
 
@@ -50,6 +51,8 @@ async function onDownloadAll() {
     />
 
     <UploadDropzone :summary="uploadSummary" @uploaded="onUploaded" />
+
+    <MetadataFields v-model="metadata" />
 
     <QueueList :items="items" @remove="removeItem" />
 

@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:component": "vitest run --config vitest.nuxt.config.ts",
-    "test:adapters": "vitest run tests/adapters",
+    "test:adapters": "vitest run --config vitest.adapters.config.ts",
     "bumpp": "bumpp"
   },
   "dependencies": {

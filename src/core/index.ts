@@ -17,6 +17,13 @@ export type { GenerationRepository, NewGenerationRecord } from './library/reposi
 export { SqliteGenerationRepository } from './library/sqlite-repository'
 export { FileAudioStore } from './library/audio-store'
 export { LibraryService } from './library/library-service'
+export type { SaveInput, SaveResult } from './library/library-service'
+
+// Multi-format tagging (AudioTagger port + taglib-wasm adapter + use-case).
+export type { AudioTagger, TagResult } from './tagging/tagger'
+export { skippedFields, UNSUPPORTED_FIELDS } from './tagging/tagger'
+export { tagAudio } from './tagging/tag-audio'
+export { TagLibAudioTagger } from './tagging/taglib-tagger'
 
 // Naming (filesystem-safe slug + dated, collision-safe filename allocation).
 export { MAX_SLUG_LENGTH } from './naming/slug'

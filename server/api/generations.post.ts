@@ -31,9 +31,11 @@ export default defineEventHandler(async (event) => {
     // request (env key today; UI→env precedence lands in US8).
     const bytes = await generateSpeech(getTtsProvider(), input)
 
-    // After validation the model/format are known-good; persist alongside the
-    // (untagged in US1) metadata under a dated, slug-named path.
-    const entry = await getLibraryService().save(
+    // After validation the model/format are known-good; the audio is tagged with
+    // the metadata (inside save) before being written under a dated, slug-named
+    // path. `skippedTags` reports any fields dropped for the format (FR-021).
+    const service = await getLibraryService()
+    const { skippedTags, ...entry } = await service.save(
       {
         text: input.text,
         voiceId: input.voiceId,
@@ -48,7 +50,7 @@ export default defineEventHandler(async (event) => {
     )
 
     setResponseStatus(event, 201)
-    return toGenerationDto(entry)
+    return toGenerationDto(entry, skippedTags)
   } catch (err) {
     return respondError(event, err)
   }

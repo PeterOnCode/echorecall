@@ -7,6 +7,8 @@ import { formatInfo } from '../tts/provider'
 import { slugify } from '../naming/slug'
 import { allocateFilename, datedDir } from '../naming/filename'
 import { resolveArchiveEntries } from '../batch/archive'
+import { tagAudio } from '../tagging/tag-audio'
+import type { AudioTagger } from '../tagging/tagger'
 import type { GenerationRepository } from './repository'
 import type { FileAudioStore } from './audio-store'
 
@@ -21,6 +23,15 @@ export interface SaveInput {
 }
 
 /**
+ * A saved generation plus the transient list of tag fields/paths skipped for its
+ * format (FR-021). `skippedTags` is `[]` when everything was embedded and `['*']`
+ * for untaggable formats; it is surfaced to the client but never persisted.
+ */
+export interface SaveResult extends Generation {
+  skippedTags: string[]
+}
+
+/**
  * Composes the metadata repository and the path-based audio store into the
  * library use-cases (save / list / get / read audio / delete / archive). Audio is
  * resolved by the stored `path`, so legacy `audio/<id>.mp3` files and new dated
@@ -32,6 +43,12 @@ export class LibraryService {
     private readonly audio: FileAudioStore,
     private readonly clock: () => Date = () => new Date(),
     private readonly idFn: () => string = newId,
+    /**
+     * Optional metadata tagger. When present, audio is tagged before it is
+     * written (a tagging failure fails only this item — nothing is saved). When
+     * absent (e.g. plain unit tests), audio is stored untagged.
+     */
+    private readonly tagger?: AudioTagger,
   ) {}
 
   /**
@@ -43,14 +60,29 @@ export class LibraryService {
    * The filename is the title slug under `audio/YYYY/MM/DD/`, with a numeric
    * suffix on same-day collisions and a UUID fallback when the title yields no
    * usable slug (FR-025/029).
+   *
+   * When a tagger is configured the audio is tagged BEFORE it is written, so a
+   * tagging failure aborts this item with nothing persisted (FR-006). The
+   * returned {@link SaveResult} carries the per-format `skippedTags` notice.
    */
-  async save(input: SaveInput, bytes: Buffer): Promise<Generation> {
+  async save(input: SaveInput, bytes: Buffer): Promise<SaveResult> {
     const id = this.idFn()
     const createdAt = this.clock()
     const format: Format = input.format ?? 'mp3'
+    const metadata: Metadata = input.metadata ?? {}
+
+    // Tag first: if embedding fails it throws before anything is written/inserted.
+    let toWrite = bytes
+    let skippedTags: string[] = []
+    if (this.tagger) {
+      const tagged = await tagAudio(this.tagger, format, bytes, metadata)
+      toWrite = tagged.bytes
+      skippedTags = tagged.skipped
+    }
+
     const ext = formatInfo(format)?.ext ?? format
     const dir = `audio/${datedDir(createdAt)}`
-    const slug = slugify(input.metadata?.title ?? '') || id
+    const slug = slugify(metadata.title ?? '') || id
     const filename = allocateFilename(slug, ext, (name) =>
       this.audio.existsAtSync(`${dir}/${name}`),
     )
@@ -65,10 +97,10 @@ export class LibraryService {
       speed: input.speed ?? null,
       createdAt: createdAt.toISOString(),
       path,
-      metadata: input.metadata ?? {},
+      metadata,
     }
 
-    await this.audio.saveAt(path, bytes)
+    await this.audio.saveAt(path, toWrite)
     try {
       this.repo.insert(generation)
     } catch (err) {
@@ -81,7 +113,7 @@ export class LibraryService {
       }
       throw err
     }
-    return generation
+    return { ...generation, skippedTags }
   }
 
   list(): Generation[] {

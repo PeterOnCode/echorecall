@@ -8,7 +8,8 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody<{ ids?: string[] }>(event)
     const ids = Array.isArray(body?.ids) ? body.ids : []
-    const stream = await getLibraryService().archive(ids)
+    const service = await getLibraryService()
+    const stream = await service.archive(ids)
     setHeader(event, 'Content-Type', 'application/zip')
     setHeader(event, 'Content-Disposition', 'attachment; filename="echorecall-batch.zip"')
     return sendStream(event, stream)
