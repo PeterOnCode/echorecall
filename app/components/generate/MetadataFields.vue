@@ -58,10 +58,11 @@ const newTextDesc = ref('')
 const newTextValue = ref('')
 function addText() {
   const description = newTextDesc.value.trim()
-  if (!description) return
+  const value = newTextValue.value.trim()
+  if (!description || !value) return
   model.value = {
     ...model.value,
-    customText: [...(model.value.customText ?? []), { description, value: newTextValue.value }],
+    customText: [...(model.value.customText ?? []), { description, value }],
   }
   newTextDesc.value = ''
   newTextValue.value = ''
@@ -187,6 +188,7 @@ function removeUrl(index: number) {
           type="text"
           :placeholder="t('generate.metadata.description')"
           class="w-40 rounded border px-2 py-1"
+          @keydown.enter.prevent="addText"
         >
         <input
           v-model="newTextValue"
@@ -194,6 +196,7 @@ function removeUrl(index: number) {
           type="text"
           :placeholder="t('generate.metadata.value')"
           class="w-40 rounded border px-2 py-1"
+          @keydown.enter.prevent="addText"
         >
         <UButton
           data-test="meta-text-add"
@@ -237,6 +240,7 @@ function removeUrl(index: number) {
           type="text"
           :placeholder="t('generate.metadata.description')"
           class="w-40 rounded border px-2 py-1"
+          @keydown.enter.prevent="addUrl"
         >
         <input
           v-model="newUrlValue"
@@ -244,6 +248,7 @@ function removeUrl(index: number) {
           type="url"
           :placeholder="t('generate.metadata.url')"
           class="w-40 rounded border px-2 py-1"
+          @keydown.enter.prevent="addUrl"
         >
         <UButton
           data-test="meta-url-add"

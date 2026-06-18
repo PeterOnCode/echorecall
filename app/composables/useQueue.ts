@@ -75,6 +75,18 @@ export function useQueue() {
     items.value = []
   }
 
+  /**
+   * Apply the current form-level metadata to every not-yet-generated row. Called
+   * right before generation so the metadata shown on the form reaches the whole
+   * batch — including rows added before it was filled (US2 has a single shared
+   * editor). Per-row editing (US3) will let an edited row keep its own set.
+   */
+  function applyMetadataToPending(): void {
+    for (const item of items.value) {
+      if (item.status !== 'done') item.metadata = cloneMetadata(metadata.value)
+    }
+  }
+
   return {
     items,
     voiceId,
@@ -86,6 +98,7 @@ export function useQueue() {
     addItems,
     addFromUpload,
     removeItem,
+    applyMetadataToPending,
     clear,
   }
 }

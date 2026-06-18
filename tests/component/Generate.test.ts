@@ -18,11 +18,16 @@ registerEndpoint('/api/voices', () => ({
   ],
 }))
 
+// Captures each POST body so tests can assert what the queue actually sent
+// (e.g. the form metadata applied to the batch).
+const postedBodies: { text?: string; metadata?: Record<string, unknown> }[] = []
+
 // One item is made to fail (text === 'boom') so we can prove failure isolation.
 registerEndpoint('/api/generations', {
   method: 'POST',
   handler: defineEventHandler(async (event) => {
-    const body = await readBody<{ text?: string }>(event)
+    const body = await readBody<{ text?: string; metadata?: Record<string, unknown> }>(event)
+    postedBodies.push(body)
     if (body?.text === 'boom') {
       setResponseStatus(event, 502)
       return { error: { code: 'PROVIDER_UNAVAILABLE', message: 'boom failed' } }
@@ -113,6 +118,21 @@ describe('Generate page (batch studio)', () => {
       const statuses = wrapper.findAll('[data-test="item-status"]').map((s) => s.text())
       expect(statuses[0]).toMatch(/done/i)
       expect(statuses[1]).toMatch(/fail/i)
+    })
+  })
+
+  it('applies the form metadata to a row added before the metadata was filled', async () => {
+    const wrapper = await mountPage()
+    // Row first, metadata after — the order that previously left the row untagged.
+    await addTyped(wrapper, 'metadata-after')
+    await wrapper.find('[data-test="meta-title"]').setValue('Shared Title')
+
+    postedBodies.length = 0
+    await wrapper.find('[data-test="generate-all"]').trigger('click')
+
+    await vi.waitFor(() => {
+      const sent = postedBodies.find((b) => b.text === 'metadata-after')
+      expect(sent?.metadata?.title).toBe('Shared Title')
     })
   })
 })

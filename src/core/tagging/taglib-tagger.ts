@@ -64,8 +64,11 @@ export class TagLibAudioTagger implements AudioTagger {
  */
 function buildPropertyMap(format: Format, metadata: Metadata): PropertyMap {
   const props: Record<string, string[]> = {}
-  const set = (key: string, value?: string) => {
-    if (value != null && value !== '') props[key] = [value]
+  // `metadata` originates from an untrusted request body; only embed well-typed
+  // values (and guard the array fields below) so a malformed payload can't crash
+  // generation with a TypeError.
+  const set = (key: string, value?: unknown) => {
+    if (typeof value === 'string' && value !== '') props[key] = [value]
   }
 
   set('TITLE', metadata.title)
@@ -76,21 +79,30 @@ function buildPropertyMap(format: Format, metadata: Metadata): PropertyMap {
   set('DATE', metadata.recordedAt)
   set('TRACKNUMBER', metadata.track)
 
-  if (metadata.languages?.length) {
-    props.LANGUAGE = metadata.languages.filter((l) => l !== '')
+  if (Array.isArray(metadata.languages)) {
+    const languages = (metadata.languages as unknown[]).filter(
+      (l): l is string => typeof l === 'string' && l !== '',
+    )
+    if (languages.length > 0) props.LANGUAGE = languages
   }
 
-  for (const entry of metadata.customText ?? []) {
-    addCustom(props, entry.description, entry.value)
+  for (const entry of objectEntries(metadata.customText)) {
+    addCustom(props, String(entry.description ?? ''), String(entry.value ?? ''))
   }
   // Custom URLs are ID3-only; Vorbis omits them (and reports them as skipped).
   if (formatInfo(format)?.taggable === 'id3') {
-    for (const entry of metadata.customUrl ?? []) {
-      addCustom(props, entry.description, entry.url)
+    for (const entry of objectEntries(metadata.customUrl)) {
+      addCustom(props, String(entry.description ?? ''), String(entry.url ?? ''))
     }
   }
 
   return props
+}
+
+/** Coerce a possibly-malformed field into an array of plain objects (empty otherwise). */
+function objectEntries(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((v): v is Record<string, unknown> => v != null && typeof v === 'object')
 }
 
 /**

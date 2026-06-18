@@ -4,8 +4,18 @@ import type { UploadSummary } from '../composables/useQueue'
 // US1 batch studio: build a generation list (typed and/or uploaded), then a
 // single Generate produces audio per item with isolated failures, each saved to
 // the library, with a batch `.zip` download of the successful items.
-const { items, voiceId, model, format, speed, metadata, addItem, addFromUpload, removeItem } =
-  useQueue()
+const {
+  items,
+  voiceId,
+  model,
+  format,
+  speed,
+  metadata,
+  addItem,
+  addFromUpload,
+  removeItem,
+  applyMetadataToPending,
+} = useQueue()
 const { voices, generating, loadVoices, generateAll, downloadArchive } = useGeneration()
 const { t } = useI18n()
 
@@ -31,6 +41,9 @@ const canGenerate = computed(() => items.value.length > 0 && !generating.value)
 
 async function onGenerate() {
   if (!canGenerate.value) return
+  // Apply the form-level metadata to the whole batch (incl. rows added before it
+  // was filled) just before generating.
+  applyMetadataToPending()
   await generateAll(items.value, speed.value)
 }
 

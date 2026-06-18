@@ -27,13 +27,21 @@ function dataDir(): string {
 export function getLibraryService(): Promise<LibraryService> {
   if (!libraryServicePromise) {
     libraryServicePromise = (async () => {
-      const dir = dataDir()
-      const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
-      // Audio store is rooted at the data dir; stored paths are relative
-      // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
-      const audio = new FileAudioStore(dir)
-      const tagger = await TagLibAudioTagger.create()
-      return new LibraryService(repo, audio, undefined, undefined, tagger)
+      try {
+        const dir = dataDir()
+        const repo = new SqliteGenerationRepository(join(dir, 'echorecall.db'))
+        // Audio store is rooted at the data dir; stored paths are relative
+        // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
+        const audio = new FileAudioStore(dir)
+        const tagger = await TagLibAudioTagger.create()
+        return new LibraryService(repo, audio, undefined, undefined, tagger)
+      } catch (err) {
+        // Don't cache a rejected promise: clear it so a transient failure (WASM
+        // load, fs lock, SQLite init) can self-recover on the next request
+        // instead of wedging every request until a restart.
+        libraryServicePromise = undefined
+        throw err
+      }
     })()
   }
   return libraryServicePromise
