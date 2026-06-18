@@ -2,19 +2,29 @@ import { describe, it, expect } from 'vitest'
 import { attachmentDisposition, isDownloadRequested } from '../../server/utils/audio-response'
 
 // Coverage for the download affordance on GET /api/generations/:id/audio
-// (FR-014): with `?download=1` the response tells the browser to SAVE the clip
-// (Content-Disposition: attachment; filename="<id>.mp3") instead of streaming it
-// inline. The route's header plumbing is a thin h3 concern; the decision (is this
-// a download?) and the attachment filename are the real logic and are unit-tested
-// here, mirroring how the rest of this suite tests behaviour in plain Node.
+// (FR-014 + US4): with `?download=1` the response tells the browser to SAVE the
+// clip under its REAL human-readable filename (Content-Disposition: attachment;
+// filename="<real filename>") instead of streaming it inline. The route derives
+// that filename from the stored path's basename and hands it to
+// `attachmentDisposition`. The route's header plumbing is a thin h3 concern; the
+// decision (is this a download?) and the attachment value are the real logic and
+// are unit-tested here, mirroring how the rest of this suite tests behaviour in
+// plain Node.
 
 describe('audio download disposition', () => {
   it('treats ?download=1 as a download request', () => {
     expect(isDownloadRequested('1')).toBe(true)
   })
 
-  it('builds an attachment Content-Disposition with the <id>.mp3 filename', () => {
-    expect(attachmentDisposition('abc-123')).toBe('attachment; filename="abc-123.mp3"')
+  it('builds an attachment Content-Disposition from the real (basename) filename', () => {
+    // Dated, title-slug files download under their slug name (US4)…
+    expect(attachmentDisposition('my-great-clip.flac')).toBe(
+      'attachment; filename="my-great-clip.flac"',
+    )
+    // …and legacy flat-path 001 rows download under their stored <id>.mp3 name.
+    expect(attachmentDisposition('legacy-uuid.mp3')).toBe(
+      'attachment; filename="legacy-uuid.mp3"',
+    )
   })
 
   it('streams inline (no download) when the flag is absent or falsy', () => {

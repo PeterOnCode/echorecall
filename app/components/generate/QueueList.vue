@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatInfo, slugify } from '#core/client'
 import type { Voice } from '#core/client'
 import type { ItemPatch, QueueItem } from '../../composables/useQueue'
 
@@ -30,6 +31,20 @@ const STATUS_COLOR: Record<QueueItem['status'], string> = {
 function skippedLabel(skipped: string[]): string {
   if (skipped.includes('*')) return t('generate.metadata.skippedAll')
   return t('generate.metadata.skipped', { fields: skipped.join(', ') })
+}
+
+/**
+ * Live preview of the filename this row will be saved under (US4 / FR-025–027):
+ * the title slug + the format extension, matching the server's naming. Uses the
+ * same `slugify` the server uses so the preview is accurate; an empty/un-sluggable
+ * title shows the unique-name fallback (the server substitutes a UUID). The
+ * collision suffix is not predictable client-side and is omitted.
+ */
+function filenamePreview(item: QueueItem): string {
+  const ext = formatInfo(item.format)?.ext ?? item.format
+  const slug = slugify(item.metadata.title ?? '')
+  const name = slug ? `${slug}.${ext}` : t('generate.queue.filenameFallback', { ext })
+  return t('generate.queue.filenamePreview', { name })
 }
 </script>
 
@@ -76,6 +91,16 @@ function skippedLabel(skipped: string[]): string {
             @click="emit('remove', item.clientId)"
           />
         </div>
+
+        <!-- Live filename preview (US4): what this row will be saved as, updating
+             as the title/format change. Shown only before it has generated. -->
+        <p
+          v-if="canEdit(item)"
+          data-test="filename-preview"
+          class="text-xs text-muted"
+        >
+          {{ filenamePreview(item) }}
+        </p>
 
         <!-- Per-row editor (US3): open/close via the pencil; edits apply to this
              row only and reflect immediately. -->

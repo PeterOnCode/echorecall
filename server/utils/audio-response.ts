@@ -31,7 +31,13 @@ export function isDownloadRequested(value: unknown): boolean {
   return flag !== '0' && flag !== 'false'
 }
 
-/** `Content-Disposition` value that makes the browser save the clip as <id>.mp3. */
-export function attachmentDisposition(id: string): string {
-  return `attachment; filename="${id}.mp3"`
+/**
+ * `Content-Disposition` value that makes the browser save the clip under its real
+ * human-readable filename (US4) — the basename of the stored path, e.g.
+ * `my-great-clip.flac` or a legacy `<id>.mp3`. Filenames are ASCII by
+ * construction (slugs are transliterated; ids are UUIDs), so no RFC 5987 encoding
+ * is required and the value is safe to quote directly.
+ */
+export function attachmentDisposition(filename: string): string {
+  return `attachment; filename="${filename}"`
 }

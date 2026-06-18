@@ -51,7 +51,9 @@
       "empty": "No items yet — type text or upload a .txt to build your list.",
       "remove": "Remove item",
       "edit": "Edit item",
-      "download": "Download"
+      "download": "Download",
+      "filenamePreview": "Will be saved as {name}",
+      "filenameFallback": "a unique name (.{ext})"
     },
     "edit": {
       "instructions": "Voice instructions",
