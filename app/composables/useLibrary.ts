@@ -50,39 +50,33 @@ export function useLibrary() {
   }
 
   /**
-   * Rename a stored file (FR-031). The server re-slugs the name, keeps the
-   * extension, and reports the final filename; an empty/un-sluggable name yields
-   * a specific message and leaves the item unchanged.
+   * Rename a stored file and/or replace its embedded metadata in a single PATCH
+   * (FR-030/031). Sending both in one request keeps the edit atomic — the editor
+   * never lands in a partial-success state where one half saved and the other
+   * failed. The server re-slugs the name (keeping the extension), retags the
+   * stored file, and reports the final filename; the local list is patched on
+   * success. An empty/un-sluggable name or a tagging failure yields a specific
+   * message and leaves the item unchanged. Clears any prior error up front so a
+   * corrected retry can succeed.
    */
-  async function rename(id: string, filename: string): Promise<LibraryItem | undefined> {
+  async function update(
+    id: string,
+    patch: { filename?: string; metadata?: Metadata },
+  ): Promise<LibraryItem | undefined> {
     error.value = null
     try {
       const updated = await $fetch<LibraryItem>(`/api/generations/${id}`, {
         method: 'PATCH',
-        body: { filename },
+        body: patch,
       })
       patchLocal(updated)
       return updated
     } catch (err) {
-      error.value =
-        errorCode(err) === 'INVALID_FILENAME'
-          ? t('library.errors.invalidFilename')
-          : t('library.errors.rename')
-    }
-  }
-
-  /** Replace an item's embedded metadata (FR-030): retags the stored file + persists. */
-  async function updateMetadata(id: string, metadata: Metadata): Promise<LibraryItem | undefined> {
-    error.value = null
-    try {
-      const updated = await $fetch<LibraryItem>(`/api/generations/${id}`, {
-        method: 'PATCH',
-        body: { metadata },
-      })
-      patchLocal(updated)
-      return updated
-    } catch {
-      error.value = t('library.errors.retag')
+      const code = errorCode(err)
+      if (code === 'INVALID_FILENAME') error.value = t('library.errors.invalidFilename')
+      else if (code === 'TAGGING_FAILED') error.value = t('library.errors.retag')
+      // A generic failure is reported against whichever change was attempted.
+      else error.value = patch.filename !== undefined ? t('library.errors.rename') : t('library.errors.retag')
     }
   }
 
@@ -100,5 +94,5 @@ export function useLibrary() {
     }
   }
 
-  return { items, loading, error, load, rename, updateMetadata, remove }
+  return { items, loading, error, load, update, remove }
 }

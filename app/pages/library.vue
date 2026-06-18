@@ -6,7 +6,7 @@ import type { LibraryItem } from '../composables/useLibrary'
 // replay, download, rename + retag via the inline editor, or delete (confirmed
 // inside the editor). Search / sort / filter / bulk-clean arrive in US6.
 // `LibraryItemEditor` and `AudioPlayer` are resolved via Nuxt's auto-import.
-const { items, loading, error, load, rename, updateMetadata, remove } = useLibrary()
+const { items, loading, error, load, update, remove } = useLibrary()
 const { t } = useI18n()
 
 // One editor open at a time; replaying is local-only playback via `audioUrl`.
@@ -26,17 +26,25 @@ function downloadUrl(audioUrl: string): string {
 }
 
 /**
- * Apply an editor save: retag when the metadata changed and rename when the base
- * filename changed (each is a no-op otherwise). Both go through `useLibrary`,
- * which patches the list and sets `error` on failure; the editor stays open on
- * error so the change can be corrected.
+ * Apply an editor save as a single atomic PATCH: include only the parts that
+ * actually changed (rename and/or retag). `useLibrary.update` clears any prior
+ * error, patches the list, and sets `error` on failure; the editor stays open on
+ * error so the change can be corrected. A no-op save just closes the editor.
  */
 async function onSave(item: LibraryItem, patch: { filename: string; metadata: Metadata }) {
   const metadataChanged = JSON.stringify(item.metadata ?? {}) !== JSON.stringify(patch.metadata ?? {})
   const nameChanged = patch.filename !== baseName(item.filename)
 
-  if (metadataChanged) await updateMetadata(item.id, patch.metadata)
-  if (nameChanged && !error.value) await rename(item.id, patch.filename)
+  if (!metadataChanged && !nameChanged) {
+    editingId.value = null
+    return
+  }
+
+  const updatePatch: { filename?: string; metadata?: Metadata } = {}
+  if (nameChanged) updatePatch.filename = patch.filename
+  if (metadataChanged) updatePatch.metadata = patch.metadata
+
+  await update(item.id, updatePatch)
   if (!error.value) editingId.value = null
 }
 

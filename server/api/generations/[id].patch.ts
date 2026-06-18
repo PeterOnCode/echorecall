@@ -22,14 +22,17 @@ export default defineEventHandler(async (event) => {
     const body = (await readBody<PatchBody>(event)) ?? {}
     const service = await getLibraryService()
 
-    // Retag before rename so a title change in the metadata can't be mistaken for
-    // a rename; `updateMetadata`/`rename` each 404 on an unknown id.
-    let updated: Generation =
-      body.metadata !== undefined
-        ? await service.updateMetadata(id, body.metadata)
-        : service.get(id)
+    // Rename before retag: the filename is validated (INVALID_FILENAME) before any
+    // file/db mutation, so a bad name rejects the whole request without having
+    // already rewritten the tags. The title is never used to rename — only the
+    // explicit `filename` field is. `get`/`rename`/`updateMetadata` each 404 on an
+    // unknown id.
+    let updated: Generation = service.get(id)
     if (body.filename !== undefined) {
       updated = await service.rename(id, body.filename)
+    }
+    if (body.metadata !== undefined) {
+      updated = await service.updateMetadata(id, body.metadata)
     }
 
     // The skipped-tags notice is a pure function of the final format + tag set, so

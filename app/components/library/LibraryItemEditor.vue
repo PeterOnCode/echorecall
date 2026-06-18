@@ -23,17 +23,24 @@ function splitName(filename: string): { base: string; ext: string } {
   return dot > 0 ? { base: filename.slice(0, dot), ext: filename.slice(dot) } : { base: filename, ext: '' }
 }
 
+// Deep clone so editing nested tag fields (languages / customText / customUrl) in
+// the draft can never mutate the prop's arrays — cancelling must leave the item
+// untouched. Metadata is plain JSON, so a JSON round-trip is a safe deep copy.
+function cloneMetadata(metadata: Metadata): Metadata {
+  return JSON.parse(JSON.stringify(metadata ?? {})) as Metadata
+}
+
 // Local drafts so edits don't mutate the prop; re-seeded whenever the item the
 // page hands us changes (e.g. after a save returns the re-slugged filename).
 const filenameBase = ref(splitName(props.item.filename).base)
-const metadata = ref<Metadata>({ ...props.item.metadata })
+const metadata = ref<Metadata>(cloneMetadata(props.item.metadata))
 const ext = computed(() => splitName(props.item.filename).ext)
 
 watch(
   () => props.item,
   (item) => {
     filenameBase.value = splitName(item.filename).base
-    metadata.value = { ...item.metadata }
+    metadata.value = cloneMetadata(item.metadata)
   },
 )
 
