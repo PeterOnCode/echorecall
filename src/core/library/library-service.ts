@@ -2,7 +2,7 @@ import type { Readable } from 'node:stream'
 import { ZipArchive } from 'archiver'
 import type { Format, Generation, Metadata, Model } from '../shared/types'
 import { newId } from '../shared/ids'
-import { NotFoundError } from '../shared/errors'
+import { InvalidFilenameError, NotFoundError } from '../shared/errors'
 import { formatInfo } from '../tts/provider'
 import { slugify } from '../naming/slug'
 import { allocateFilename, datedDir } from '../naming/filename'
@@ -156,6 +156,78 @@ export class LibraryService {
     // 'error' event.
     zip.finalize().catch(() => {})
     return zip
+  }
+
+  /**
+   * Rename a saved item's file from a new human name (FR-031), without
+   * re-synthesis. The name is run through the same {@link slugify} rules as
+   * generation, kept in its original dated folder, and disambiguated with a
+   * numeric suffix on collision (never overwriting another file). The extension
+   * is immutable (taken from the current file). An empty/un-sluggable name is
+   * rejected and the original file/name are left untouched. Renaming to the same
+   * effective name is a no-op.
+   */
+  async rename(id: string, newName: string): Promise<Generation> {
+    const generation = this.repo.get(id)
+    if (!generation) throw new NotFoundError(id)
+
+    const slug = slugify(newName)
+    if (!slug) throw new InvalidFilenameError()
+
+    const oldPath = generation.path
+    const slash = oldPath.lastIndexOf('/')
+    const dir = slash >= 0 ? oldPath.slice(0, slash) : ''
+    const oldName = slash >= 0 ? oldPath.slice(slash + 1) : oldPath
+    const dot = oldName.lastIndexOf('.')
+    const ext = dot >= 0 ? oldName.slice(dot + 1) : (formatInfo(generation.format)?.ext ?? generation.format)
+
+    const join = (name: string) => (dir ? `${dir}/${name}` : name)
+    // The current file occupies its own name; exclude it from the collision check
+    // so renaming to the same slug stays a no-op instead of gaining a `_2` suffix.
+    const filename = allocateFilename(
+      slug,
+      ext,
+      (name) => join(name) !== oldPath && this.audio.existsAtSync(join(name)),
+    )
+    const newPath = join(filename)
+    if (newPath === oldPath) return generation
+
+    await this.audio.rename(oldPath, newPath)
+    try {
+      this.repo.update(id, { path: newPath })
+    } catch (err) {
+      // Roll the file back so the row and the file never disagree.
+      try {
+        await this.audio.rename(newPath, oldPath)
+      } catch {
+        // intentionally ignored — `err` below is the meaningful failure
+      }
+      throw err
+    }
+    return this.get(id)
+  }
+
+  /**
+   * Replace a saved item's embedded metadata (FR-030) without re-synthesis: the
+   * stored audio is re-tagged in memory and written back, then the persisted tag
+   * set is replaced as a whole (clearing a field removes it). A tagging failure
+   * throws before anything is written, so the original file and row are left
+   * untouched. Untaggable containers (AAC/PCM) skip the rewrite but still persist
+   * the editable tag set. Editing the title here never renames the file.
+   */
+  async updateMetadata(id: string, metadata: Metadata): Promise<Generation> {
+    const generation = this.repo.get(id)
+    if (!generation) throw new NotFoundError(id)
+
+    if (this.tagger) {
+      const current = await this.audio.readAt(generation.path)
+      // Tag first: a failure throws here, before the write — original file intact.
+      const { bytes } = await tagAudio(this.tagger, generation.format, current, metadata)
+      await this.audio.saveAt(generation.path, bytes)
+    }
+
+    this.repo.update(id, { metadata })
+    return this.get(id)
   }
 
   /** Permanently delete an entry and its audio. */

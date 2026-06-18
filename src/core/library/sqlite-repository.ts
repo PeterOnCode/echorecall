@@ -161,6 +161,47 @@ export class SqliteGenerationRepository implements GenerationRepository {
     return row ? rowToGeneration(row) : undefined
   }
 
+  update(id: string, patch: { path?: string; metadata?: Metadata }): boolean {
+    const sets: string[] = []
+    const params: Record<string, unknown> = { id }
+    if (patch.path !== undefined) {
+      sets.push('path = @path')
+      params.path = patch.path
+    }
+    if (patch.metadata !== undefined) {
+      // Replace the whole tag set: every tag column is rewritten so clearing a
+      // field on the editor removes it from the row (FR-023/030).
+      const m = patch.metadata
+      sets.push(
+        'tag_title = @title',
+        'tag_artist = @artist',
+        'tag_album = @album',
+        'tag_genre = @genre',
+        'tag_comment = @comment',
+        'tag_recorded_at = @recordedAt',
+        'tag_track = @track',
+        'tags_extra = @extra',
+      )
+      params.title = m.title ?? null
+      params.artist = m.artist ?? null
+      params.album = m.album ?? null
+      params.genre = m.genre ?? null
+      params.comment = m.comment ?? null
+      params.recordedAt = m.recordedAt ?? null
+      params.track = m.track ?? null
+      params.extra = serializeExtra(m)
+    }
+    // Nothing to change: report whether the row exists so callers can still map a
+    // missing id to NOT_FOUND.
+    if (sets.length === 0) {
+      return this.db.prepare('SELECT 1 FROM generations WHERE id = ?').get(id) !== undefined
+    }
+    return (
+      this.db.prepare(`UPDATE generations SET ${sets.join(', ')} WHERE id = @id`).run(params)
+        .changes > 0
+    )
+  }
+
   delete(id: string): boolean {
     return this.db.prepare('DELETE FROM generations WHERE id = ?').run(id).changes > 0
   }

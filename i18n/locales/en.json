@@ -68,7 +68,32 @@
       "downloadAll": "Download all (.zip)"
     }
   },
-  "library": {},
+  "library": {
+    "title": "Library",
+    "empty": "No saved items yet.",
+    "loadError": "Could not load your library. Please try again.",
+    "item": {
+      "replay": "Replay",
+      "download": "Download",
+      "edit": "Edit"
+    },
+    "editor": {
+      "filename": "File name",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "confirmTitle": "Delete this item?",
+      "confirmMessage": "This permanently removes the clip and its audio. This can’t be undone.",
+      "confirmLabel": "Delete"
+    },
+    "errors": {
+      "rename": "Could not rename that item.",
+      "invalidFilename": "That file name is empty or can’t be used. Try another.",
+      "retag": "Could not update the metadata.",
+      "delete": "Could not delete that item. Please try again."
+    }
+  },
   "settings": {
     "comingSoon": "Settings are coming soon."
   }

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { LibraryService } from '../../src/core/library/library-service'
 import { SqliteGenerationRepository } from '../../src/core/library/sqlite-repository'
 import { FileAudioStore } from '../../src/core/library/audio-store'
+import { datedDir } from '../../src/core/naming/filename'
 import { respondError } from '../../server/utils/errors'
 
 // Integration coverage for DELETE /api/generations/:id (FR-015): the pipeline the
@@ -53,6 +54,23 @@ describe('DELETE /api/generations/:id', () => {
 
     expect(service.list()).toEqual([])
     expect(await audioStore.existsAt(entry.path)).toBe(false)
+  })
+
+  it('removes the stored file from its dated YYYY/MM/DD folder', async () => {
+    // A US4-named item lives under audio/<YYYY/MM/DD>/<slug>.<ext>; deletion must
+    // remove that nested file, not just the row.
+    const entry = await service.save(
+      { text: 'hi', voiceId: 'alloy', format: 'mp3', metadata: { title: 'Dated Clip' } },
+      Buffer.from('audio-bytes'),
+    )
+    const today = datedDir(new Date(entry.createdAt))
+    expect(entry.path).toBe(`audio/${today}/dated-clip.mp3`)
+    expect(await audioStore.existsAt(entry.path)).toBe(true)
+
+    await service.delete(entry.id)
+
+    expect(await audioStore.existsAt(entry.path)).toBe(false)
+    expect(service.list().map((g) => g.id)).not.toContain(entry.id)
   })
 
   it('after delete, reading the audio -> 404 NOT_FOUND', async () => {

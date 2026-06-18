@@ -68,7 +68,32 @@
       "downloadAll": "Összes letöltése (.zip)"
     }
   },
-  "library": {},
+  "library": {
+    "title": "Könyvtár",
+    "empty": "Még nincsenek mentett tételek.",
+    "loadError": "Nem sikerült betölteni a könyvtárat. Próbáld újra.",
+    "item": {
+      "replay": "Lejátszás",
+      "download": "Letöltés",
+      "edit": "Szerkesztés"
+    },
+    "editor": {
+      "filename": "Fájlnév",
+      "save": "Módosítások mentése",
+      "saving": "Mentés…",
+      "delete": "Törlés",
+      "cancel": "Mégse",
+      "confirmTitle": "Törlöd ezt a tételt?",
+      "confirmMessage": "Ez véglegesen eltávolítja a klipet és a hangját. Ez nem vonható vissza.",
+      "confirmLabel": "Törlés"
+    },
+    "errors": {
+      "rename": "Nem sikerült átnevezni a tételt.",
+      "invalidFilename": "A fájlnév üres vagy nem használható. Próbálj másikat.",
+      "retag": "Nem sikerült frissíteni a metaadatokat.",
+      "delete": "Nem sikerült törölni a tételt. Próbáld újra."
+    }
+  },
   "settings": {
     "comingSoon": "A beállítások hamarosan elérhetők."
   }

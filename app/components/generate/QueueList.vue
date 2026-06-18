@@ -130,6 +130,8 @@ function filenamePreview(item: QueueItem): string {
             size="xs"
             icon="i-lucide-download"
             :href="`${item.result.audioUrl}?download=1`"
+            external
+            download
             :aria-label="t('generate.queue.download')"
           />
         </div>
