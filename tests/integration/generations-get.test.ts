@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { LibraryService } from '../../src/core/library/library-service'
 import { SqliteGenerationRepository } from '../../src/core/library/sqlite-repository'
 import { FileAudioStore } from '../../src/core/library/audio-store'
+import { toGenerationDto } from '../../server/utils/serialize'
 
 // Integration coverage for GET /api/generations: the pipeline the route runs
 // (libraryService.list()) over a real file-backed SQLite + the real filesystem
@@ -51,6 +52,23 @@ describe('GET /api/generations', () => {
     const third = await service.save({ text: 'three', voiceId: 'nova' }, Buffer.from('c'))
 
     expect(service.list().map((g) => g.id)).toEqual([third.id, second.id, first.id])
+  })
+
+  it('serializes each entry to the REST shape: filename (basename) + audioUrl, never the raw path', async () => {
+    // The route maps service.list() through toGenerationDto; the client (library
+    // editor, US5) reads `filename`, so the response must carry it and keep the
+    // authoritative `path` server-side.
+    const service = makeService()
+    const entry = await service.save(
+      { text: 'hi', voiceId: 'alloy', format: 'mp3', metadata: { title: 'My Clip' } },
+      Buffer.from('a'),
+    )
+
+    const dto = service.list().map((g) => toGenerationDto(g))[0]!
+
+    expect(dto.filename).toBe('my-clip.mp3')
+    expect(dto.audioUrl).toBe(`/api/generations/${entry.id}/audio`)
+    expect((dto as Record<string, unknown>).path).toBeUndefined()
   })
 
   it('persists the list across a fresh repository over the same DB (survives restart)', async () => {

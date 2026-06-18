@@ -179,19 +179,19 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 5 ⚠️ (write first, must fail)
 
-- [ ] T060 [P] [US5] Integration test `tests/integration/generations-patch.test.ts`: `PATCH` filename → re-slugged, file renamed, final name reported; empty/un-sluggable → 400 `INVALID_FILENAME` (original kept); collision → suffix; `metadata.title` edit does NOT rename; metadata retag persisted and survives a fresh repository instance; tagging failure → 502 with the original file untouched
-- [ ] T061 [P] [US5] Extend `tests/integration/generations-delete.test.ts`: `DELETE` removes both the row and its stored file (incl. dated path)
-- [ ] T062 [P] [US5] Component test `tests/component/LibraryItemEditor.test.ts`: editor shows current filename + full metadata; save; delete requires confirmation
+- [X] T060 [P] [US5] Integration test `tests/integration/generations-patch.test.ts`: `PATCH` filename → re-slugged, file renamed, final name reported; empty/un-sluggable → 400 `INVALID_FILENAME` (original kept); collision → suffix; `metadata.title` edit does NOT rename; metadata retag persisted and survives a fresh repository instance; tagging failure → 502 with the original file untouched
+- [X] T061 [P] [US5] Extend `tests/integration/generations-delete.test.ts`: `DELETE` removes both the row and its stored file (incl. dated path)
+- [X] T062 [P] [US5] Component test `tests/component/LibraryItemEditor.test.ts`: editor shows current filename + full metadata; save; delete requires confirmation
 
 ### Implementation for User Story 5
 
-- [ ] T063 [US5] Add `update(id, { path?, metadata? })` to `src/core/library/repository.ts` (port) and `src/core/library/sqlite-repository.ts` — depends on T013
-- [ ] T064 [US5] Add `rename(id, newName)` (re-slug, collision suffix in the dated folder, reject empty, move file, update `path`) and `updateMetadata(id, metadata)` (retag via tagger + persist) to `LibraryService` (`src/core/library/library-service.ts`) — depends on T043, T063
-- [ ] T065 [US5] Create `server/api/generations/[id].patch.ts` (rename and/or retag; returns final filename + `skippedTags`) — depends on T064
-- [ ] T066 [US5] Create `app/components/library/LibraryItemEditor.vue` (filename field + `MetadataFields`; extension shown non-editable) — depends on T047
-- [ ] T067 [US5] Add `rename`/`updateMetadata`/`delete` (with `ConfirmDialog`) to `app/composables/useLibrary.ts` — depends on T065
-- [ ] T068 [US5] Build the Library page in `app/pages/library.vue` to list items, open the editor, and delete with confirmation — depends on T066, T067
-- [ ] T069 [US5] Add library-management i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T063 [US5] Add `update(id, { path?, metadata? })` to `src/core/library/repository.ts` (port) and `src/core/library/sqlite-repository.ts` — depends on T013
+- [X] T064 [US5] Add `rename(id, newName)` (re-slug, collision suffix in the dated folder, reject empty, move file, update `path`) and `updateMetadata(id, metadata)` (retag via tagger + persist) to `LibraryService` (`src/core/library/library-service.ts`) — depends on T043, T063
+- [X] T065 [US5] Create `server/api/generations/[id].patch.ts` (rename and/or retag; returns final filename + `skippedTags`) — depends on T064
+- [X] T066 [US5] Create `app/components/library/LibraryItemEditor.vue` (filename field + `MetadataFields`; extension shown non-editable) — depends on T047
+- [X] T067 [US5] Add `rename`/`updateMetadata`/`delete` (with `ConfirmDialog`) to `app/composables/useLibrary.ts` — depends on T065
+- [X] T068 [US5] Build the Library page in `app/pages/library.vue` to list items, open the editor, and delete with confirmation — depends on T066, T067
+- [X] T069 [US5] Add library-management i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: Saved items are renamable, retaggable, and deletable from the library.
 
