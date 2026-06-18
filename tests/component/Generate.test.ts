@@ -135,4 +135,26 @@ describe('Generate page (batch studio)', () => {
       expect(sent?.metadata?.title).toBe('Shared Title')
     })
   })
+
+  it('preserves a per-row metadata edit through generation, untouched by the shared form metadata', async () => {
+    const wrapper = await mountPage()
+    await addTyped(wrapper, 'per-row')
+    await addTyped(wrapper, 'shared')
+
+    // Shared form metadata is meant for untouched rows only.
+    await wrapper.find('[data-test="meta-title"]').setValue('Shared Title')
+
+    // Open the first row's editor and give it its own title.
+    await wrapper.findAll('[data-test="edit-item"]')[0]!.trigger('click')
+    await wrapper.find('[data-test="queue-item-editor"] [data-test="meta-title"]').setValue('Per-row Title')
+
+    postedBodies.length = 0
+    await wrapper.find('[data-test="generate-all"]').trigger('click')
+
+    await vi.waitFor(() => {
+      // The edited row keeps its own title; the untouched row gets the shared one.
+      expect(postedBodies.find((b) => b.text === 'per-row')?.metadata?.title).toBe('Per-row Title')
+      expect(postedBodies.find((b) => b.text === 'shared')?.metadata?.title).toBe('Shared Title')
+    })
+  })
 })

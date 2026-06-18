@@ -161,4 +161,28 @@ describe('useQueue().updateItem', () => {
     expect(result).toMatchObject({ ok: true, tagsSkipped: true })
     expect(q.items.value[0]!.metadata).toEqual({ title: 'T' })
   })
+
+  it('reports a missing row as notFound rather than a text rejection', () => {
+    const q = useQueue()
+    expect(q.updateItem('nope', { voiceId: 'echo' })).toEqual({ ok: false, reason: 'notFound' })
+  })
+})
+
+describe('useQueue().applyMetadataToPending', () => {
+  it('fills shared form metadata into untouched rows but preserves a per-row metadata edit', () => {
+    const q = useQueue()
+    const shared = q.addItem('shared')!
+    const edited = q.addItem('edited')!
+
+    // One row gets its own metadata through the per-row editor (sets metadataEdited).
+    q.updateItem(edited.clientId, { metadata: { title: 'Per-row Title' } })
+
+    // Form metadata is filled, then applied to the batch just before generation.
+    q.metadata.value = { title: 'Shared Title' }
+    q.applyMetadataToPending()
+
+    const rows = q.items.value
+    expect(rows.find((i) => i.clientId === shared.clientId)!.metadata).toEqual({ title: 'Shared Title' })
+    expect(rows.find((i) => i.clientId === edited.clientId)!.metadata).toEqual({ title: 'Per-row Title' })
+  })
 })

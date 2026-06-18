@@ -62,7 +62,7 @@ function skippedLabel(skipped: string[]): string {
             variant="ghost"
             icon="i-lucide-pencil"
             size="xs"
-            :aria-pressed="editingId === item.clientId"
+            :aria-expanded="editingId === item.clientId"
             :aria-label="t('generate.queue.edit')"
             @click="toggleEdit(item.clientId)"
           />

@@ -3,13 +3,18 @@ import {
   FORMATS,
   INSTRUCTIONS_MODEL,
   MODELS,
-  formatInfo,
   type Format,
   type Metadata,
   type Model,
   type Voice,
 } from '#core/client'
-import { validateItemText, type ItemPatch, type QueueItem, type TextRejection } from '../../composables/useQueue'
+import {
+  isUntaggableFormat,
+  validateItemText,
+  type ItemPatch,
+  type QueueItem,
+  type TextRejection,
+} from '../../composables/useQueue'
 
 // Per-row editor (US3): edit one queue item's text/voice/model/format/instructions/
 // metadata. Controlled — every change emits a minimal `update` patch that the
@@ -66,7 +71,7 @@ function commitText() {
 }
 
 const instructionsApplied = computed(() => props.item.model === INSTRUCTIONS_MODEL)
-const tagsSkipped = computed(() => formatInfo(props.item.format)?.taggable === 'none')
+const tagsSkipped = computed(() => isUntaggableFormat(props.item.format))
 </script>
 
 <template>
@@ -78,6 +83,7 @@ const tagsSkipped = computed(() => formatInfo(props.item.format)?.taggable === '
         data-test="edit-text"
         rows="3"
         class="rounded border px-2 py-1"
+        @input="textError = null"
         @blur="commitText"
       />
       <span v-if="textError" data-test="edit-text-error" class="text-xs text-error">
@@ -109,7 +115,7 @@ const tagsSkipped = computed(() => formatInfo(props.item.format)?.taggable === '
     <label class="flex flex-col gap-1 text-sm">
       <span class="font-medium">{{ t('generate.edit.instructions') }}</span>
       <textarea
-        v-model="instructions"
+        v-model.lazy="instructions"
         data-test="edit-instructions"
         rows="2"
         :placeholder="t('generate.edit.instructionsPlaceholder')"

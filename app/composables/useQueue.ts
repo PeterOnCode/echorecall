@@ -8,6 +8,12 @@ export interface QueueItem extends ListItem {
   status: ItemStatus
   error?: string
   result?: { id: string; audioUrl: string; skippedTags?: string[] }
+  /**
+   * Set once the row's metadata is edited individually (US3). Tells
+   * {@link useQueue.applyMetadataToPending} to leave this row alone so its per-row
+   * metadata survives generation instead of being overwritten by the shared form set.
+   */
+  metadataEdited?: boolean
 }
 
 export interface UploadSummary {
@@ -22,9 +28,9 @@ export type ItemPatch = Partial<Pick<ListItem, 'text' | 'voiceId' | 'model' | 'f
 /** Why a text edit was refused (empty after trim, or over the input cap). */
 export type TextRejection = 'empty' | 'tooLong'
 
-/** Outcome of {@link useQueue.updateItem}: a refused text edit, or the applied row. */
+/** Outcome of {@link useQueue.updateItem}: a refused edit, or the applied row. */
 export type UpdateResult =
-  | { ok: false; reason: TextRejection }
+  | { ok: false; reason: TextRejection | 'notFound' }
   | { ok: true; item: QueueItem; tagsSkipped: boolean }
 
 /**
@@ -109,7 +115,7 @@ export function useQueue() {
    */
   function updateItem(clientId: string, patch: ItemPatch): UpdateResult {
     const item = items.value.find((i) => i.clientId === clientId)
-    if (!item) return { ok: false, reason: 'empty' }
+    if (!item) return { ok: false, reason: 'notFound' }
 
     if (patch.text !== undefined) {
       const validated = validateItemText(patch.text)
@@ -120,7 +126,10 @@ export function useQueue() {
     if (patch.model !== undefined) item.model = patch.model
     if (patch.format !== undefined) item.format = patch.format
     if (patch.instructions !== undefined) item.instructions = patch.instructions
-    if (patch.metadata !== undefined) item.metadata = cloneMetadata(patch.metadata)
+    if (patch.metadata !== undefined) {
+      item.metadata = cloneMetadata(patch.metadata)
+      item.metadataEdited = true
+    }
 
     return { ok: true, item, tagsSkipped: isUntaggableFormat(item.format) }
   }
@@ -130,14 +139,15 @@ export function useQueue() {
   }
 
   /**
-   * Apply the current form-level metadata to every not-yet-generated row. Called
-   * right before generation so the metadata shown on the form reaches the whole
-   * batch — including rows added before it was filled (US2 has a single shared
-   * editor). Per-row editing (US3) will let an edited row keep its own set.
+   * Apply the current form-level metadata to every not-yet-generated row that
+   * hasn't been edited individually. Called right before generation so the
+   * metadata shown on the form reaches the whole batch — including rows added
+   * before it was filled (US2 has a single shared editor). A row with its own
+   * per-row metadata edit (US3) is left untouched so its values survive generation.
    */
   function applyMetadataToPending(): void {
     for (const item of items.value) {
-      if (item.status !== 'done') item.metadata = cloneMetadata(metadata.value)
+      if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(metadata.value)
     }
   }
 
