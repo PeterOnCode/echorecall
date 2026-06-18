@@ -50,7 +50,16 @@
     "queue": {
       "empty": "Még nincs tétel — írj be szöveget vagy tölts fel egy .txt fájlt a lista összeállításához.",
       "remove": "Tétel eltávolítása",
+      "edit": "Tétel szerkesztése",
       "download": "Letöltés"
+    },
+    "edit": {
+      "instructions": "Hangutasítások",
+      "instructionsPlaceholder": "Írd le az előadásmódot, pl. nyugodt és meleg…",
+      "instructionsNotApplied": "Ez a modell figyelmen kívül hagyja az utasításokat — megmaradnak, de nem lesznek alkalmazva.",
+      "tagsSkipped": "Ez a formátum nem tud címkéket tárolni, ezért a metaadatok kimaradnak a létrehozáskor.",
+      "textEmpty": "A szöveg nem lehet üres.",
+      "textTooLong": "A szöveg túl hosszú (legfeljebb 4 096 karakter)."
     },
     "actions": {
       "generate": "Létrehozás",

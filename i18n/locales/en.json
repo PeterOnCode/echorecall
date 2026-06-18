@@ -50,7 +50,16 @@
     "queue": {
       "empty": "No items yet — type text or upload a .txt to build your list.",
       "remove": "Remove item",
+      "edit": "Edit item",
       "download": "Download"
+    },
+    "edit": {
+      "instructions": "Voice instructions",
+      "instructionsPlaceholder": "Describe the delivery, e.g. calm and warm…",
+      "instructionsNotApplied": "This model ignores instructions — they’re kept but won’t be applied.",
+      "tagsSkipped": "This format can’t carry tags, so the metadata will be skipped when you generate.",
+      "textEmpty": "Text can’t be empty.",
+      "textTooLong": "Text is too long (max 4,096 characters)."
     },
     "actions": {
       "generate": "Generate",

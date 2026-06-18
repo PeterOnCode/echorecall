@@ -14,6 +14,7 @@ const {
   addItem,
   addFromUpload,
   removeItem,
+  updateItem,
   applyMetadataToPending,
 } = useQueue()
 const { voices, generating, loadVoices, generateAll, downloadArchive } = useGeneration()
@@ -67,7 +68,7 @@ async function onDownloadAll() {
 
     <MetadataFields v-model="metadata" />
 
-    <QueueList :items="items" @remove="removeItem" />
+    <QueueList :items="items" :voices="voices" @remove="removeItem" @update="updateItem" />
 
     <div class="flex gap-3">
       <UButton
