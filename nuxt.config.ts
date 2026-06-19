@@ -41,6 +41,11 @@ export default defineNuxtConfig({
     // Hungarian is the deterministic default; user-choice persistence is wired in US7.
     detectBrowserLanguage: false,
   },
+  // Persist the theme in a cookie (FR-038, research.md §2) so SSR knows the
+  // preference — keeps the selected-theme control correct on reload (no flash).
+  colorMode: {
+    storage: 'cookie',
+  },
   alias: {
     '#core': fileURLToPath(new URL('./src/core', import.meta.url)),
   },
