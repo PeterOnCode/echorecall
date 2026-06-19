@@ -232,13 +232,13 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 7 ⚠️ (write first, must fail)
 
-- [ ] T081 [P] [US7] Component test `tests/component/Settings.appearance-language.test.ts`: theme toggle (light/dark/system) and language switch (en/hu) update the UI and persist; default locale is `hu`; rendered domain data (text/tags/filenames) is not translated
+- [X] T081 [P] [US7] Component test `tests/component/Settings.appearance-language.test.ts`: theme toggle (light/dark/system) and language switch (en/hu) update the UI and persist; default locale is `hu`; rendered domain data (text/tags/filenames) is not translated
 
 ### Implementation for User Story 7
 
-- [ ] T082 [P] [US7] Create `app/components/settings/AppearanceSettings.vue` (color-mode light/dark/system)
-- [ ] T083 [US7] Create `app/components/settings/LanguageSettings.vue` (i18n locale switch) and wire both into `app/pages/settings.vue` — depends on T082
-- [ ] T084 [US7] Complete the `en`/`hu` catalogs in `i18n/locales/` for all shipped UI strings (consolidating keys added per story)
+- [X] T082 [P] [US7] Create `app/components/settings/AppearanceSettings.vue` (color-mode light/dark/system)
+- [X] T083 [US7] Create `app/components/settings/LanguageSettings.vue` (i18n locale switch) and wire both into `app/pages/settings.vue` — depends on T082
+- [X] T084 [US7] Complete the `en`/`hu` catalogs in `i18n/locales/` for all shipped UI strings (consolidating keys added per story)
 
 **Checkpoint**: Appearance and language are user-selectable and persisted, with no effect on content.
 

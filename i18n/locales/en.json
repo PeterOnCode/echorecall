@@ -134,6 +134,15 @@
     }
   },
   "settings": {
-    "comingSoon": "Settings are coming soon."
+    "title": "Settings",
+    "appearance": {
+      "title": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "language": {
+      "title": "Language"
+    }
   }
 }

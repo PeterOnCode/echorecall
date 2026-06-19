@@ -1,13 +1,13 @@
 <script setup lang="ts">
-// Settings area. Appearance + language (US7), in-app OpenAI key (US8) and
-// default tags (US10) are added later; this is the placeholder shell.
+// Settings area. Appearance + language (US7) ship here; the in-app OpenAI key
+// (US8) and default tags (US10) are added in later stories.
+const { t } = useI18n()
 </script>
 
 <template>
-  <UAlert
-    icon="i-lucide-construction"
-    color="neutral"
-    variant="subtle"
-    :title="$t('settings.comingSoon')"
-  />
+  <div class="flex flex-col gap-8">
+    <h1 class="text-xl font-semibold">{{ t('settings.title') }}</h1>
+    <AppearanceSettings />
+    <LanguageSettings />
+  </div>
 </template>
