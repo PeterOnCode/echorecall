@@ -95,6 +95,14 @@ export interface ListItem {
   metadata: Metadata
 }
 
+/** Filter for a bulk-clean (FR-037); at least one key must be set (UI + service enforce it). */
+export interface BulkCleanFilter {
+  /** Inclusive `createdAt` range bounds (ISO 8601). */
+  from?: string
+  to?: string
+  voiceId?: string
+}
+
 /** Composable server-side library query (search + filter + sort + pagination). */
 export interface LibraryQuery {
   /** Free-text LIKE over title, source text, tags, and filename. */

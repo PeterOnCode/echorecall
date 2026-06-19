@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import type { Metadata } from '#core/client'
+import type { BulkCleanFilter, Metadata } from '#core/client'
 import type { LibraryItem } from '../composables/useLibrary'
 
-// Library area (US5): list the persisted library and manage each saved item —
-// replay, download, rename + retag via the inline editor, or delete (confirmed
-// inside the editor). Search / sort / filter / bulk-clean arrive in US6.
-// `LibraryItemEditor` and `AudioPlayer` are resolved via Nuxt's auto-import.
-const { items, loading, error, load, update, remove } = useLibrary()
+// Library area (US5 + US6): browse the persisted library with server-side
+// search / sort / filter / pagination, manage each saved item (replay, download,
+// rename + retag via the inline editor, delete), and bulk-clean batches by
+// date/voice. The page owns the network — it reloads whenever the query changes
+// and carries out save / delete / bulk-clean — while `LibraryTable` owns the
+// presentation. Components are resolved via Nuxt's auto-import.
+const { items, total, loading, error, query, load, update, remove, bulkClean } = useLibrary()
 const { t } = useI18n()
 
-// One editor open at a time; replaying is local-only playback via `audioUrl`.
+// Which row's inline editor is open; two-way bound into the table so a successful
+// save (whose result lands here) can close it.
 const editingId = ref<string | null>(null)
-const playingId = ref<string | null>(null)
 
 onMounted(load)
+// Any search / filter / sort / page change replaces the query object → reload.
+watch(query, load)
 
 /** Base name (without the immutable extension) the editor edits. */
 function baseName(filename: string): string {
   const dot = filename.lastIndexOf('.')
   return dot > 0 ? filename.slice(0, dot) : filename
-}
-
-function downloadUrl(audioUrl: string): string {
-  return `${audioUrl}?download=1`
 }
 
 /**
@@ -45,12 +45,22 @@ async function onSave(item: LibraryItem, patch: { filename: string; metadata: Me
   if (metadataChanged) updatePatch.metadata = patch.metadata
 
   await update(item.id, updatePatch)
-  if (!error.value) editingId.value = null
+  if (!error.value) {
+    editingId.value = null
+    // A rename/title/tag edit can change what the active search/sort matches, so
+    // re-run the current query to keep the list consistent (e.g. a row renamed
+    // out of a `q=…` match must drop, a title-sorted page must reorder).
+    await load()
+  }
 }
 
 async function onDelete(id: string) {
   await remove(id)
   if (editingId.value === id) editingId.value = null
+}
+
+async function onBulkClean(filter: BulkCleanFilter) {
+  await bulkClean(filter)
 }
 </script>
 
@@ -60,69 +70,15 @@ async function onDelete(id: string) {
 
     <p v-if="error" role="alert" class="text-error">{{ error }}</p>
     <p v-if="loading && items.length === 0" class="text-muted">{{ $t('common.loading') }}</p>
-    <p v-else-if="items.length === 0" data-test="library-empty" class="text-muted">
-      {{ t('library.empty') }}
-    </p>
 
-    <ul v-else class="flex flex-col gap-3">
-      <li
-        v-for="g in items"
-        :key="g.id"
-        data-test="library-item"
-        class="flex flex-col gap-2 rounded border p-3"
-      >
-        <div class="flex items-start gap-3">
-          <div class="min-w-0 flex-1">
-            <p class="truncate font-medium">{{ g.filename }}</p>
-            <p class="truncate text-sm text-muted">{{ g.text }}</p>
-            <p class="text-xs text-muted">
-              {{ g.voiceId }} · {{ new Date(g.createdAt).toLocaleString() }}
-            </p>
-          </div>
-          <div class="flex shrink-0 items-center gap-2">
-            <UButton
-              data-test="replay"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              icon="i-lucide-play"
-              :aria-label="t('library.item.replay')"
-              @click="playingId = playingId === g.id ? null : g.id"
-            />
-            <UButton
-              data-test="download"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              icon="i-lucide-download"
-              :href="downloadUrl(g.audioUrl)"
-              external
-              download
-              :aria-label="t('library.item.download')"
-            />
-            <UButton
-              data-test="edit-item"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              icon="i-lucide-pencil"
-              :aria-expanded="editingId === g.id"
-              :aria-label="t('library.item.edit')"
-              @click="editingId = editingId === g.id ? null : g.id"
-            />
-          </div>
-        </div>
-
-        <AudioPlayer v-if="playingId === g.id" :src="g.audioUrl" :label="g.filename" />
-
-        <LibraryItemEditor
-          v-if="editingId === g.id"
-          :item="g"
-          @save="(patch) => onSave(g, patch)"
-          @delete="onDelete"
-          @cancel="editingId = null"
-        />
-      </li>
-    </ul>
+    <LibraryTable
+      v-model:query="query"
+      v-model:editing-id="editingId"
+      :items="items"
+      :total="total"
+      @save="onSave"
+      @delete="onDelete"
+      @bulk-clean="onBulkClean"
+    />
   </section>
 </template>

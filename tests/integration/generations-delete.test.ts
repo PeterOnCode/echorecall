@@ -52,7 +52,7 @@ describe('DELETE /api/generations/:id', () => {
 
     await service.delete(entry.id)
 
-    expect(service.list()).toEqual([])
+    expect(service.list()).toEqual({ rows: [], total: 0 })
     expect(await audioStore.existsAt(entry.path)).toBe(false)
   })
 
@@ -70,7 +70,7 @@ describe('DELETE /api/generations/:id', () => {
     await service.delete(entry.id)
 
     expect(await audioStore.existsAt(entry.path)).toBe(false)
-    expect(service.list().map((g) => g.id)).not.toContain(entry.id)
+    expect(service.list().rows.map((g) => g.id)).not.toContain(entry.id)
   })
 
   it('after delete, reading the audio -> 404 NOT_FOUND', async () => {
@@ -86,7 +86,7 @@ describe('DELETE /api/generations/:id', () => {
 
     const err = await service.delete('does-not-exist').catch((e) => e)
     expect(mapError(err)).toEqual({ status: 404, code: 'NOT_FOUND' })
-    expect(service.list().map((g) => g.id)).toEqual([entry.id])
+    expect(service.list().rows.map((g) => g.id)).toEqual([entry.id])
   })
 
   it('delete is permanent across a fresh repository (survives restart)', async () => {
@@ -98,7 +98,7 @@ describe('DELETE /api/generations/:id', () => {
       new SqliteGenerationRepository(dbPath),
       new FileAudioStore(dir),
     )
-    expect(reopened.list()).toEqual([])
+    expect(reopened.list()).toEqual({ rows: [], total: 0 })
     const err = await reopened.readAudio(entry.id).catch((e) => e)
     expect(mapError(err)).toEqual({ status: 404, code: 'NOT_FOUND' })
   })

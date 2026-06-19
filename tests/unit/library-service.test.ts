@@ -41,7 +41,7 @@ describe('LibraryService', () => {
     await service.save({ text: 'one', voiceId: 'alloy' }, Buffer.from('a'))
     await new Promise((r) => setTimeout(r, 5))
     await service.save({ text: 'two', voiceId: 'nova' }, Buffer.from('b'))
-    const texts = service.list().map((g) => g.text)
+    const texts = service.list().rows.map((g) => g.text)
     expect(texts[0]).toBe('two')
     expect(texts).toContain('one')
   })
@@ -63,9 +63,11 @@ describe('LibraryService', () => {
       insert() {
         throw new Error('db down')
       },
-      list: () => [],
+      list: () => ({ rows: [], total: 0 }),
       get: () => undefined,
+      update: () => false,
       delete: () => false,
+      bulkDelete: () => [],
     }
     // Fixed clock + id make the dated, UUID-fallback path deterministic.
     const svc = new LibraryService(

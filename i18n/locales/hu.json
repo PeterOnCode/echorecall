@@ -71,7 +71,45 @@
   "library": {
     "title": "Könyvtár",
     "empty": "Még nincsenek mentett tételek.",
+    "noResults": "Nincs a keresésnek megfelelő tétel.",
+    "unavailable": "A hang nem érhető el",
     "loadError": "Nem sikerült betölteni a könyvtárat. Próbáld újra.",
+    "search": {
+      "label": "Keresés",
+      "placeholder": "Keresés cím, szöveg, címkék vagy fájlnév szerint…"
+    },
+    "filters": {
+      "voice": "Hang",
+      "format": "Formátum",
+      "allVoices": "Minden hang",
+      "allFormats": "Minden formátum",
+      "from": "Ettől",
+      "to": "Eddig"
+    },
+    "columns": {
+      "name": "Fájlnév",
+      "voice": "Hang",
+      "format": "Formátum",
+      "created": "Létrehozva",
+      "actions": "Műveletek"
+    },
+    "pagination": {
+      "previous": "Előző",
+      "next": "Következő",
+      "status": "{page}. oldal / {pages} · {total} tétel"
+    },
+    "bulkClean": {
+      "open": "Tömeges törlés…",
+      "title": "Könyvtár tömeges takarítása",
+      "description": "Véglegesen eltávolítja az összes szűrőnek megfelelő mentett tételt a hangjával együtt. Ez nem vonható vissza.",
+      "voice": "Hang",
+      "anyVoice": "Bármely hang",
+      "from": "Ettől",
+      "to": "Eddig",
+      "needFilter": "Először válassz dátumtartományt és/vagy hangot.",
+      "confirm": "Megfelelő tételek törlése",
+      "cancel": "Mégse"
+    },
     "item": {
       "replay": "Lejátszás",
       "download": "Letöltés",
@@ -91,7 +129,8 @@
       "rename": "Nem sikerült átnevezni a tételt.",
       "invalidFilename": "A fájlnév üres vagy nem használható. Próbálj másikat.",
       "retag": "Nem sikerült frissíteni a metaadatokat.",
-      "delete": "Nem sikerült törölni a tételt. Próbáld újra."
+      "delete": "Nem sikerült törölni a tételt. Próbáld újra.",
+      "bulkClean": "Nem sikerült a könyvtár takarítása. Próbáld újra."
     }
   },
   "settings": {

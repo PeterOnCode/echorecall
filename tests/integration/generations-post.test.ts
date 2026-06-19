@@ -94,7 +94,7 @@ describe('POST /api/generations', () => {
     const err = await generateSpeech(provider, { text: '   ', voiceId: 'alloy' }).catch((e) => e)
 
     expect(provider.calls).toBe(0)
-    expect(service.list()).toHaveLength(0)
+    expect(service.list().rows).toHaveLength(0)
     expect(await audioFileCount()).toBe(0)
     expect(mapError(err)).toEqual({ status: 400, code: 'EMPTY_INPUT' })
   })
@@ -105,7 +105,7 @@ describe('POST /api/generations', () => {
     const err = await generateSpeech(provider, { text, voiceId: 'alloy' }).catch((e) => e)
 
     expect(provider.calls).toBe(0)
-    expect(service.list()).toHaveLength(0)
+    expect(service.list().rows).toHaveLength(0)
     expect(await audioFileCount()).toBe(0)
     expect(mapError(err)).toEqual({ status: 400, code: 'INPUT_TOO_LONG' })
   })
@@ -115,7 +115,7 @@ describe('POST /api/generations', () => {
     const err = await generateSpeech(provider, { text: 'hi', voiceId: 'nope' }).catch((e) => e)
 
     expect(provider.calls).toBe(0)
-    expect(service.list()).toHaveLength(0)
+    expect(service.list().rows).toHaveLength(0)
     expect(await audioFileCount()).toBe(0)
     expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_VOICE' })
   })
@@ -125,7 +125,7 @@ describe('POST /api/generations', () => {
     const err = await generateSpeech(provider, { text: 'hi', voiceId: 'alloy' }).catch((e) => e)
 
     expect(provider.calls).toBe(1) // synthesis attempted...
-    expect(service.list()).toHaveLength(0) // ...but nothing was saved
+    expect(service.list().rows).toHaveLength(0) // ...but nothing was saved
     expect(await audioFileCount()).toBe(0) // and no orphan file was left behind
     expect(mapError(err)).toEqual({ status: 502, code: 'PROVIDER_UNAVAILABLE' })
   })
@@ -141,7 +141,7 @@ describe('POST /api/generations', () => {
     expect(entry.path).toMatch(/^audio\/\d{4}\/\d{2}\/\d{2}\/hello-world\.flac$/)
     expect(entry.path.split('/').pop()).toBe('hello-world.flac') // derived filename
     expect(Buffer.compare(await service.readAudio(entry.id), Buffer.from('flac-bytes'))).toBe(0)
-    expect(service.list().map((g) => g.id)).toContain(entry.id)
+    expect(service.list().rows.map((g) => g.id)).toContain(entry.id)
   })
 
   it('disambiguates two same-title items under the same day (no overwrite)', async () => {
@@ -170,7 +170,7 @@ describe('POST /api/generations', () => {
     }).catch((e) => e)
 
     expect(provider.calls).toBe(0)
-    expect(service.list()).toHaveLength(0)
+    expect(service.list().rows).toHaveLength(0)
     expect(await audioFileCount()).toBe(0)
     expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_MODEL' })
   })
@@ -184,7 +184,7 @@ describe('POST /api/generations', () => {
     }).catch((e) => e)
 
     expect(provider.calls).toBe(0)
-    expect(service.list()).toHaveLength(0)
+    expect(service.list().rows).toHaveLength(0)
     expect(await audioFileCount()).toBe(0)
     expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_FORMAT' })
   })

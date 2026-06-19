@@ -1,8 +1,15 @@
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import Database from 'better-sqlite3'
-import type { Format, Generation, Metadata, Model } from '../shared/types'
-import type { GenerationRepository, NewGenerationRecord } from './repository'
+import type { Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  type BulkCleanFilter,
+  type GenerationRepository,
+  type LibraryListResult,
+  type NewGenerationRecord,
+} from './repository'
 
 interface ExtraTags {
   languages?: string[]
@@ -49,6 +56,69 @@ const SELECT = `
   SELECT id, text, voice_id AS voiceId, created_at AS createdAt, path, model, format, speed,
          tag_title, tag_artist, tag_album, tag_genre, tag_comment, tag_recorded_at, tag_track, tags_extra
   FROM generations`
+
+// Allow-list mapping the public sort keys to real columns. Never interpolate a
+// user-supplied string into the SQL — only these fixed columns are reachable.
+const SORT_COLUMNS: Record<NonNullable<LibraryQuery['sort']>, string> = {
+  createdAt: 'created_at',
+  title: 'tag_title',
+  voice: 'voice_id',
+  format: 'format',
+}
+
+// The columns the free-text `q` searches: source text, the stored filename
+// (path), the scalar tags, and the packed multi-value/custom tags (FR-034).
+const SEARCH_COLUMNS = [
+  'text',
+  'path',
+  'tag_title',
+  'tag_artist',
+  'tag_album',
+  'tag_genre',
+  'tag_comment',
+  'tags_extra',
+] as const
+
+/** Escape LIKE wildcards so a literal `%`/`_`/`\` in the search term is matched as text. */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (ch) => `\\${ch}`)
+}
+
+/**
+ * Build the shared WHERE clause + bound params for {@link LibraryQuery}. Every
+ * filter is optional and composes (AND); an empty query yields an empty clause.
+ * Used by both `list` (search/filter/sort/page) and `bulkDelete` (its
+ * from/to/voiceId subset).
+ */
+function buildWhere(query: LibraryQuery): { clause: string; params: Record<string, unknown> } {
+  const conditions: string[] = []
+  const params: Record<string, unknown> = {}
+
+  const q = query.q?.trim()
+  if (q) {
+    params.q = `%${escapeLike(q)}%`
+    const ors = SEARCH_COLUMNS.map((col) => `${col} LIKE @q ESCAPE '\\'`).join(' OR ')
+    conditions.push(`(${ors})`)
+  }
+  if (query.voiceId) {
+    params.voiceId = query.voiceId
+    conditions.push('voice_id = @voiceId')
+  }
+  if (query.format) {
+    params.format = query.format
+    conditions.push('format = @format')
+  }
+  if (query.from) {
+    params.from = query.from
+    conditions.push('created_at >= @from')
+  }
+  if (query.to) {
+    params.to = query.to
+    conditions.push('created_at <= @to')
+  }
+
+  return { clause: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params }
+}
 
 /** SQLite-backed generation metadata store (better-sqlite3). */
 export class SqliteGenerationRepository implements GenerationRepository {
@@ -150,10 +220,34 @@ export class SqliteGenerationRepository implements GenerationRepository {
       })
   }
 
-  list(): Generation[] {
-    return (
-      this.db.prepare(`${SELECT} ORDER BY created_at DESC, id DESC`).all() as GenerationRow[]
-    ).map(rowToGeneration)
+  list(query: LibraryQuery = {}): LibraryListResult {
+    const { clause, params } = buildWhere(query)
+
+    const total = (
+      this.db.prepare(`SELECT COUNT(*) AS n FROM generations ${clause}`).get(params) as {
+        n: number
+      }
+    ).n
+
+    const column = SORT_COLUMNS[query.sort ?? 'createdAt'] ?? SORT_COLUMNS.createdAt
+    const direction = query.order === 'asc' ? 'ASC' : 'DESC'
+    // Stable, deterministic tiebreaker; for non-date sorts, newest-first then id.
+    const tiebreak = column === 'created_at' ? 'id DESC' : 'created_at DESC, id DESC'
+
+    const pageSize =
+      query.pageSize && query.pageSize > 0
+        ? Math.min(Math.floor(query.pageSize), MAX_PAGE_SIZE)
+        : DEFAULT_PAGE_SIZE
+    const page = query.page && query.page > 0 ? Math.floor(query.page) : 1
+    const offset = (page - 1) * pageSize
+
+    const rows = this.db
+      .prepare(
+        `${SELECT} ${clause} ORDER BY ${column} ${direction}, ${tiebreak} LIMIT @limit OFFSET @offset`,
+      )
+      .all({ ...params, limit: pageSize, offset }) as GenerationRow[]
+
+    return { rows: rows.map(rowToGeneration), total }
   }
 
   get(id: string): Generation | undefined {
@@ -204,6 +298,22 @@ export class SqliteGenerationRepository implements GenerationRepository {
 
   delete(id: string): boolean {
     return this.db.prepare('DELETE FROM generations WHERE id = ?').run(id).changes > 0
+  }
+
+  bulkDelete(filter: BulkCleanFilter): Generation[] {
+    const { clause, params } = buildWhere(filter)
+    // Defensive: an empty filter would match the whole table — never bulk-delete
+    // everything (the service rejects this before we get here, FR-037).
+    if (!clause) return []
+
+    // Select the matching rows and delete them in one transaction so the returned
+    // set is exactly what was removed (the caller deletes their audio files).
+    const remove = this.db.transaction((): GenerationRow[] => {
+      const rows = this.db.prepare(`${SELECT} ${clause}`).all(params) as GenerationRow[]
+      this.db.prepare(`DELETE FROM generations ${clause}`).run(params)
+      return rows
+    })
+    return remove().map(rowToGeneration)
   }
 
   close(): void {

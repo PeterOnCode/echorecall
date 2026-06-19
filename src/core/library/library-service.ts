@@ -1,15 +1,15 @@
 import type { Readable } from 'node:stream'
 import { ZipArchive } from 'archiver'
-import type { Format, Generation, Metadata, Model } from '../shared/types'
+import type { Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
 import { newId } from '../shared/ids'
-import { InvalidFilenameError, NotFoundError } from '../shared/errors'
+import { DomainError, InvalidFilenameError, NotFoundError } from '../shared/errors'
 import { formatInfo } from '../tts/provider'
 import { slugify } from '../naming/slug'
 import { allocateFilename, datedDir } from '../naming/filename'
 import { resolveArchiveEntries } from '../batch/archive'
 import { tagAudio } from '../tagging/tag-audio'
 import type { AudioTagger } from '../tagging/tagger'
-import type { GenerationRepository } from './repository'
+import type { BulkCleanFilter, GenerationRepository, LibraryListResult } from './repository'
 import type { FileAudioStore } from './audio-store'
 
 /** Input for persisting a successful generation. */
@@ -116,8 +116,13 @@ export class LibraryService {
     return { ...generation, skippedTags }
   }
 
-  list(): Generation[] {
-    return this.repo.list()
+  /**
+   * Composable server-side library query (FR-034–036): search + filter + sort +
+   * pagination, returning the requested page plus the full match `total`. An
+   * empty query lists everything newest-first.
+   */
+  list(query: LibraryQuery = {}): LibraryListResult {
+    return this.repo.list(query)
   }
 
   get(id: string): Generation {
@@ -237,5 +242,31 @@ export class LibraryService {
     const existed = this.repo.delete(id)
     if (!existed) throw new NotFoundError(id)
     if (generation) await this.audio.deleteAt(generation.path)
+  }
+
+  /**
+   * Bulk-clean the library by date and/or voice (FR-037): remove every matching
+   * row and its stored audio, returning how many were deleted. At least one
+   * filter is required — an empty filter is rejected so this can never wipe the
+   * whole library (the UI also confirms before calling). File deletion is
+   * best-effort per row: a missing/locked file never aborts cleaning the rest.
+   */
+  async bulkClean(filter: BulkCleanFilter): Promise<{ deleted: number }> {
+    if (!filter.from && !filter.to && !filter.voiceId) {
+      throw new DomainError(
+        'EMPTY_INPUT',
+        'At least one filter (date range or voice) is required to clean the library.',
+      )
+    }
+    const removed = this.repo.bulkDelete(filter)
+    for (const generation of removed) {
+      try {
+        await this.audio.deleteAt(generation.path)
+      } catch {
+        // intentionally ignored — the row is already gone; an orphan file must
+        // not stop us cleaning the remaining matches.
+      }
+    }
+    return { deleted: removed.length }
   }
 }

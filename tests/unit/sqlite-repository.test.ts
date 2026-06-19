@@ -52,7 +52,7 @@ describe('SqliteGenerationRepository', () => {
     repo.insert(rec({ id: 'old', createdAt: '2026-06-15T09:00:00.000Z' }))
     repo.insert(rec({ id: 'new', createdAt: '2026-06-15T11:00:00.000Z' }))
     repo.insert(rec({ id: 'mid', createdAt: '2026-06-15T10:00:00.000Z' }))
-    expect(repo.list().map((g) => g.id)).toEqual(['new', 'mid', 'old'])
+    expect(repo.list().rows.map((g) => g.id)).toEqual(['new', 'mid', 'old'])
   })
 
   it('deletes a row and reports whether it existed', () => {

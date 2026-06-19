@@ -205,20 +205,20 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 6 ⚠️ (write first, must fail)
 
-- [ ] T070 [P] [US6] Unit test `tests/unit/library-query.test.ts`: `list(query)` builds composable WHERE (q LIKE over title/text/tags/filename; voiceId/format equality; from/to range), ORDER BY (createdAt/title/voice/format, asc/desc), LIMIT/OFFSET; returns accurate `total`
-- [ ] T071 [P] [US6] Extend `tests/integration/generations-get.test.ts`: `GET /api/generations` with `q/voiceId/format/from/to/sort/order/page/pageSize` composes; empty result returns an empty array + correct `total`
-- [ ] T072 [P] [US6] Integration test `tests/integration/bulk-clean.test.ts`: `POST /api/library/bulk-clean` removes matching rows + files and returns `{ deleted }`
-- [ ] T073 [P] [US6] Component test `tests/component/LibraryTable.test.ts`: search bar + sortable/filterable table + pagination drive the query; empty-state message renders
+- [X] T070 [P] [US6] Unit test `tests/unit/library-query.test.ts`: `list(query)` builds composable WHERE (q LIKE over title/text/tags/filename; voiceId/format equality; from/to range), ORDER BY (createdAt/title/voice/format, asc/desc), LIMIT/OFFSET; returns accurate `total`
+- [X] T071 [P] [US6] Extend `tests/integration/generations-get.test.ts`: `GET /api/generations` with `q/voiceId/format/from/to/sort/order/page/pageSize` composes; empty result returns an empty array + correct `total`
+- [X] T072 [P] [US6] Integration test `tests/integration/bulk-clean.test.ts`: `POST /api/library/bulk-clean` removes matching rows + files and returns `{ deleted }`
+- [X] T073 [P] [US6] Component test `tests/component/LibraryTable.test.ts`: search bar + sortable/filterable table + pagination drive the query; empty-state message renders
 
 ### Implementation for User Story 6
 
-- [ ] T074 [US6] Add `list(query)` (composable filter/sort/page + `total`) and `bulkDelete(filter)` (returns removed rows) to `src/core/library/repository.ts` and `src/core/library/sqlite-repository.ts` — depends on T013
-- [ ] T075 [US6] Add `list(query)` and `bulkClean(filter)` (delete files for removed rows) to `LibraryService` (`src/core/library/library-service.ts`) — depends on T074
-- [ ] T076 [US6] Update `server/api/generations.get.ts` to parse the query params and return `{ generations, total, page, pageSize }` — depends on T075
-- [ ] T077 [US6] Create `server/api/library/bulk-clean.post.ts` (requires ≥1 filter) — depends on T075
-- [ ] T078 [US6] Build `app/components/library/LibrarySearchBar.vue`, `LibraryTable.vue` (sort/filter/paginate), and `BulkCleanDialog.vue`; add query state to `app/composables/useLibrary.ts` and wire into `app/pages/library.vue` — depends on T068, T076, T077
-- [ ] T079 [US6] Render an "unavailable" state for a row whose stored file is missing (edge case) in `app/components/library/LibraryTable.vue` — depends on T078
-- [ ] T080 [US6] Add discovery/bulk-clean i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T074 [US6] Add `list(query)` (composable filter/sort/page + `total`) and `bulkDelete(filter)` (returns removed rows) to `src/core/library/repository.ts` and `src/core/library/sqlite-repository.ts` — depends on T013
+- [X] T075 [US6] Add `list(query)` and `bulkClean(filter)` (delete files for removed rows) to `LibraryService` (`src/core/library/library-service.ts`) — depends on T074
+- [X] T076 [US6] Update `server/api/generations.get.ts` to parse the query params and return `{ generations, total, page, pageSize }` — depends on T075
+- [X] T077 [US6] Create `server/api/library/bulk-clean.post.ts` (requires ≥1 filter) — depends on T075
+- [X] T078 [US6] Build `app/components/library/LibrarySearchBar.vue`, `LibraryTable.vue` (sort/filter/paginate), and `BulkCleanDialog.vue`; add query state to `app/composables/useLibrary.ts` and wire into `app/pages/library.vue` — depends on T068, T076, T077
+- [X] T079 [US6] Render an "unavailable" state for a row whose stored file is missing (edge case) in `app/components/library/LibraryTable.vue` — depends on T078
+- [X] T080 [US6] Add discovery/bulk-clean i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: A growing library stays searchable, sortable, filterable, paginated, and cleanable.
 
