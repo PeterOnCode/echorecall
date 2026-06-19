@@ -143,6 +143,31 @@
     },
     "language": {
       "title": "Language"
+    },
+    "openaiKey": {
+      "title": "OpenAI API key",
+      "description": "Set an OpenAI key for this app. It’s stored encrypted on the server and is never shown again.",
+      "current": "Current key:",
+      "none": "No key set in the app — the environment key is used if available.",
+      "source": {
+        "ui": "set in app",
+        "env": "from environment",
+        "none": "none"
+      },
+      "inputLabel": "OpenAI API key",
+      "placeholder": "sk-…",
+      "save": "Save key",
+      "clear": "Clear key",
+      "test": "Test key",
+      "testOk": "The active key works.",
+      "testFail": "The active key didn’t work.",
+      "disabledNotice": "Set NUXT_APP_SECRET on the server to store an OpenAI key in the app. The environment key (if any) is still used.",
+      "errors": {
+        "load": "Could not load the key status.",
+        "save": "Could not save the key. Please try again.",
+        "disabled": "In-app key storage is disabled. Set NUXT_APP_SECRET to enable it.",
+        "clear": "Could not clear the key. Please try again."
+      }
     }
   }
 }

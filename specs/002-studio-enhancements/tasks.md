@@ -252,19 +252,19 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 8 ⚠️ (write first, must fail)
 
-- [ ] T085 [P] [US8] Unit test `tests/unit/crypto.test.ts`: AES-256-GCM `encryptSecret`/`decryptSecret` round-trip; tampered payload fails to decrypt
-- [ ] T086 [P] [US8] Unit test `tests/unit/api-key.test.ts`: `resolveApiKey` precedence UI(decrypted)→env→undefined; with `appSecret` unset, UI key is ignored and env is used
-- [ ] T087 [P] [US8] Integration test `tests/integration/settings-key.test.ts`: `PUT` then `GET` shows masked only (`source:'ui'`); `DELETE` reverts to env; `test` reports the active key; key never appears in any response/error; no `NUXT_APP_SECRET` → `GET secretConfigured:false` and `PUT` → 409 `KEY_STORAGE_DISABLED`; no key anywhere → generation 400 `NO_API_KEY`, nothing saved
+- [X] T085 [P] [US8] Unit test `tests/unit/crypto.test.ts`: AES-256-GCM `encryptSecret`/`decryptSecret` round-trip; tampered payload fails to decrypt
+- [X] T086 [P] [US8] Unit test `tests/unit/api-key.test.ts`: `resolveApiKey` precedence UI(decrypted)→env→undefined; with `appSecret` unset, UI key is ignored and env is used
+- [X] T087 [P] [US8] Integration test `tests/integration/settings-key.test.ts`: `PUT` then `GET` shows masked only (`source:'ui'`); `DELETE` reverts to env; `test` reports the active key; key never appears in any response/error; no `NUXT_APP_SECRET` → `GET secretConfigured:false` and `PUT` → 409 `KEY_STORAGE_DISABLED`; no key anywhere → generation 400 `NO_API_KEY`, nothing saved
 
 ### Implementation for User Story 8
 
-- [ ] T088 [P] [US8] Create `src/core/settings/crypto.ts` (`encryptSecret`/`decryptSecret`, AES-256-GCM, scrypt-derived key)
-- [ ] T089 [P] [US8] Create `src/core/settings/app-config-repository.ts` (`AppConfigRepository` over `app_config`: get/set/delete)
-- [ ] T090 [US8] Create `src/core/settings/api-key.ts` (`resolveApiKey({ config, appSecret?, envKey? })`) — depends on T088, T089
-- [ ] T091 [US8] Create `server/api/settings/openai-key.get.ts`, `openai-key.put.ts`, `openai-key.delete.ts`, and `openai-key/test.post.ts` (masked status; 409 when secret unset; active-key test) — depends on T090
-- [ ] T092 [US8] Wire `resolveApiKey` into the per-request `OpenAiTtsProvider` in `server/utils/container.ts` and raise `NO_API_KEY` (nothing saved) in the generate path — depends on T090, T028
-- [ ] T093 [US8] Create `app/components/settings/OpenAiKeySettings.vue` and `app/composables/useSettings.ts` (masked status, set/clear/test, disabled state when `secretConfigured:false`); wire into `app/pages/settings.vue` — depends on T091, T083
-- [ ] T094 [US8] Add OpenAI-key i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T088 [P] [US8] Create `src/core/settings/crypto.ts` (`encryptSecret`/`decryptSecret`, AES-256-GCM, scrypt-derived key)
+- [X] T089 [P] [US8] Create `src/core/settings/app-config-repository.ts` (`AppConfigRepository` over `app_config`: get/set/delete)
+- [X] T090 [US8] Create `src/core/settings/api-key.ts` (`resolveApiKey({ config, appSecret?, envKey? })`) — depends on T088, T089
+- [X] T091 [US8] Create `server/api/settings/openai-key.get.ts`, `openai-key.put.ts`, `openai-key.delete.ts`, and `openai-key/test.post.ts` (masked status; 409 when secret unset; active-key test) — depends on T090
+- [X] T092 [US8] Wire `resolveApiKey` into the per-request `OpenAiTtsProvider` in `server/utils/container.ts` and raise `NO_API_KEY` (nothing saved) in the generate path — depends on T090, T028
+- [X] T093 [US8] Create `app/components/settings/OpenAiKeySettings.vue` and `app/composables/useSettings.ts` (masked status, set/clear/test, disabled state when `secretConfigured:false`); wire into `app/pages/settings.vue` — depends on T091, T083
+- [X] T094 [US8] Add OpenAI-key i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: The OpenAI key is fully manageable in-app, encrypted, server-only, with env fallback.
 
