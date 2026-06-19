@@ -41,8 +41,8 @@ function makeService(clock = steppingClock()): LibraryService {
 }
 
 describe('GET /api/generations', () => {
-  it('returns an empty list when nothing has been generated', () => {
-    expect(makeService().list()).toEqual([])
+  it('returns an empty result (no rows, total 0) when nothing has been generated', () => {
+    expect(makeService().list()).toEqual({ rows: [], total: 0 })
   })
 
   it('lists saved generations newest-first', async () => {
@@ -51,20 +51,22 @@ describe('GET /api/generations', () => {
     const second = await service.save({ text: 'two', voiceId: 'echo' }, Buffer.from('b'))
     const third = await service.save({ text: 'three', voiceId: 'nova' }, Buffer.from('c'))
 
-    expect(service.list().map((g) => g.id)).toEqual([third.id, second.id, first.id])
+    const { rows, total } = service.list()
+    expect(rows.map((g) => g.id)).toEqual([third.id, second.id, first.id])
+    expect(total).toBe(3)
   })
 
   it('serializes each entry to the REST shape: filename (basename) + audioUrl, never the raw path', async () => {
-    // The route maps service.list() through toGenerationDto; the client (library
-    // editor, US5) reads `filename`, so the response must carry it and keep the
-    // authoritative `path` server-side.
+    // The route maps service.list().rows through toGenerationDto; the client
+    // (library editor, US5) reads `filename`, so the response must carry it and
+    // keep the authoritative `path` server-side.
     const service = makeService()
     const entry = await service.save(
       { text: 'hi', voiceId: 'alloy', format: 'mp3', metadata: { title: 'My Clip' } },
       Buffer.from('a'),
     )
 
-    const dto = service.list().map((g) => toGenerationDto(g))[0]!
+    const dto = service.list().rows.map((g) => toGenerationDto(g))[0]!
 
     expect(dto.filename).toBe('my-clip.mp3')
     expect(dto.audioUrl).toBe(`/api/generations/${entry.id}/audio`)
@@ -78,9 +80,64 @@ describe('GET /api/generations', () => {
 
     // A brand-new service/repository over the same files — simulates a restart.
     const reopened = makeService()
-    const list = reopened.list()
+    const { rows } = reopened.list()
 
-    expect(list.map((g) => g.id)).toEqual([b.id, a.id])
-    expect(list[0]).toMatchObject({ text: 'two', voiceId: 'echo' })
+    expect(rows.map((g) => g.id)).toEqual([b.id, a.id])
+    expect(rows[0]).toMatchObject({ text: 'two', voiceId: 'echo' })
+  })
+})
+
+describe('GET /api/generations — composable query (US6)', () => {
+  // Build three rows distinct across every queryable dimension. The stepping
+  // clock keeps insertion order deterministic (first → oldest, third → newest).
+  async function seed() {
+    const service = makeService()
+    const first = await service.save(
+      { text: 'apple pie', voiceId: 'alloy', format: 'mp3', metadata: { title: 'Apple' } },
+      Buffer.from('a'),
+    )
+    const second = await service.save(
+      { text: 'banana bread', voiceId: 'echo', format: 'wav', metadata: { title: 'Banana' } },
+      Buffer.from('b'),
+    )
+    const third = await service.save(
+      { text: 'cherry cake', voiceId: 'alloy', format: 'flac', metadata: { title: 'Cherry' } },
+      Buffer.from('c'),
+    )
+    return { service, first, second, third }
+  }
+
+  it('matches free text over the whole stack', async () => {
+    const { service, second } = await seed()
+    const { rows, total } = service.list({ q: 'banana' })
+    expect(rows.map((g) => g.id)).toEqual([second.id])
+    expect(total).toBe(1)
+  })
+
+  it('filters by voiceId, newest-first', async () => {
+    const { service, first, third } = await seed()
+    expect(service.list({ voiceId: 'alloy' }).rows.map((g) => g.id)).toEqual([third.id, first.id])
+  })
+
+  it('sorts by title ascending', async () => {
+    const { service } = await seed()
+    expect(service.list({ sort: 'title', order: 'asc' }).rows.map((g) => g.metadata.title)).toEqual(
+      ['Apple', 'Banana', 'Cherry'],
+    )
+  })
+
+  it('paginates while reporting the full total', async () => {
+    const { service } = await seed()
+    const page1 = service.list({ pageSize: 2, page: 1 })
+    expect(page1.rows).toHaveLength(2)
+    expect(page1.total).toBe(3)
+    const page2 = service.list({ pageSize: 2, page: 2 })
+    expect(page2.rows).toHaveLength(1)
+    expect(page2.total).toBe(3)
+  })
+
+  it('returns an empty array and total 0 when the query matches nothing', async () => {
+    const { service } = await seed()
+    expect(service.list({ q: 'zzz-no-match' })).toEqual({ rows: [], total: 0 })
   })
 })

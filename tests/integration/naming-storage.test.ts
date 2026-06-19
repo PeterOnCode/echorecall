@@ -121,7 +121,7 @@ describe('US4 naming + dated storage', () => {
     const service = makeService()
 
     // Lists in place (no migration of the file).
-    expect(service.list().map((g) => g.id)).toContain(id)
+    expect(service.list().rows.map((g) => g.id)).toContain(id)
     // Plays: reads the stored bytes, no provider call.
     expect(Buffer.compare(await service.readAudio(id), Buffer.from('legacy-bytes'))).toBe(0)
     // Downloads by its real filename (basename of the stored path).

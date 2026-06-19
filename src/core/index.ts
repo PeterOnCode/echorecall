@@ -13,7 +13,13 @@ export { newId } from './shared/ids'
 export { OpenAiTtsProvider } from './tts/openai-provider'
 export type { OpenAiTtsConfig } from './tts/openai-provider'
 
-export type { GenerationRepository, NewGenerationRecord } from './library/repository'
+export type {
+  BulkCleanFilter,
+  GenerationRepository,
+  LibraryListResult,
+  NewGenerationRecord,
+} from './library/repository'
+export { DEFAULT_PAGE_SIZE } from './library/repository'
 export { SqliteGenerationRepository } from './library/sqlite-repository'
 export { FileAudioStore } from './library/audio-store'
 export { LibraryService } from './library/library-service'

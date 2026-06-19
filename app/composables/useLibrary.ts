@@ -1,4 +1,4 @@
-import type { Generation, Metadata } from '#core/client'
+import type { BulkCleanFilter, Generation, LibraryQuery, Metadata } from '#core/client'
 
 /**
  * A library entry as served by the REST API: the authoritative `path` stays
@@ -18,25 +18,59 @@ function errorCode(err: unknown): string | undefined {
   return data?.error?.code
 }
 
+/** Drop empty/undefined keys so the request URL only carries active filters. */
+function toParams(query: LibraryQuery): Record<string, string | number> {
+  const params: Record<string, string | number> = {}
+  if (query.q) params.q = query.q
+  if (query.voiceId) params.voiceId = query.voiceId
+  if (query.format) params.format = query.format
+  if (query.from) params.from = query.from
+  if (query.to) params.to = query.to
+  if (query.sort) params.sort = query.sort
+  if (query.order) params.order = query.order
+  if (query.page) params.page = query.page
+  if (query.pageSize) params.pageSize = query.pageSize
+  return params
+}
+
 /**
- * Loads and manages the persisted library: list (newest-first, server-ordered),
- * rename a stored file, replace an item's metadata (retag), and permanently
- * delete an entry. Mutations patch the local list in place so the view updates
- * without a full reload; the caller confirms a delete first. Replay is pure
- * playback via each item's `audioUrl` (no provider call).
+ * Loads and manages the persisted library with a composable server-side query
+ * (US6 / FR-034–037): search / filter / sort / pagination drive `load`, which
+ * keeps `items`, `total`, and the effective `page`/`pageSize` in sync. Also:
+ * rename a stored file, replace an item's metadata (retag), permanently delete
+ * an entry, and bulk-clean by date/voice. Rename/retag patch the local list in
+ * place; delete and bulk-clean reload so `total` and pagination stay correct.
+ * Replay is pure playback via each item's `audioUrl` (no provider call).
  */
 export function useLibrary() {
   const { t } = useI18n()
   const items = ref<LibraryItem[]>([])
+  const total = ref(0)
   const loading = ref(false)
   const error = ref<string | null>(null)
+
+  // The single source of truth for search/filter/sort/page; the page binds it to
+  // LibraryTable (v-model:query) and reloads whenever it changes. The default
+  // pageSize matches the server's so the first load needs no write-back.
+  const query = ref<LibraryQuery>({ sort: 'createdAt', order: 'desc', page: 1, pageSize: 20 })
 
   async function load() {
     loading.value = true
     error.value = null
     try {
-      const res = await $fetch<{ generations: LibraryItem[] }>('/api/generations')
+      const res = await $fetch<{
+        generations: LibraryItem[]
+        total: number
+        page: number
+        pageSize: number
+      }>('/api/generations', { query: toParams(query.value) })
       items.value = res.generations
+      total.value = res.total
+      // Adopt the server's effective paging (e.g. clamped defaults) without
+      // re-triggering a load: only write back when it actually differs.
+      if (query.value.page !== res.page || query.value.pageSize !== res.pageSize) {
+        query.value = { ...query.value, page: res.page, pageSize: res.pageSize }
+      }
     } catch {
       error.value = t('library.loadError')
     } finally {
@@ -81,18 +115,37 @@ export function useLibrary() {
   }
 
   /**
-   * Permanently delete an entry (FR-032) and drop it from the local list on
-   * success. The caller is responsible for confirming the action first.
+   * Permanently delete an entry (FR-032) and reload so `total` and pagination
+   * stay correct. The caller is responsible for confirming the action first.
    */
   async function remove(id: string) {
     error.value = null
     try {
       await $fetch(`/api/generations/${id}`, { method: 'DELETE' })
-      items.value = items.value.filter((item) => item.id !== id)
+      await load()
     } catch {
       error.value = t('library.errors.delete')
     }
   }
 
-  return { items, loading, error, load, update, remove }
+  /**
+   * Bulk-clean the library by date and/or voice (FR-037): remove every matching
+   * item and its audio, then reload. Returns how many were removed (undefined on
+   * failure). The caller confirms first. An empty filter is rejected server-side.
+   */
+  async function bulkClean(filter: BulkCleanFilter): Promise<number | undefined> {
+    error.value = null
+    try {
+      const res = await $fetch<{ deleted: number }>('/api/library/bulk-clean', {
+        method: 'POST',
+        body: filter,
+      })
+      await load()
+      return res.deleted
+    } catch {
+      error.value = t('library.errors.bulkClean')
+    }
+  }
+
+  return { items, total, loading, error, query, load, update, remove, bulkClean }
 }
