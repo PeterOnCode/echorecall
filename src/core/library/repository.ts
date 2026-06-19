@@ -34,6 +34,9 @@ export interface LibraryListResult {
 /** Default page size when a query omits `pageSize` (FR-036). */
 export const DEFAULT_PAGE_SIZE = 20
 
+/** Upper bound on `pageSize` so a crafted request can't pull the whole table. */
+export const MAX_PAGE_SIZE = 100
+
 /** Port: persistence for generation metadata. */
 export interface GenerationRepository {
   insert(record: NewGenerationRecord): void

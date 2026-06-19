@@ -43,7 +43,8 @@ function sortIndicator(column: SortKey): string {
 }
 
 // --- Pagination ----------------------------------------------------------------
-const pageSize = computed(() => query.value.pageSize ?? 20)
+// Guard against a 0/negative pageSize so totalPages never divides by zero.
+const pageSize = computed(() => Math.max(1, query.value.pageSize ?? 20))
 const currentPage = computed(() => query.value.page ?? 1)
 const totalPages = computed(() => Math.max(1, Math.ceil(props.total / pageSize.value)))
 

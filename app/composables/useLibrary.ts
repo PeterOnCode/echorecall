@@ -66,10 +66,14 @@ export function useLibrary() {
       }>('/api/generations', { query: toParams(query.value) })
       items.value = res.generations
       total.value = res.total
-      // Adopt the server's effective paging (e.g. clamped defaults) without
-      // re-triggering a load: only write back when it actually differs.
-      if (query.value.page !== res.page || query.value.pageSize !== res.pageSize) {
-        query.value = { ...query.value, page: res.page, pageSize: res.pageSize }
+      // If we asked for a page past the end (e.g. after deleting the last item
+      // on the last page, where the server echoes the now-out-of-range page and
+      // returns no rows), clamp to the last valid page. Reassigning `query`
+      // triggers the page's watcher → one reload at the corrected page, so the
+      // user is never stranded on an empty page with the pager hidden.
+      const lastPage = Math.max(1, Math.ceil(res.total / res.pageSize))
+      if (res.page > lastPage) {
+        query.value = { ...query.value, page: lastPage }
       }
     } catch {
       error.value = t('library.loadError')

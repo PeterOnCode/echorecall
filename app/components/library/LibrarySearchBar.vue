@@ -29,15 +29,26 @@ const format = computed<string>({
   set: (value) => patch({ format: (value === '' ? undefined : value) as LibraryQuery['format'] }),
 })
 
-// Date inputs work in calendar days; map them to inclusive ISO bounds so a single
-// day "from = to" still matches everything created that day.
+// Format an ISO instant as the local calendar date (YYYY-MM-DD) for a date input.
+function toLocalDateInput(iso?: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Date inputs work in the user's local calendar days; map a picked day to its
+// inclusive local-midnight→end-of-day bounds as UTC instants, so filtering lines
+// up with what the user sees (not UTC) — important for non-UTC locales like hu.
 const fromDate = computed<string>({
-  get: () => query.value.from?.slice(0, 10) ?? '',
-  set: (value) => patch({ from: value ? `${value}T00:00:00.000Z` : undefined }),
+  get: () => toLocalDateInput(query.value.from),
+  set: (value) => patch({ from: value ? new Date(`${value}T00:00:00`).toISOString() : undefined }),
 })
 const toDate = computed<string>({
-  get: () => query.value.to?.slice(0, 10) ?? '',
-  set: (value) => patch({ to: value ? `${value}T23:59:59.999Z` : undefined }),
+  get: () => toLocalDateInput(query.value.to),
+  set: (value) => patch({ to: value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined }),
 })
 </script>
 
@@ -72,12 +83,24 @@ const toDate = computed<string>({
 
     <label class="flex flex-col gap-1 text-sm">
       <span class="font-medium">{{ t('library.filters.from') }}</span>
-      <input v-model="fromDate" data-test="filter-from" type="date" class="rounded border px-2 py-1">
+      <input
+        v-model="fromDate"
+        :max="toDate || undefined"
+        data-test="filter-from"
+        type="date"
+        class="rounded border px-2 py-1"
+      >
     </label>
 
     <label class="flex flex-col gap-1 text-sm">
       <span class="font-medium">{{ t('library.filters.to') }}</span>
-      <input v-model="toDate" data-test="filter-to" type="date" class="rounded border px-2 py-1">
+      <input
+        v-model="toDate"
+        :min="fromDate || undefined"
+        data-test="filter-to"
+        type="date"
+        class="rounded border px-2 py-1"
+      >
     </label>
   </div>
 </template>

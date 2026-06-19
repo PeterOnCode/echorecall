@@ -4,6 +4,7 @@ import Database from 'better-sqlite3'
 import type { Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
 import {
   DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
   type BulkCleanFilter,
   type GenerationRepository,
   type LibraryListResult,
@@ -234,7 +235,9 @@ export class SqliteGenerationRepository implements GenerationRepository {
     const tiebreak = column === 'created_at' ? 'id DESC' : 'created_at DESC, id DESC'
 
     const pageSize =
-      query.pageSize && query.pageSize > 0 ? Math.floor(query.pageSize) : DEFAULT_PAGE_SIZE
+      query.pageSize && query.pageSize > 0
+        ? Math.min(Math.floor(query.pageSize), MAX_PAGE_SIZE)
+        : DEFAULT_PAGE_SIZE
     const page = query.page && query.page > 0 ? Math.floor(query.page) : 1
     const offset = (page - 1) * pageSize
 

@@ -171,6 +171,16 @@ describe('SqliteGenerationRepository.list(query)', () => {
     expect(page2.total).toBe(3)
   })
 
+  it('caps an excessive pageSize so a crafted request cannot pull the whole table', () => {
+    const repo = makeRepo()
+    for (let i = 0; i < 150; i++) {
+      repo.insert(rec({ id: `r${i}`, path: `audio/r${i}.mp3` }))
+    }
+    const { rows, total } = repo.list({ pageSize: 10_000, page: 1 })
+    expect(total).toBe(150)
+    expect(rows).toHaveLength(100)
+  })
+
   it('composes search + filter + sort', () => {
     const repo = makeRepo()
     seed(repo)

@@ -29,10 +29,12 @@ const hasFilter = computed(() => Boolean(voiceId.value || fromDate.value || toDa
 
 function confirm() {
   if (!hasFilter.value) return
+  // Treat the picked days as the user's local calendar days (not UTC) and convert
+  // their inclusive bounds to UTC instants, matching how the search filter works.
   emit('confirm', {
     voiceId: voiceId.value || undefined,
-    from: fromDate.value ? `${fromDate.value}T00:00:00.000Z` : undefined,
-    to: toDate.value ? `${toDate.value}T23:59:59.999Z` : undefined,
+    from: fromDate.value ? new Date(`${fromDate.value}T00:00:00`).toISOString() : undefined,
+    to: toDate.value ? new Date(`${toDate.value}T23:59:59.999`).toISOString() : undefined,
   })
 }
 </script>
@@ -54,11 +56,23 @@ function confirm() {
         <div class="flex gap-3">
           <label class="flex flex-1 flex-col gap-1 text-sm">
             <span class="font-medium">{{ t('library.bulkClean.from') }}</span>
-            <input v-model="fromDate" data-test="bulk-from" type="date" class="rounded border px-2 py-1">
+            <input
+              v-model="fromDate"
+              :max="toDate || undefined"
+              data-test="bulk-from"
+              type="date"
+              class="rounded border px-2 py-1"
+            >
           </label>
           <label class="flex flex-1 flex-col gap-1 text-sm">
             <span class="font-medium">{{ t('library.bulkClean.to') }}</span>
-            <input v-model="toDate" data-test="bulk-to" type="date" class="rounded border px-2 py-1">
+            <input
+              v-model="toDate"
+              :min="fromDate || undefined"
+              data-test="bulk-to"
+              type="date"
+              class="rounded border px-2 py-1"
+            >
           </label>
         </div>
       </div>

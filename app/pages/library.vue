@@ -45,7 +45,13 @@ async function onSave(item: LibraryItem, patch: { filename: string; metadata: Me
   if (metadataChanged) updatePatch.metadata = patch.metadata
 
   await update(item.id, updatePatch)
-  if (!error.value) editingId.value = null
+  if (!error.value) {
+    editingId.value = null
+    // A rename/title/tag edit can change what the active search/sort matches, so
+    // re-run the current query to keep the list consistent (e.g. a row renamed
+    // out of a `q=…` match must drop, a title-sorted page must reorder).
+    await load()
+  }
 }
 
 async function onDelete(id: string) {
