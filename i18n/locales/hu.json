@@ -134,6 +134,15 @@
     }
   },
   "settings": {
-    "comingSoon": "A beállítások hamarosan elérhetők."
+    "title": "Beállítások",
+    "appearance": {
+      "title": "Megjelenés",
+      "light": "Világos",
+      "dark": "Sötét",
+      "system": "Rendszer"
+    },
+    "language": {
+      "title": "Nyelv"
+    }
   }
 }
