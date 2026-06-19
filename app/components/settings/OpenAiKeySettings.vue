@@ -13,6 +13,9 @@ onMounted(load)
 const storageDisabled = computed(() => status.value?.secretConfigured === false)
 
 async function onSave() {
+  // Guard against the Enter key bypassing the button's disabled/loading state
+  // (concurrent submits or a submit while storage is disabled).
+  if (saving.value || storageDisabled.value) return
   const key = draft.value.trim()
   if (!key) return
   if (await setKey(key)) draft.value = ''

@@ -23,8 +23,13 @@ export interface KeyDeps {
   envKey?: string
 }
 
-/** Mask a key to a fixed prefix + its last four characters (never the full key). */
+/**
+ * Mask a key to a fixed prefix + its last four characters (never the full key).
+ * Keys too short to safely reveal a suffix are masked completely, so a malformed
+ * or mistyped secret can't leak through the status (FR-041).
+ */
 export function maskKey(key: string): string {
+  if (key.length < 8) return '●●●●'
   return `●●●●${key.slice(-4)}`
 }
 

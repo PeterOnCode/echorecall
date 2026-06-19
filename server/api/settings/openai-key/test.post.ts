@@ -16,8 +16,9 @@ export default defineEventHandler(async (event) => {
       },
       async (apiKey) => {
         // A lightweight authenticated call: it succeeds with a usable key and
-        // throws on an invalid one (caught by testApiKey → ok:false).
-        await new OpenAI({ apiKey }).models.list()
+        // throws on an invalid one (caught by testApiKey → ok:false). A short
+        // timeout keeps an unresponsive OpenAI from hanging the handler.
+        await new OpenAI({ apiKey, timeout: 10_000 }).models.list()
         return true
       },
     )

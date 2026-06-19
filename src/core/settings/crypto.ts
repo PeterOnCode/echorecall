@@ -13,13 +13,23 @@ const IV_BYTES = 12
 // scopes the derived key to this application/version.
 const KEY_SALT = 'echorecall:openai-key:v1'
 
+// scrypt is deliberately CPU-intensive, and the key is derived on every request
+// (resolveApiKey runs per generation). The app secret is fixed for the process
+// lifetime, so cache the derived key by secret to keep the event loop unblocked.
+let cachedSecret: string | undefined
+let cachedKey: Buffer | undefined
+
 function deriveKey(appSecret: string): Buffer {
   if (!appSecret) {
     // Encryption must never run without a secret; callers gate on this, but fail
     // loudly if one slips through rather than encrypting under an empty key.
     throw new Error('Cannot derive an encryption key without an app secret.')
   }
-  return scryptSync(appSecret, KEY_SALT, KEY_BYTES)
+  if (appSecret === cachedSecret && cachedKey) return cachedKey
+  const key = scryptSync(appSecret, KEY_SALT, KEY_BYTES)
+  cachedSecret = appSecret
+  cachedKey = key
+  return key
 }
 
 /** Encrypt `plaintext` to an `iv:authTag:ciphertext` (base64) payload. */

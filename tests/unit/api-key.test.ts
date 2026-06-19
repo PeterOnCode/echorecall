@@ -67,4 +67,9 @@ describe('maskKey', () => {
     expect(masked).not.toContain('sk-proj-1234567890')
     expect(masked.endsWith('ABCD')).toBe(true)
   })
+
+  it('completely masks short keys so they can never leak', () => {
+    expect(maskKey('123')).toBe('●●●●')
+    expect(maskKey('1234567')).toBe('●●●●')
+  })
 })
