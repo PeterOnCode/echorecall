@@ -143,6 +143,31 @@
     },
     "language": {
       "title": "Nyelv"
+    },
+    "openaiKey": {
+      "title": "OpenAI API-kulcs",
+      "description": "Állíts be egy OpenAI-kulcsot ehhez az alkalmazáshoz. Titkosítva tároljuk a szerveren, és többé nem jelenik meg.",
+      "current": "Jelenlegi kulcs:",
+      "none": "Nincs az alkalmazásban beállított kulcs — a környezeti kulcsot használjuk, ha van.",
+      "source": {
+        "ui": "alkalmazásban beállítva",
+        "env": "környezetből",
+        "none": "nincs"
+      },
+      "inputLabel": "OpenAI API-kulcs",
+      "placeholder": "sk-…",
+      "save": "Kulcs mentése",
+      "clear": "Kulcs törlése",
+      "test": "Kulcs tesztelése",
+      "testOk": "Az aktív kulcs működik.",
+      "testFail": "Az aktív kulcs nem működött.",
+      "disabledNotice": "Állítsd be a NUXT_APP_SECRET értékét a szerveren, hogy OpenAI-kulcsot tárolhass az alkalmazásban. A környezeti kulcsot (ha van) továbbra is használjuk.",
+      "errors": {
+        "load": "Nem sikerült betölteni a kulcs állapotát.",
+        "save": "Nem sikerült menteni a kulcsot. Próbáld újra.",
+        "disabled": "Az alkalmazáson belüli kulcstárolás ki van kapcsolva. Engedélyezéshez állítsd be a NUXT_APP_SECRET-et.",
+        "clear": "Nem sikerült törölni a kulcsot. Próbáld újra."
+      }
     }
   }
 }

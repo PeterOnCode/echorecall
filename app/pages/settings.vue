@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Settings area. Appearance + language (US7) ship here; the in-app OpenAI key
-// (US8) and default tags (US10) are added in later stories.
+// Settings area. Appearance + language (US7) and the in-app OpenAI key (US8) ship
+// here; default tags (US10) are added in a later story.
 const { t } = useI18n()
 </script>
 
@@ -9,5 +9,6 @@ const { t } = useI18n()
     <h1 class="text-xl font-semibold">{{ t('settings.title') }}</h1>
     <AppearanceSettings />
     <LanguageSettings />
+    <OpenAiKeySettings />
   </div>
 </template>

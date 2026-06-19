@@ -34,3 +34,20 @@ export { TagLibAudioTagger } from './tagging/taglib-tagger'
 // Naming (filesystem-safe slug + dated, collision-safe filename allocation).
 export { MAX_SLUG_LENGTH } from './naming/slug'
 export { datedDir, allocateFilename } from './naming/filename'
+
+// In-app OpenAI key (US8): encrypted-at-rest storage + per-request UI→env
+// precedence. Server-only (node:crypto, better-sqlite3) — never import from
+// '#core/client'.
+export type { AppConfigRepository } from './settings/app-config-repository'
+export { SqliteAppConfigRepository } from './settings/app-config-repository'
+export { encryptSecret, decryptSecret } from './settings/crypto'
+export {
+  resolveApiKey,
+  getKeyStatus,
+  setUiKey,
+  clearUiKey,
+  testApiKey,
+  maskKey,
+  OPENAI_KEY_CONFIG_KEY,
+} from './settings/api-key'
+export type { KeyStatus, KeySource, KeyDeps } from './settings/api-key'
