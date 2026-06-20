@@ -8,7 +8,8 @@
  */
 export function useAppVersion(): string | null {
   // Nuxt types this computed public value broadly, so narrow it ourselves: any
-  // non-string or empty value is treated as "unavailable" and degrades to null.
+  // non-string or blank value (incl. whitespace-only) is treated as
+  // "unavailable" and degrades to null.
   const version = useRuntimeConfig().public.appVersion
-  return typeof version === 'string' && version.length > 0 ? version : null
+  return typeof version === 'string' && version.trim().length > 0 ? version.trim() : null
 }

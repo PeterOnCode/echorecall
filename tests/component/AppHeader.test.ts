@@ -25,7 +25,11 @@ mockNuxtImport('useAppVersion', () => useAppVersionMock)
 const REMOTE_VERSION_CHECK = /version|release|github|npm|registry|update/i
 function assertNoRemoteVersionCheck(spy: ReturnType<typeof vi.spyOn>): void {
   for (const call of spy.mock.calls) {
-    expect(String(call[0])).not.toMatch(REMOTE_VERSION_CHECK)
+    // fetch accepts string | URL | Request; a Request stringifies to
+    // "[object Request]", so read its url to keep the guard meaningful.
+    const input = call[0]
+    const url = input instanceof Request ? input.url : String(input)
+    expect(url).not.toMatch(REMOTE_VERSION_CHECK)
   }
 }
 
