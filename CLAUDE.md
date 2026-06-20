@@ -1,8 +1,10 @@
 <!-- SPECKIT START -->
-Active feature: **002-studio-enhancements** (branch `002-studio-enhancements`).
+Latest shipped feature: **002-studio-enhancements** — all user stories (US1–US10) plus
+Phase 13 polish are merged to `master`. No feature is currently in progress; start a new
+one with `/speckit-specify`. (Only the manual T109 quickstart walkthrough is unsigned-off.)
 
 For technologies, project structure, shell commands, and other context, read the
-current plan and its design artifacts:
+002 plan and its design artifacts (they describe the now-shipped feature set):
 
 - Plan: `specs/002-studio-enhancements/plan.md`
 - Spec: `specs/002-studio-enhancements/spec.md`
@@ -12,7 +14,7 @@ current plan and its design artifacts:
 - Core API contract: `specs/002-studio-enhancements/contracts/core-api.md`
 - Quickstart: `specs/002-studio-enhancements/quickstart.md`
 
-Prior feature (still the running baseline): `specs/001-tts-generation-library/`.
+002 is now the running baseline, built on the original `specs/001-tts-generation-library/`.
 
 Stack: TypeScript (strict) on Node.js (pinned 22.22.2 via mise); Nuxt 4 (Vue 3 + Nitro)
 web adapter over a framework-agnostic `src/core/`. 002 adds: `@nuxt/ui` v4 (+color-mode),
