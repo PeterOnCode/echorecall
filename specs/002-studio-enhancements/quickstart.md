@@ -37,8 +37,11 @@ mise exec node@22.22.2 -- pnpm typecheck
 mise exec node@22.22.2 -- pnpm test:adapters  # OPTIONAL gated suite: taglib-wasm tagger (+ live OpenAI if keyed)
 ```
 
-Release (FR-047): `mise exec node@22.22.2 -- pnpm bumpp` → bumps `package.json`, commits,
-tags; the header version updates with no further edit.
+Release (FR-047): `mise exec node@22.22.2 -- pnpm bumpp <patch|minor|major>` (one command;
+omit the type to pick interactively) → bumps the single authoritative `version` in
+`package.json`, creates a release commit + tag. `nuxt.config.ts` reads that `version` into
+`runtimeConfig.public.appVersion`, which the header shows via `useAppVersion()` — so the
+displayed version updates with no further edit.
 
 ## Validation scenarios (map to user stories & SCs)
 

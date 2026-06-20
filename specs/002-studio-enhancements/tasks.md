@@ -278,12 +278,12 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 9 ⚠️ (write first, must fail)
 
-- [ ] T095 [P] [US9] Component test `tests/component/AppHeader.test.ts`: header renders the version from `runtimeConfig.public.appVersion`; when absent, it is omitted/placeholder and no remote request is made
+- [X] T095 [P] [US9] Component test `tests/component/AppHeader.test.ts`: header renders the version from `runtimeConfig.public.appVersion`; when absent, it is omitted/placeholder and no remote request is made
 
 ### Implementation for User Story 9
 
-- [ ] T096 [US9] Create `app/components/common/AppHeader.vue` (+ `app/composables/useAppVersion.ts`) reading `useRuntimeConfig().public.appVersion`, degrading gracefully; mount it in `app/layouts/default.vue` — depends on T017
-- [ ] T097 [US9] Verify the `bumpp` script + `runtimeConfig.public.appVersion` end-to-end (bump → header reflects new version) and document it in quickstart usage — depends on T001, T002, T096
+- [X] T096 [US9] Create `app/components/common/AppHeader.vue` (+ `app/composables/useAppVersion.ts`) reading `useRuntimeConfig().public.appVersion`, degrading gracefully; mount it in `app/layouts/default.vue` — depends on T017
+- [X] T097 [US9] Verify the `bumpp` script + `runtimeConfig.public.appVersion` end-to-end (bump → header reflects new version) and document it in quickstart usage — depends on T001, T002, T096
 
 **Checkpoint**: The running version is visible and releasable with one command.
 
