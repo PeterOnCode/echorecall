@@ -14,14 +14,19 @@ const voiceId = ref('')
 const fromDate = ref('')
 const toDate = ref('')
 
+// The dialog container is focusable (tabindex -1); moving focus into it on open
+// announces the dialog (via aria-labelledby) and lets the Esc keydown be caught
+// no matter which control is active — keyboard a11y for this custom modal (T105).
+const dialog = ref<HTMLElement | null>(null)
+
 watch(
   () => props.open,
   (open) => {
-    if (open) {
-      voiceId.value = ''
-      fromDate.value = ''
-      toDate.value = ''
-    }
+    if (!open) return
+    voiceId.value = ''
+    fromDate.value = ''
+    toDate.value = ''
+    nextTick(() => dialog.value?.focus())
   },
 )
 
@@ -41,7 +46,15 @@ function confirm() {
 
 <template>
   <div v-if="open" class="backdrop" data-test="bulk-clean-dialog" @click.self="emit('cancel')">
-    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="bulk-clean-title">
+    <div
+      ref="dialog"
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bulk-clean-title"
+      tabindex="-1"
+      @keydown.esc="emit('cancel')"
+    >
       <h3 id="bulk-clean-title" class="text-base font-semibold">{{ t('library.bulkClean.title') }}</h3>
       <p class="text-sm text-muted">{{ t('library.bulkClean.description') }}</p>
 
