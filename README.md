@@ -1,84 +1,114 @@
 # EchoRecall
 
 Turn written text into spoken audio and keep a permanent, browsable library of
-everything you've generated. EchoRecall is a small web app: enter text, pick a
-voice, and listen — every successful generation is saved so you can replay,
-download, or delete it later without regenerating.
+everything you've generated. EchoRecall is a small web app: build a list of
+text, pick a voice and format, and generate a whole batch at once — every
+successful clip is saved so you can replay, retag, download, or delete it later
+without regenerating.
 
-- **Generate & listen** — type/paste text (up to 4,096 chars), choose a voice, hear MP3 audio.
-- **Persistent library** — every generation is stored (SQLite + on-disk MP3) and survives restarts; replay makes no new provider call.
-- **Manage** — download any clip as `<id>.mp3`, or permanently delete it behind a confirmation.
+- **Batch studio** — type/paste lines or upload a `.txt`, then generate the whole list in one go; per-item failures are isolated and the successes download as a `.zip`.
+- **Voices, models & formats** — choose a voice and model, and render to MP3, WAV, FLAC, Opus, AAC, or PCM.
+- **Standards-based metadata** — attach title, artist, album, genre, comment, languages, and repeatable custom text/URL tags, written as ID3v2.4 / Vorbis comments where the format supports them.
+- **Persistent library** — every generation is stored (SQLite + on-disk audio under `data/`) and survives restarts; replay makes no new provider call. Files are saved with human-readable, title-slugged names under a `YYYY/MM/DD` folder.
+- **Find & manage** — server-side search, sort, filter (voice/format/date), and pagination; rename, retag, delete, or bulk-clean by filter.
+- **Personalize** — light/dark theme and language (English / Hungarian, Hungarian default), persisted per browser.
+- **In-app OpenAI key** — optionally set/replace/clear the OpenAI key from the Settings tab; it is encrypted at rest and never returned to the client.
+- **Versioned** — the running app version is shown in the header and bumped with one release command.
 
 There is no built-in authentication — secure network access yourself (localhost,
 reverse proxy, or VPN).
 
 ## Stack
 
-TypeScript (strict) on Node.js · Nuxt 4 (Vue 3 + Nitro) · OpenAI TTS (MP3) ·
-SQLite (`better-sqlite3`) + filesystem audio under `data/` · Vitest + `@nuxt/test-utils`
-· Docker Compose. A framework-agnostic core lives in `src/core/`; the Nuxt server
-(`server/`) and UI (`app/`) are adapters over it.
+TypeScript (strict) on Node.js · Nuxt 4 (Vue 3 + Nitro) · `@nuxt/ui` v4 (+ color-mode)
+· `@nuxtjs/i18n` (en/hu) · OpenAI TTS · multi-format audio with ID3/Vorbis tagging via
+`taglib-wasm` (pure WASM — no system binary) · SQLite (`better-sqlite3`) + filesystem
+audio under `data/` · Vitest + `@nuxt/test-utils` · Docker Compose. A framework-agnostic
+core lives in `src/core/`; the Nuxt server (`server/`) and UI (`app/`) are adapters over it.
 
 ## Prerequisites
 
 - **Node.js 22.22.2** — pinned in `.mise.toml` / `.node-version`. Using [mise](https://mise.jdx.dev)
   (`mise install`) is recommended; the native `better-sqlite3` addon must be built
-  against this version.
+  against this version. (Node ≥ 22.6 is required for the WASM tagger.)
 - **pnpm 10** (`corepack enable` will provide it).
-- An **OpenAI API key** with TTS access.
+- An **OpenAI API key** with TTS access — set it in `.env` or in the Settings tab.
 
 ## Local development
 
 ```bash
 pnpm install
-cp .env.example .env          # then set NUXT_OPENAI_API_KEY=sk-...
+cp .env.example .env          # then set NUXT_OPENAI_API_KEY=sk-... (or set it in Settings)
 pnpm dev                      # http://localhost:3102
 ```
 
 Environment variables (server-only; never commit real keys):
 
-| Variable              | Required | Default  | Purpose                                  |
-| --------------------- | -------- | -------- | ---------------------------------------- |
-| `NUXT_OPENAI_API_KEY` | yes      | —        | OpenAI key used for TTS generation.      |
-| `NUXT_DATA_DIR`       | no       | `./data` | Where the SQLite DB + MP3 audio are kept. |
+| Variable                     | Required | Default  | Purpose                                                                 |
+| ---------------------------- | -------- | -------- | ----------------------------------------------------------------------- |
+| `NUXT_OPENAI_API_KEY`        | no\*     | —        | OpenAI key for TTS. \*Required unless you set one in the Settings tab.   |
+| `NUXT_DATA_DIR`              | no       | `./data` | Where the SQLite DB + audio are kept.                                   |
+| `NUXT_APP_SECRET`            | no       | —        | 32+ char secret enabling the encrypted in-app OpenAI key; unset → env key only. |
+| `NUXT_DEFAULT_TAG_ARTIST`    | no       | —        | Default Artist pre-filled on new generations.                           |
+| `NUXT_DEFAULT_TAG_ALBUM`     | no       | —        | Default Album.                                                          |
+| `NUXT_DEFAULT_TAG_GENRE`     | no       | —        | Default Genre.                                                          |
+| `NUXT_DEFAULT_TAG_COMMENT`   | no       | —        | Default Comment.                                                        |
+| `NUXT_DEFAULT_TAG_LANGUAGES` | no       | —        | Default languages (comma-separated). Title is never defaulted.          |
 
 ## Tests, types, and lint
 
 ```bash
 pnpm test            # core unit + server integration (TTS provider mocked — no live calls)
 pnpm test:component  # Vue component tests (@nuxt/test-utils)
+pnpm test:adapters   # GATED: real taglib-wasm tagger (+ optional live OpenAI if keyed)
 pnpm typecheck       # nuxt typecheck
 pnpm lint            # eslint
 ```
 
-The TTS provider is mocked at the core port boundary, so the suite never makes a
-live network call.
+The default suites mock the TTS provider and tagger at the core port boundary, so they
+never touch the network or a system binary. The real WASM tagger is exercised only by the
+opt-in `test:adapters` suite.
+
+## Release
+
+```bash
+pnpm bumpp <patch|minor|major>   # omit the type to choose interactively
+```
+
+`bumpp` bumps the single `version` in `package.json` and creates a release commit + tag.
+`nuxt.config.ts` reads that version into `runtimeConfig.public.appVersion`, which the
+header displays — so the shown version updates with no further edit.
 
 ## Docker
 
 ```bash
-# Reads NUXT_OPENAI_API_KEY from .env; serves on http://localhost:3102
+# Reads NUXT_* vars from .env; serves on http://localhost:3102
 docker compose up --build -d
 ```
 
-`docker-compose.yml` bind-mounts `./data` into the container, so the SQLite
-database and generated MP3s persist across container recreation. Stop with
-`docker compose down`.
+`docker-compose.yml` passes the OpenAI key, `NUXT_APP_SECRET`, and the `NUXT_DEFAULT_TAG_*`
+defaults through from `.env` (all optional), and bind-mounts `./data` so the SQLite
+database and generated audio persist across container recreation. No extra system packages
+are needed — `better-sqlite3` is built in the image and the tagger ships as WASM via npm.
+Stop with `docker compose down`.
 
 ## Project layout
 
 ```
-src/core/      framework-agnostic domain: tts/, library/, shared/ (ports + use-cases)
-server/        Nitro API routes (server/api/) + DI container & error mapping (server/utils/)
-app/           Nuxt UI: components/, composables/, pages/
-tests/         unit/ · integration/ · component/
+src/core/      framework-agnostic domain: tts/, library/, settings/, shared/ (ports + use-cases)
+server/        Nitro API routes (server/api/, incl. settings/) + DI container & error mapping
+app/           Nuxt UI: components/ (generate, library, settings, common), composables/, pages/
+i18n/locales/  en.json · hu.json
+tests/         unit/ · integration/ · component/ · adapters/ (gated)
 data/          runtime SQLite DB + audio/ (gitignored; Docker volume)
-specs/001-tts-generation-library/   spec, plan, data model, API contract, quickstart
+specs/         feature specs, plans, data models, API contracts, quickstarts
 ```
 
 ## Documentation
 
-End-to-end validation steps and acceptance criteria live in
-[`specs/001-tts-generation-library/quickstart.md`](specs/001-tts-generation-library/quickstart.md).
-The full specification, plan, data model, and REST API contract are alongside it in
+The current feature — batch studio, formats, tagging, library, settings, defaults, and
+versioning — is specified in
+[`specs/002-studio-enhancements/`](specs/002-studio-enhancements/) (see its
+[`quickstart.md`](specs/002-studio-enhancements/quickstart.md) for end-to-end validation
+steps). The original single-generation baseline lives in
 [`specs/001-tts-generation-library/`](specs/001-tts-generation-library/).

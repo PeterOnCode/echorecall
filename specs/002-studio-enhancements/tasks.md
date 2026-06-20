@@ -314,13 +314,13 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 **Purpose**: Documentation, deployment config, a11y, edge cases, and full-suite validation across all stories.
 
-- [ ] T103 [P] Update `README.md` and cross-check `specs/002-studio-enhancements/quickstart.md` for the new run/test/release commands and env vars
-- [ ] T104 Update `Dockerfile` and `docker-compose.yml` to pass through `NUXT_APP_SECRET` and `NUXT_DEFAULT_TAG_*` and confirm no extra system packages are required (WASM tagger via npm)
-- [ ] T105 [P] Accessibility pass on new components (labels, focus, keyboard) across `app/components/generate/`, `library/`, `settings/`, `common/`
-- [ ] T106 Configure the gated adapter suite (`test:adapters`) in `vitest.config.ts` (taglib-wasm tagger; optional live OpenAI) so the default suite stays network-/binary-free
-- [ ] T107 Handle the "deleting/bulk-cleaning a currently-playing item" edge case in `app/components/common/AudioPlayer.vue` (stop playback gracefully) and the missing-file tolerance end-to-end
-- [ ] T108 Run all quality gates: `pnpm test`, `pnpm test:component`, `pnpm lint`, `pnpm typecheck` (all green)
-- [ ] T109 Walk through every `quickstart.md` validation scenario (US1–US10 + migration) and confirm each observable outcome
+- [X] T103 [P] Update `README.md` and cross-check `specs/002-studio-enhancements/quickstart.md` for the new run/test/release commands and env vars
+- [X] T104 Update `Dockerfile` and `docker-compose.yml` to pass through `NUXT_APP_SECRET` and `NUXT_DEFAULT_TAG_*` and confirm no extra system packages are required (WASM tagger via npm)
+- [X] T105 [P] Accessibility pass on new components (labels, focus, keyboard) across `app/components/generate/`, `library/`, `settings/`, `common/`
+- [X] T106 Configure the gated adapter suite (`test:adapters`) in `vitest.config.ts` (taglib-wasm tagger; optional live OpenAI) so the default suite stays network-/binary-free
+- [X] T107 Handle the "deleting/bulk-cleaning a currently-playing item" edge case in `app/components/AudioPlayer.vue` (stop playback gracefully) and the missing-file tolerance end-to-end
+- [X] T108 Run all quality gates: `pnpm test`, `pnpm test:component`, `pnpm lint`, `pnpm typecheck` (all green)
+- [ ] T109 Walk through every `quickstart.md` validation scenario (US1–US10 + migration) and confirm each observable outcome — *automated gates green (T108); manual UI walkthrough pending sign-off*
 
 ---
 
