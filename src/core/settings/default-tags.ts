@@ -9,7 +9,7 @@ import type { Metadata } from '../shared/types'
  * Invalid or missing config simply yields an empty object — the reader never throws,
  * so the route never 500s.
  */
-export function readDefaultTags(env: Record<string, string | undefined>): Metadata {
+export function readDefaultTags(env: Record<string, string | undefined> = {}): Metadata {
   const tags: Metadata = {}
 
   const artist = clean(env.NUXT_DEFAULT_TAG_ARTIST)

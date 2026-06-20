@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { defineEventHandler, readBody } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
@@ -12,15 +12,29 @@ import GeneratePage from '~/pages/index.vue'
 
 registerEndpoint('/api/voices', () => ({ voices: [{ id: 'alloy', label: 'Alloy' }] }))
 
-registerEndpoint('/api/settings/defaults', () => ({
-  defaultTags: {
-    artist: 'EchoRecall',
-    album: 'Daily Briefing',
-    genre: 'Speech',
-    comment: 'Auto-generated',
-    languages: ['eng', 'hun'],
-  },
-}))
+const DEFAULT_TAGS = {
+  artist: 'EchoRecall',
+  album: 'Daily Briefing',
+  genre: 'Speech',
+  comment: 'Auto-generated',
+  languages: ['eng', 'hun'],
+}
+
+// When set, the defaults endpoint blocks on this promise until the test releases
+// it — letting us reproduce the mount-time race where the user types before the
+// async defaults arrive.
+let defaultsGate: Promise<void> | null = null
+registerEndpoint(
+  '/api/settings/defaults',
+  defineEventHandler(async () => {
+    if (defaultsGate) await defaultsGate
+    return { defaultTags: DEFAULT_TAGS }
+  }),
+)
+
+beforeEach(() => {
+  defaultsGate = null
+})
 
 const postedBodies: { text?: string; metadata?: Record<string, unknown> }[] = []
 registerEndpoint('/api/generations', {
@@ -94,5 +108,25 @@ describe('Generate form — default tag values (US10)', () => {
       expect(sent?.metadata?.languages).toEqual(['eng', 'hun'])
       expect(sent?.metadata?.title).toBeUndefined() // never defaulted
     })
+  })
+
+  it('preserves a value typed before the async defaults land (no clobber)', async () => {
+    // Hold the defaults response open so the form is interactive before they arrive.
+    let releaseDefaults!: () => void
+    defaultsGate = new Promise<void>((resolve) => {
+      releaseDefaults = resolve
+    })
+
+    const wrapper = await mountPage() // loadVoices resolves; defaults still in flight
+
+    // The user types into a field during the window before defaults return.
+    await wrapper.find('[data-test="meta-artist"]').setValue('User Artist')
+
+    // Defaults arrive now and are applied.
+    releaseDefaults()
+    await vi.waitFor(() => expect(inputValue(wrapper, 'meta-album')).toBe('Daily Briefing'))
+
+    // The user's value wins; the still-empty field got the default.
+    expect(inputValue(wrapper, 'meta-artist')).toBe('User Artist')
   })
 })
