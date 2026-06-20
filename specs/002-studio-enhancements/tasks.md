@@ -297,14 +297,14 @@ Web full-stack over a shared framework-agnostic core (per plan.md):
 
 ### Tests for User Story 10 ⚠️ (write first, must fail)
 
-- [ ] T098 [P] [US10] Integration test `tests/integration/settings-defaults.test.ts`: `GET /api/settings/defaults` returns env-provided default tags, never defaults Title, and returns blank (never 500) on invalid/missing config
-- [ ] T099 [P] [US10] Component test `tests/component/DefaultTags.test.ts`: a new queue row pre-fills non-title defaults (Title blank) and the user can override/clear them
+- [X] T098 [P] [US10] Integration test `tests/integration/settings-defaults.test.ts`: `GET /api/settings/defaults` returns env-provided default tags, never defaults Title, and returns blank (never 500) on invalid/missing config
+- [X] T099 [P] [US10] Component test `tests/component/DefaultTags.test.ts`: a new queue row pre-fills non-title defaults (Title blank) and the user can override/clear them
 
 ### Implementation for User Story 10
 
-- [ ] T100 [US10] Create `server/api/settings/defaults.get.ts` reading `NUXT_DEFAULT_TAG_*` safely (omit/blank on invalid config) — depends on T009
-- [ ] T101 [US10] Apply defaults on form load and new-row creation in `app/composables/useQueue.ts` / `app/components/generate/MetadataFields.vue` (Title never defaulted) — depends on T047, T100
-- [ ] T102 [US10] Add default-tags i18n keys to `i18n/locales/en.json` and `hu.json`
+- [X] T100 [US10] Create `server/api/settings/defaults.get.ts` reading `NUXT_DEFAULT_TAG_*` safely (omit/blank on invalid config) — depends on T009
+- [X] T101 [US10] Apply defaults on form load and new-row creation in `app/composables/useQueue.ts` / `app/components/generate/MetadataFields.vue` (Title never defaulted) — depends on T047, T100
+- [X] T102 [US10] Add default-tags i18n keys to `i18n/locales/en.json` and `hu.json`
 
 **Checkpoint**: All ten user stories are independently functional.
 

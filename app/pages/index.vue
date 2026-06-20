@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Metadata } from '#core/client'
 import type { UploadSummary } from '../composables/useQueue'
 
 // US1 batch studio: build a generation list (typed and/or uploaded), then a
@@ -16,15 +17,30 @@ const {
   removeItem,
   updateItem,
   applyMetadataToPending,
+  setDefaults,
 } = useQueue()
 const { voices, generating, loadVoices, generateAll, downloadArchive } = useGeneration()
 const { t } = useI18n()
 
 const uploadSummary = ref<UploadSummary | null>(null)
+// Whether any deployment default tag was applied (US10) — drives the form hint.
+const defaultsApplied = ref(false)
 
 onMounted(async () => {
   await loadVoices()
   if (!voiceId.value && voices.value.length > 0) voiceId.value = voices.value[0]!.id
+
+  // Pre-fill non-title metadata from deployment defaults (US10 / FR-048). Best
+  // effort: a failed or empty fetch simply leaves the fields blank.
+  try {
+    const { defaultTags } = await $fetch<{ defaultTags: Metadata }>('/api/settings/defaults')
+    if (defaultTags && Object.keys(defaultTags).length > 0) {
+      setDefaults(defaultTags)
+      defaultsApplied.value = Object.keys(defaultTags).some((key) => key !== 'title')
+    }
+  } catch {
+    // Defaults are optional; leave the form blank on any error.
+  }
 })
 
 function onAdd(text: string) {
@@ -66,7 +82,12 @@ async function onDownloadAll() {
 
     <UploadDropzone :summary="uploadSummary" @uploaded="onUploaded" />
 
-    <MetadataFields v-model="metadata" />
+    <div class="flex flex-col gap-1">
+      <p v-if="defaultsApplied" data-test="defaults-hint" class="text-xs text-muted">
+        {{ t('generate.metadata.defaultsHint') }}
+      </p>
+      <MetadataFields v-model="metadata" />
+    </div>
 
     <QueueList
       :items="items"

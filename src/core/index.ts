@@ -51,3 +51,5 @@ export {
   OPENAI_KEY_CONFIG_KEY,
 } from './settings/api-key'
 export type { KeyStatus, KeySource, KeyDeps } from './settings/api-key'
+// Default tag values (US10): non-secret, env-provided pre-fills for the form.
+export { readDefaultTags } from './settings/default-tags'

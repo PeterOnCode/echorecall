@@ -26,6 +26,7 @@
     },
     "metadata": {
       "legend": "Metadata (optional)",
+      "defaultsHint": "Some fields are pre-filled from deployment defaults. Change or clear any of them; the title is never pre-filled.",
       "title": "Title",
       "artist": "Artist",
       "album": "Album",

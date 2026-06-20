@@ -139,6 +139,28 @@ export function useQueue() {
   }
 
   /**
+   * Seed the shared form-level metadata with deployment-provided defaults (US10 /
+   * FR-048). Title is never defaulted, so it is stripped even if present. New rows
+   * clone this metadata in {@link makeItem}, so the defaults reach both the form and
+   * every newly-added row.
+   *
+   * Defaults arrive from an async fetch on mount, so a fast user may type before they
+   * land. They are merged *behind* whatever the user already set — defaults only fill
+   * still-empty fields — so an early edit is never clobbered and every default stays
+   * overridable/clearable (FR-048).
+   */
+  function setDefaults(defaults: Metadata): void {
+    const seeded = cloneMetadata(defaults)
+    delete seeded.title
+    const userEntered = Object.fromEntries(
+      Object.entries(metadata.value).filter(
+        ([, value]) => value !== undefined && value !== '' && !(Array.isArray(value) && value.length === 0),
+      ),
+    )
+    metadata.value = { ...seeded, ...userEntered } as Metadata
+  }
+
+  /**
    * Apply the current form-level metadata to every not-yet-generated row that
    * hasn't been edited individually. Called right before generation so the
    * metadata shown on the form reaches the whole batch — including rows added
@@ -164,6 +186,7 @@ export function useQueue() {
     removeItem,
     updateItem,
     applyMetadataToPending,
+    setDefaults,
     clear,
   }
 }
