@@ -26,6 +26,7 @@
     },
     "metadata": {
       "legend": "Metaadatok (nem kötelező)",
+      "defaultsHint": "Egyes mezők a telepítési alapértékekből vannak előkitöltve. Bármelyiket módosíthatod vagy törölheted; a cím soha nincs előkitöltve.",
       "title": "Cím",
       "artist": "Előadó",
       "album": "Album",
