@@ -20,6 +20,7 @@
     "bumpp": "bumpp"
   },
   "dependencies": {
+    "@internationalized/date": "^3.12.2",
     "@nuxt/ui": "^4.8.2",
     "@nuxtjs/i18n": "^10.4.0",
     "@sindresorhus/slugify": "^3.0.0",

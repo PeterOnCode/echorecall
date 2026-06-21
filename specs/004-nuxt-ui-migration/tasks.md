@@ -31,7 +31,9 @@
 
 **Purpose**: Establish a known-green baseline before red-first work.
 
-- [ ] T001 Confirm the baseline suite is green on branch `004-nuxt-ui-migration`: run `mise exec node@22.22.2 -- pnpm test`, `... pnpm test:component`, and `... pnpm typecheck`. Record which component specs currently pass (`LibraryTable`, `BulkCleanDialog`, `LibraryItemEditor`, `LibraryItemActions`, `QueueItemEditor`, `MetadataFields`, `Generate`, `QueueList`, `DefaultTags`, `DefaultTagsSettings`, `LibraryList`) — these are rewritten/removed in later phases.
+- [X] T001 Confirm the baseline suite is green on branch `004-nuxt-ui-migration`: run `mise exec node@22.22.2 -- pnpm test`, `... pnpm test:component`, and `... pnpm typecheck`. Record which component specs currently pass (`LibraryTable`, `BulkCleanDialog`, `LibraryItemEditor`, `LibraryItemActions`, `QueueItemEditor`, `MetadataFields`, `Generate`, `QueueList`, `DefaultTags`, `DefaultTagsSettings`, `LibraryList`) — these are rewritten/removed in later phases.
+
+**Baseline recorded (2026-06-21):** All three gates green — `pnpm test` 25 files/161 tests; `pnpm test:component` 14 files/62 tests; `pnpm typecheck` exit 0. **All 11 named component specs currently PASS** (`LibraryTable`, `BulkCleanDialog`, `LibraryItemEditor`, `LibraryItemActions`, `QueueItemEditor`, `MetadataFields`, `Generate`, `QueueList`, `DefaultTags`, `DefaultTagsSettings`, `LibraryList`) plus 3 not slated for rewrite (`AppHeader`, `AudioPlayer`, `Settings.appearance-language`). These 11 are the red-first rewrite/removal targets in Phases 3–6.
 
 **Checkpoint**: Clean baseline; ready to author failing tests.
 
@@ -43,7 +45,9 @@
 
 **⚠️ CRITICAL**: US2 and US3 date-picker tasks cannot begin until this is complete.
 
-- [ ] T002 Add `@internationalized/date` `^3.12.2` to `package.json` `dependencies` (same version already resolved under `@nuxt/ui@4.8.2`), run `mise exec node@22.22.2 -- pnpm install`, and confirm it resolves at the top level by importing `{ CalendarDate, getLocalTimeZone, parseDate } from '@internationalized/date'` in a scratch check + `... pnpm typecheck` (no new transitive surface). See plan Complexity Tracking + research D3.
+- [X] T002 Add `@internationalized/date` `^3.12.2` to `package.json` `dependencies` (same version already resolved under `@nuxt/ui@4.8.2`), run `mise exec node@22.22.2 -- pnpm install`, and confirm it resolves at the top level by importing `{ CalendarDate, getLocalTimeZone, parseDate } from '@internationalized/date'` in a scratch check + `... pnpm typecheck` (no new transitive surface). See plan Complexity Tracking + research D3.
+
+**Done (2026-06-21):** Added `"@internationalized/date": "^3.12.2"` to `dependencies`; `pnpm install` deduped to the existing **3.12.2** (`+ @internationalized/date 3.12.2`, otherwise "Already up to date" — no new transitive surface). Scratch import of `CalendarDate`/`getLocalTimeZone`/`parseDate` resolved & executed from top-level `node_modules`; `pnpm typecheck` exit 0.
 
 **Checkpoint**: `@internationalized/date` importable in app code; typecheck green.
 
