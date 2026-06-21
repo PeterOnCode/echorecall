@@ -4,12 +4,14 @@
 // takes effect on the next new generation. Title is never defaulted, so it isn't editable
 // here. Values are sanitized server-side, so the inputs are plain v-model bindings.
 const { t } = useI18n()
-const { values, hasSaved, saving, error, load, save, clear } = useDefaultTags()
+const { values, hasSaved, loading, saving, error, load, save, clear } = useDefaultTags()
 
 onMounted(load)
 
 async function onSave() {
-  if (saving.value) return
+  // Don't save until the current defaults have loaded: a full-replace PUT from the
+  // still-blank initial form would overwrite untouched fields, dropping saved values.
+  if (saving.value || loading.value) return
   await save()
 }
 </script>
@@ -31,7 +33,7 @@ async function onSave() {
       <input
         v-model="values.artist"
         data-test="default-artist"
-        :disabled="saving"
+        :disabled="loading || saving"
         class="rounded border px-2 py-1"
       >
     </label>
@@ -41,7 +43,7 @@ async function onSave() {
       <input
         v-model="values.album"
         data-test="default-album"
-        :disabled="saving"
+        :disabled="loading || saving"
         class="rounded border px-2 py-1"
       >
     </label>
@@ -51,7 +53,7 @@ async function onSave() {
       <input
         v-model="values.genre"
         data-test="default-genre"
-        :disabled="saving"
+        :disabled="loading || saving"
         class="rounded border px-2 py-1"
       >
     </label>
@@ -61,7 +63,7 @@ async function onSave() {
       <input
         v-model="values.comment"
         data-test="default-comment"
-        :disabled="saving"
+        :disabled="loading || saving"
         class="rounded border px-2 py-1"
       >
     </label>
@@ -72,14 +74,20 @@ async function onSave() {
         v-model="values.languages"
         data-test="default-languages"
         :placeholder="t('settings.defaultTags.languagesPlaceholder')"
-        :disabled="saving"
+        :disabled="loading || saving"
         class="rounded border px-2 py-1"
       >
       <span class="text-xs text-muted">{{ t('settings.defaultTags.languagesHint') }}</span>
     </label>
 
     <div class="flex flex-wrap gap-2">
-      <UButton data-test="default-save" icon="i-lucide-save" :loading="saving" @click="onSave">
+      <UButton
+        data-test="default-save"
+        icon="i-lucide-save"
+        :loading="saving"
+        :disabled="loading || saving"
+        @click="onSave"
+      >
         {{ t('settings.defaultTags.save') }}
       </UButton>
       <UButton

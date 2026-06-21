@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { defineEventHandler, readBody, getMethod } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import DefaultTagsSettings from '~/components/settings/DefaultTagsSettings.vue'
@@ -12,6 +13,9 @@ import DefaultTagsSettings from '~/components/settings/DefaultTagsSettings.vue'
 let saved: Record<string, unknown> = {}
 const putBodies: Record<string, unknown>[] = []
 let deleteCalls = 0
+// When set, the GET handler blocks on this until released — lets us reproduce the
+// window where the form is interactive before the saved defaults have loaded.
+let loadGate: Promise<void> | null = null
 
 registerEndpoint(
   '/api/settings/defaults',
@@ -35,6 +39,7 @@ registerEndpoint(
       saved = {}
       return { defaultTags: {} }
     }
+    if (loadGate) await loadGate
     return { defaultTags: saved }
   }),
 )
@@ -43,6 +48,7 @@ beforeEach(() => {
   saved = {}
   putBodies.length = 0
   deleteCalls = 0
+  loadGate = null
 })
 
 function val(wrapper: Awaited<ReturnType<typeof mountSuspended>>, test: string): string {
@@ -84,6 +90,28 @@ describe('Settings — default tag values (003)', () => {
 
     expect(putBodies).toHaveLength(1)
     expect(putBodies[0]).toMatchObject({ artist: 'Jane Doe', languages: 'eng' })
+  })
+
+  it('does not Save while the initial load is still in flight (prevents blank overwrite)', async () => {
+    saved = { artist: 'Jane', album: 'Briefing' }
+    let release!: () => void
+    loadGate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+
+    const wrapper = await mountSuspended(DefaultTagsSettings)
+    // load() is blocked, so the form is still the all-blank initial state.
+    await nextTick()
+
+    // Clicking Save now must not PUT — a full-replace from the blank form would drop
+    // the previously-saved Artist/Album.
+    await wrapper.find('[data-test="default-save"]').trigger('click')
+    await flushPromises()
+    expect(putBodies).toHaveLength(0)
+
+    // Once defaults arrive, the form reflects the saved values (settles over a few ticks).
+    release()
+    await vi.waitFor(() => expect(val(wrapper, 'default-artist')).toBe('Jane'))
   })
 
   it('Clear DELETEs and resets the fields', async () => {
