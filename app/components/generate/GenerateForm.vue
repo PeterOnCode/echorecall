@@ -14,6 +14,12 @@ const { t } = useI18n()
 
 const text = ref('')
 
+// USelectMenu items: formats display the uppercased extension but bind the format
+// id (matching the prior <option :value="f.id"> mapping). MODELS is readonly, so a
+// mutable copy is needed for USelectMenu's `items` type.
+const modelItems = [...MODELS]
+const formatItems = FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() }))
+
 function onAdd() {
   const value = text.value.trim()
   if (!value) return
@@ -25,49 +31,51 @@ function onAdd() {
 <template>
   <div class="flex flex-col gap-3">
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.voice') }}</span>
-        <select v-model="voiceId" data-test="voice" class="rounded border px-2 py-1">
-          <option v-for="v in voices" :key="v.id" :value="v.id">{{ v.label }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.model') }}</span>
-        <select v-model="model" data-test="model" class="rounded border px-2 py-1">
-          <option v-for="m in MODELS" :key="m" :value="m">{{ m }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.format') }}</span>
-        <select v-model="format" data-test="format" class="rounded border px-2 py-1">
-          <option v-for="f in FORMATS" :key="f.id" :value="f.id">{{ f.ext.toUpperCase() }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.speed') }}</span>
-        <input
-          v-model.number="speed"
+      <UFormField :label="t('generate.form.voice')">
+        <USelectMenu
+          v-model="voiceId"
+          data-test="voice"
+          value-key="id"
+          label-key="label"
+          :items="voices"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField :label="t('generate.form.model')">
+        <USelectMenu v-model="model" data-test="model" :items="modelItems" class="w-full" />
+      </UFormField>
+      <UFormField :label="t('generate.form.format')">
+        <USelectMenu
+          v-model="format"
+          data-test="format"
+          value-key="id"
+          label-key="label"
+          :items="formatItems"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField :label="t('generate.form.speed')">
+        <UInputNumber
+          v-model="speed"
           data-test="speed"
-          type="number"
-          min="0.25"
-          max="4"
-          step="0.05"
-          class="rounded border px-2 py-1"
-        >
-      </label>
+          :min="0.25"
+          :max="4"
+          :step="0.05"
+          class="w-full"
+        />
+      </UFormField>
     </div>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.form.text') }}</span>
-      <textarea
+    <UFormField :label="t('generate.form.text')">
+      <UTextarea
         v-model="text"
         data-test="add-text"
-        rows="3"
+        :rows="3"
         :placeholder="t('generate.form.textPlaceholder')"
-        class="rounded border px-2 py-1"
+        class="w-full"
         @keydown.ctrl.enter="onAdd"
       />
-    </label>
+    </UFormField>
 
     <div>
       <UButton data-test="add-item" icon="i-lucide-plus" @click="onAdd">

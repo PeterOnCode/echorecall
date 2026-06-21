@@ -14,6 +14,12 @@ const emit = defineEmits<{ uploaded: [content: string] }>()
 const { t } = useI18n()
 
 const error = ref<string | null>(null)
+// The file input is a visually-hidden native control (FR-009 justified exception):
+// @nuxt/ui's UFileUpload owns/previews the selected file, which breaks the
+// read-and-discard contract (FR-002) and crashes in the test DOM. A design-system
+// UButton triggers the hidden input, so the user-facing control is consistent while
+// the click-to-select / size-guard / emit / reset behavior stays byte-identical.
+const fileInput = ref<HTMLInputElement | null>(null)
 
 async function onChange(event: Event) {
   error.value = null
@@ -33,14 +39,26 @@ async function onChange(event: Event) {
 
 <template>
   <div class="flex flex-col gap-2">
-    <label for="batch-upload" class="text-sm font-medium">{{ t('generate.upload.label') }}</label>
+    <span class="text-sm font-medium">{{ t('generate.upload.label') }}</span>
     <input
-      id="batch-upload"
+      ref="fileInput"
       data-test="upload-input"
       type="file"
       accept=".txt,text/plain"
+      class="sr-only"
       @change="onChange"
     >
+    <div>
+      <UButton
+        data-test="upload-button"
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-upload"
+        @click="fileInput?.click()"
+      >
+        {{ t('generate.upload.choose') }}
+      </UButton>
+    </div>
     <p v-if="error" data-test="upload-error" role="alert" class="text-sm text-error">{{ error }}</p>
     <p v-if="summary" data-test="upload-summary" class="text-sm text-muted">
       <span data-test="summary-added">{{ summary.added }}</span> {{ t('generate.upload.added') }} ·

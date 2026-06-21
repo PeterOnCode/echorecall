@@ -51,6 +51,10 @@ function onUploaded(content: string) {
   uploadSummary.value = addFromUpload(content)
 }
 
+// The (optional) metadata editor lives in a collapsible accordion section, open by
+// default so the fields are visible without an extra click.
+const metadataSections = [{ label: t('generate.metadata.legend'), slot: 'metadata' as const, value: 'metadata' }]
+
 const doneIds = computed(() =>
   items.value.filter((i) => i.status === 'done' && i.result).map((i) => i.result!.id),
 )
@@ -82,12 +86,16 @@ async function onDownloadAll() {
 
     <UploadDropzone :summary="uploadSummary" @uploaded="onUploaded" />
 
-    <div class="flex flex-col gap-1">
-      <p v-if="defaultsApplied" data-test="defaults-hint" class="text-xs text-muted">
-        {{ t('generate.metadata.defaultsHint') }}
-      </p>
-      <MetadataFields v-model="metadata" />
-    </div>
+    <UAccordion :items="metadataSections" default-value="metadata">
+      <template #metadata>
+        <div class="flex flex-col gap-1">
+          <p v-if="defaultsApplied" data-test="defaults-hint" class="text-xs text-muted">
+            {{ t('generate.metadata.defaultsHint') }}
+          </p>
+          <MetadataFields v-model="metadata" />
+        </div>
+      </template>
+    </UAccordion>
 
     <QueueList
       :items="items"

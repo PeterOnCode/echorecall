@@ -19,6 +19,7 @@
     },
     "upload": {
       "label": "Upload a .txt (one item per line)",
+      "choose": "Choose file",
       "added": "added",
       "blank": "blank skipped",
       "tooLong": "too long",
