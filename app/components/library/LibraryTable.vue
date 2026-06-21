@@ -114,7 +114,7 @@ function onBulkConfirm(filter: BulkCleanFilter) {
         : t('library.empty') }}
     </p>
 
-    <table v-else class="w-full border-collapse text-sm">
+    <table v-else class="w-full border-collapse text-sm table-fixed">
       <thead>
         <tr class="border-b text-left">
           <th class="py-2 pr-3">
@@ -152,7 +152,7 @@ function onBulkConfirm(filter: BulkCleanFilter) {
               <p class="font-medium" :class="{ 'text-muted line-through': isUnavailable(g.id) }">
                 {{ g.filename }}
               </p>
-              <p class="truncate text-xs text-muted">{{ g.text }}</p>
+              <p class="whitespace-normal break-words text-xs text-muted">{{ g.text }}</p>
               <p v-if="isUnavailable(g.id)" data-test="row-unavailable" class="text-xs text-error">
                 {{ t('library.unavailable') }}
               </p>

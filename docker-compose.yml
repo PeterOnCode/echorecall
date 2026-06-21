@@ -12,12 +12,7 @@ services:
       NUXT_OPENAI_API_KEY: ${NUXT_OPENAI_API_KEY:-}
       # 32+ char secret enabling the encrypted in-app OpenAI key (US8); unset → env key only.
       NUXT_APP_SECRET: ${NUXT_APP_SECRET:-}
-      # Optional default tag values pre-filled on new generations (US10); Title is never defaulted.
-      NUXT_DEFAULT_TAG_ARTIST: ${NUXT_DEFAULT_TAG_ARTIST:-}
-      NUXT_DEFAULT_TAG_ALBUM: ${NUXT_DEFAULT_TAG_ALBUM:-}
-      NUXT_DEFAULT_TAG_GENRE: ${NUXT_DEFAULT_TAG_GENRE:-}
-      NUXT_DEFAULT_TAG_COMMENT: ${NUXT_DEFAULT_TAG_COMMENT:-}
-      NUXT_DEFAULT_TAG_LANGUAGES: ${NUXT_DEFAULT_TAG_LANGUAGES:-}
+      # Default tag values are configured in the Settings tab (003), not via env vars.
     volumes:
       # Persist the SQLite DB + generated MP3s across container recreation.
       - ./data:/app/data

@@ -23,15 +23,15 @@ const { voices, generating, loadVoices, generateAll, downloadArchive } = useGene
 const { t } = useI18n()
 
 const uploadSummary = ref<UploadSummary | null>(null)
-// Whether any deployment default tag was applied (US10) — drives the form hint.
+// Whether any saved default tag was applied (003) — drives the form hint.
 const defaultsApplied = ref(false)
 
 onMounted(async () => {
   await loadVoices()
   if (!voiceId.value && voices.value.length > 0) voiceId.value = voices.value[0]!.id
 
-  // Pre-fill non-title metadata from deployment defaults (US10 / FR-048). Best
-  // effort: a failed or empty fetch simply leaves the fields blank.
+  // Pre-fill non-title metadata from the saved default tags (003). Best effort:
+  // a failed or empty fetch simply leaves the fields blank.
   try {
     const { defaultTags } = await $fetch<{ defaultTags: Metadata }>('/api/settings/defaults')
     if (defaultTags && Object.keys(defaultTags).length > 0) {

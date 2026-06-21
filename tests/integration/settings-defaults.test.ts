@@ -1,57 +1,72 @@
-import { describe, it, expect } from 'vitest'
-import { readDefaultTags } from '../../src/core/settings/default-tags'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { SqliteAppConfigRepository } from '../../src/core/settings/app-config-repository'
+import {
+  getDefaultTags,
+  setDefaultTags,
+  clearDefaultTags,
+  DEFAULT_TAGS_CONFIG_KEY,
+  type DefaultTagsInput,
+} from '../../src/core/settings/default-tags'
 
-// Integration coverage for US10 default tag values (FR-048): the server reads
-// NUXT_DEFAULT_TAG_* into a Metadata object used to pre-fill the generation form.
-// Title is never defaulted, blank/whitespace values are omitted, LANGUAGES splits
-// on commas, and malformed/missing config degrades to an empty object so the route
-// returns 200 (never 500). The thin h3 route envelope is out of scope here (matching
-// the other integration suites); this drives the real reader the route delegates to.
+// Integration coverage for store-backed default tag values (003): the real pipeline the
+// /api/settings/defaults routes run — a file-backed SQLite app_config store with the
+// values persisted as plain (non-secret) JSON. The NUXT_DEFAULT_TAG_* env vars are no
+// longer a source. The thin h3 route envelopes are out of scope here (matching the other
+// integration suites); this drives the real core functions the routes delegate to.
 
-describe('readDefaultTags — env-provided default tags (US10)', () => {
-  it('maps NUXT_DEFAULT_TAG_* to Metadata, splitting languages on commas', () => {
-    const tags = readDefaultTags({
-      NUXT_DEFAULT_TAG_ARTIST: 'EchoRecall',
-      NUXT_DEFAULT_TAG_ALBUM: 'Daily Briefing',
-      NUXT_DEFAULT_TAG_GENRE: 'Speech',
-      NUXT_DEFAULT_TAG_COMMENT: 'Auto-generated',
-      NUXT_DEFAULT_TAG_LANGUAGES: 'eng, hun',
-    })
-    expect(tags).toEqual({
-      artist: 'EchoRecall',
-      album: 'Daily Briefing',
-      genre: 'Speech',
-      comment: 'Auto-generated',
-      languages: ['eng', 'hun'],
-    })
+let dir: string
+let config: SqliteAppConfigRepository
+
+beforeEach(async () => {
+  dir = await mkdtemp(join(tmpdir(), 'echorecall-defaults-'))
+  config = new SqliteAppConfigRepository(join(dir, 'echorecall.db'))
+})
+
+afterEach(async () => {
+  await rm(dir, { recursive: true, force: true })
+})
+
+describe('default tag values — store-backed (003)', () => {
+  it('GET returns {} before anything is saved', () => {
+    expect(getDefaultTags({ config })).toEqual({})
   })
 
-  it('never defaults Title, even when NUXT_DEFAULT_TAG_TITLE is set', () => {
-    const tags = readDefaultTags({
-      NUXT_DEFAULT_TAG_TITLE: 'Should be ignored',
-      NUXT_DEFAULT_TAG_ARTIST: 'EchoRecall',
-    })
-    expect(tags.title).toBeUndefined()
-    expect(tags).toEqual({ artist: 'EchoRecall' })
+  it('PUT saves the sanitized set, stored as plain JSON, readable from a fresh connection', () => {
+    const saved = setDefaultTags(
+      { config },
+      { artist: '  Jane Doe  ', genre: 'Podcast', languages: 'eng, hun, eng' },
+    )
+    expect(saved).toEqual({ artist: 'Jane Doe', genre: 'Podcast', languages: ['eng', 'hun'] })
+
+    // Persisted as plain JSON (non-secret), not encrypted.
+    const raw = config.get(DEFAULT_TAGS_CONFIG_KEY)
+    expect(raw).toBeTruthy()
+    expect(JSON.parse(raw!)).toEqual(saved)
+
+    // A fresh connection to the same DB file reads the same values back (persistence).
+    const reopened = new SqliteAppConfigRepository(join(dir, 'echorecall.db'))
+    expect(getDefaultTags({ config: reopened })).toEqual(saved)
   })
 
-  it('trims values and omits blank/whitespace-only ones', () => {
-    const tags = readDefaultTags({
-      NUXT_DEFAULT_TAG_ARTIST: '   ',
-      NUXT_DEFAULT_TAG_ALBUM: '',
-      NUXT_DEFAULT_TAG_GENRE: '  Speech  ',
-    })
-    expect(tags).toEqual({ genre: 'Speech' })
+  it('never stores a Title, even when one is supplied', () => {
+    setDefaultTags({ config }, { artist: 'Jane', title: 'nope' } as unknown as DefaultTagsInput)
+    expect(getDefaultTags({ config }).title).toBeUndefined()
+    expect(getDefaultTags({ config })).toEqual({ artist: 'Jane' })
   })
 
-  it('drops blank language entries and omits languages entirely when none remain', () => {
-    expect(readDefaultTags({ NUXT_DEFAULT_TAG_LANGUAGES: 'eng, , ,hun, ' })).toEqual({
-      languages: ['eng', 'hun'],
-    })
-    expect(readDefaultTags({ NUXT_DEFAULT_TAG_LANGUAGES: ' , , ' })).toEqual({})
+  it('re-saving with changed values replaces the stored set', () => {
+    setDefaultTags({ config }, { artist: 'Jane', genre: 'Podcast' })
+    setDefaultTags({ config }, { artist: 'Jane', genre: 'Audiobook' })
+    expect(getDefaultTags({ config })).toEqual({ artist: 'Jane', genre: 'Audiobook' })
   })
 
-  it('returns an empty object (never throws) for missing config', () => {
-    expect(readDefaultTags({})).toEqual({})
+  it('DELETE clears the saved defaults and GET is empty again', () => {
+    setDefaultTags({ config }, { artist: 'Jane' })
+    expect(clearDefaultTags({ config })).toEqual({})
+    expect(config.get(DEFAULT_TAGS_CONFIG_KEY)).toBeUndefined()
+    expect(getDefaultTags({ config })).toEqual({})
   })
 })

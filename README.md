@@ -49,11 +49,11 @@ Environment variables (server-only; never commit real keys):
 | `NUXT_OPENAI_API_KEY`        | no\*     | —        | OpenAI key for TTS. \*Required unless you set one in the Settings tab.   |
 | `NUXT_DATA_DIR`              | no       | `./data` | Where the SQLite DB + audio are kept.                                   |
 | `NUXT_APP_SECRET`            | no       | —        | 32+ char secret enabling the encrypted in-app OpenAI key; unset → env key only. |
-| `NUXT_DEFAULT_TAG_ARTIST`    | no       | —        | Default Artist pre-filled on new generations.                           |
-| `NUXT_DEFAULT_TAG_ALBUM`     | no       | —        | Default Album.                                                          |
-| `NUXT_DEFAULT_TAG_GENRE`     | no       | —        | Default Genre.                                                          |
-| `NUXT_DEFAULT_TAG_COMMENT`   | no       | —        | Default Comment.                                                        |
-| `NUXT_DEFAULT_TAG_LANGUAGES` | no       | —        | Default languages (comma-separated). Title is never defaulted.          |
+
+Default tag values (Artist, Album, Genre, Comment, Languages — Title is never defaulted)
+are configured in the **Settings tab** ("Default tag values") and persisted in the app;
+they are no longer set via environment variables. Upgrading from a release that used
+`NUXT_DEFAULT_TAG_*`? Those values are not migrated — re-enter them once in Settings.
 
 ## Tests, types, and lint
 
@@ -86,8 +86,8 @@ header displays — so the shown version updates with no further edit.
 docker compose up --build -d
 ```
 
-`docker-compose.yml` passes the OpenAI key, `NUXT_APP_SECRET`, and the `NUXT_DEFAULT_TAG_*`
-defaults through from `.env` (all optional), and bind-mounts `./data` so the SQLite
+`docker-compose.yml` passes the OpenAI key and `NUXT_APP_SECRET` through from `.env`
+(both optional), and bind-mounts `./data` so the SQLite
 database and generated audio persist across container recreation. No extra system packages
 are needed — `better-sqlite3` is built in the image and the tagger ships as WASM via npm.
 Stop with `docker compose down`.

@@ -1,13 +1,14 @@
-import { readDefaultTags } from '#core'
+import { getDefaultTags } from '#core'
+import { getAppConfigRepository } from '../../utils/container'
 import { respondError } from '../../utils/errors'
 
-// GET /api/settings/defaults — non-secret default tag values for pre-filling the
-// generation form (US10 / FR-048). Read from NUXT_DEFAULT_TAG_* per request and
-// never persisted; Title is never defaulted and invalid/missing config yields an
-// empty object, so this never 500s.
+// GET /api/settings/defaults — saved default tag values for the Settings form and the
+// generation-form pre-fill (003). Read from the in-app app_config store (no longer from
+// NUXT_DEFAULT_TAG_*). Title is never returned and unreadable data yields {}, so this
+// never 500s.
 export default defineEventHandler((event) => {
   try {
-    return { defaultTags: readDefaultTags(process.env) }
+    return { defaultTags: getDefaultTags({ config: getAppConfigRepository() }) }
   } catch (err) {
     return respondError(event, err)
   }

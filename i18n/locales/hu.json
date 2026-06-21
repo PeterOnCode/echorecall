@@ -169,6 +169,28 @@
         "disabled": "Az alkalmazáson belüli kulcstárolás ki van kapcsolva. Engedélyezéshez állítsd be a NUXT_APP_SECRET-et.",
         "clear": "Nem sikerült törölni a kulcsot. Próbáld újra."
       }
+    },
+    "defaultTags": {
+      "title": "Alapértelmezett címke-értékek",
+      "description": "Töltsd ki előre az új generálásokat ezekkel a címke-értékekkel. A Cím soha nem kap alapértelmezést.",
+      "saved": "A mentett értékek előre kitöltődnek az új generálásoknál.",
+      "none": "Nincs beállított alapértelmezés — az új generálások üres címkékkel indulnak.",
+      "fields": {
+        "artist": "Előadó",
+        "album": "Album",
+        "genre": "Műfaj",
+        "comment": "Megjegyzés",
+        "languages": "Nyelvek"
+      },
+      "languagesPlaceholder": "eng, hun",
+      "languagesHint": "Vesszővel elválasztott ISO 639-2 kódok.",
+      "save": "Alapértékek mentése",
+      "clear": "Alapértékek törlése",
+      "errors": {
+        "load": "Nem sikerült betölteni az alapértelmezett címkéket.",
+        "save": "Nem sikerült menteni az alapértelmezett címkéket. Próbáld újra.",
+        "clear": "Nem sikerült törölni az alapértelmezett címkéket. Próbáld újra."
+      }
     }
   }
 }

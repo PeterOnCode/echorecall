@@ -51,5 +51,12 @@ export {
   OPENAI_KEY_CONFIG_KEY,
 } from './settings/api-key'
 export type { KeyStatus, KeySource, KeyDeps } from './settings/api-key'
-// Default tag values (US10): non-secret, env-provided pre-fills for the form.
-export { readDefaultTags } from './settings/default-tags'
+// Default tag values (003): non-secret, store-backed pre-fills for the form,
+// editable from the Settings tab. Replaces the removed env reader (no NUXT_DEFAULT_TAG_*).
+export {
+  getDefaultTags,
+  setDefaultTags,
+  clearDefaultTags,
+  DEFAULT_TAGS_CONFIG_KEY,
+} from './settings/default-tags'
+export type { DefaultTagsDeps, DefaultTagsInput } from './settings/default-tags'
