@@ -86,6 +86,7 @@ export function useDefaultTags() {
 
   /** Clear the saved defaults; new generations then start blank. */
   async function clear(): Promise<void> {
+    if (saving.value) return
     saving.value = true
     error.value = null
     try {
