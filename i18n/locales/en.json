@@ -169,6 +169,28 @@
         "disabled": "In-app key storage is disabled. Set NUXT_APP_SECRET to enable it.",
         "clear": "Could not clear the key. Please try again."
       }
+    },
+    "defaultTags": {
+      "title": "Default tag values",
+      "description": "Pre-fill new generations with these tag values. Title is never defaulted.",
+      "saved": "Saved values are pre-filled on new generations.",
+      "none": "No defaults set — new generations start with empty tags.",
+      "fields": {
+        "artist": "Artist",
+        "album": "Album",
+        "genre": "Genre",
+        "comment": "Comment",
+        "languages": "Languages"
+      },
+      "languagesPlaceholder": "eng, hun",
+      "languagesHint": "Comma-separated ISO 639-2 codes.",
+      "save": "Save defaults",
+      "clear": "Clear defaults",
+      "errors": {
+        "load": "Could not load the default tags.",
+        "save": "Could not save the default tags. Please try again.",
+        "clear": "Could not clear the default tags. Please try again."
+      }
     }
   }
 }
