@@ -8,7 +8,7 @@ import { CalendarDate } from '@internationalized/date'
 // filter change resets to page 1 so a narrowed result set is never hidden behind
 // a now-out-of-range page.
 const query = defineModel<LibraryQuery>('query', { required: true })
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 /** Merge a partial change and snap back to the first page. */
 function patch(part: Partial<LibraryQuery>) {
@@ -25,14 +25,16 @@ const q = computed<string>({
 // throws if an item's value is '', so "all" uses a non-empty sentinel that maps
 // back to `undefined` (no filter) in the query.
 const ALL = '__all__'
-const voiceItems = [
+// Computed so the translated "all voices"/"all formats" labels track runtime
+// locale changes (the voice/format values themselves are locale-independent).
+const voiceItems = computed(() => [
   { id: ALL, label: t('library.filters.allVoices') },
   ...VOICES.map((v) => ({ id: v.id, label: v.label })),
-]
-const formatItems = [
+])
+const formatItems = computed(() => [
   { id: ALL, label: t('library.filters.allFormats') },
   ...FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() })),
-]
+])
 
 const voiceId = computed<string>({
   get: () => query.value.voiceId ?? ALL,
@@ -84,7 +86,8 @@ function clearRange() {
 const rangeLabel = computed(() => {
   const { from, to } = query.value
   if (!from && !to) return t('library.filters.anyDate')
-  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '…')
+  // Format in the active locale so the label matches the selected language.
+  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleDateString(locale.value) : '…')
   return `${fmt(from)} – ${fmt(to)}`
 })
 </script>
