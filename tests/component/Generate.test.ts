@@ -107,6 +107,27 @@ describe('Generate page (batch studio)', () => {
     expect(wrapper.find('[data-test="upload-error"]').exists()).toBe(true)
   })
 
+  it('clamps the form speed to its bounds (0.25–4)', async () => {
+    const wrapper = await mountPage()
+    const speed = wrapper.find('[data-test="speed"]')
+    const el = speed.element as HTMLInputElement
+
+    // Above max → clamped to 4 (the migrated UInputNumber enforces min/max; a raw
+    // number input would keep the typed value, so this is a red-first signal).
+    await speed.setValue('5')
+    await speed.trigger('change')
+    await speed.trigger('blur')
+    await flushPromises()
+    expect(el.value).toBe('4')
+
+    // Below min → clamped to 0.25.
+    await speed.setValue('0.1')
+    await speed.trigger('change')
+    await speed.trigger('blur')
+    await flushPromises()
+    expect(el.value).toBe('0.25')
+  })
+
   it('generates every item with one call per row, isolating a single failure', async () => {
     const wrapper = await mountPage()
     await addTyped(wrapper, 'alpha')

@@ -95,172 +95,166 @@ function removeUrl(index: number) {
 </script>
 
 <template>
-  <fieldset class="flex flex-col gap-3 rounded border p-3">
+  <fieldset class="flex flex-col gap-3 rounded border border-default p-3">
     <legend class="px-1 text-sm font-medium">{{ t('generate.metadata.legend') }}</legend>
 
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      <label v-for="f in scalarFields" :key="f.key" class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t(`generate.metadata.${f.key}`) }}</span>
-        <input
-          v-model="bound[f.key].value"
-          :data-test="f.test"
-          type="text"
-          class="rounded border px-2 py-1"
-        >
-      </label>
+      <UFormField v-for="f in scalarFields" :key="f.key" :label="t(`generate.metadata.${f.key}`)">
+        <UInput v-model="bound[f.key].value" :data-test="f.test" class="w-full" />
+      </UFormField>
     </div>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.metadata.comment') }}</span>
-      <textarea v-model="comment" data-test="meta-comment" rows="2" class="rounded border px-2 py-1" />
-    </label>
+    <UFormField :label="t('generate.metadata.comment')">
+      <UTextarea v-model="comment" data-test="meta-comment" :rows="2" class="w-full" />
+    </UFormField>
 
     <!-- Languages (multi-value) -->
-    <div class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.metadata.languages') }}</span>
-      <div class="flex flex-wrap items-center gap-2">
-        <span
-          v-for="(lang, i) in model.languages ?? []"
-          :key="`${lang}-${i}`"
-          data-test="meta-language-chip"
-          class="inline-flex items-center gap-1 rounded bg-elevated px-2 py-0.5 text-xs"
-        >
-          {{ lang }}
-          <button
-            type="button"
-            data-test="meta-language-remove"
-            class="text-muted hover:text-error"
-            :aria-label="t('generate.metadata.removeLanguage')"
-            @click="removeLanguage(i)"
+    <UFormField :label="t('generate.metadata.languages')">
+      <div class="flex flex-col gap-2">
+        <div v-if="model.languages?.length" class="flex flex-wrap items-center gap-2">
+          <UBadge
+            v-for="(lang, i) in model.languages ?? []"
+            :key="`${lang}-${i}`"
+            data-test="meta-language-chip"
+            color="neutral"
+            variant="soft"
+            class="gap-1"
           >
-            ×
-          </button>
-        </span>
+            {{ lang }}
+            <UButton
+              data-test="meta-language-remove"
+              color="neutral"
+              variant="link"
+              size="xs"
+              icon="i-lucide-x"
+              :aria-label="t('generate.metadata.removeLanguage')"
+              @click="removeLanguage(i)"
+            />
+          </UBadge>
+        </div>
+        <div class="flex gap-2">
+          <UInput
+            v-model="newLanguage"
+            data-test="meta-language-input"
+            :placeholder="t('generate.metadata.languagePlaceholder')"
+            class="w-40"
+            @keydown.enter.prevent="addLanguage"
+          />
+          <UButton
+            data-test="meta-language-add"
+            color="neutral"
+            variant="outline"
+            size="xs"
+            icon="i-lucide-plus"
+            @click="addLanguage"
+          >
+            {{ t('generate.metadata.addLanguage') }}
+          </UButton>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <input
-          v-model="newLanguage"
-          data-test="meta-language-input"
-          type="text"
-          :placeholder="t('generate.metadata.languagePlaceholder')"
-          class="w-40 rounded border px-2 py-1"
-          @keydown.enter.prevent="addLanguage"
-        >
-        <UButton
-          data-test="meta-language-add"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          icon="i-lucide-plus"
-          @click="addLanguage"
-        >
-          {{ t('generate.metadata.addLanguage') }}
-        </UButton>
-      </div>
-    </div>
+    </UFormField>
 
     <!-- Custom text entries -->
-    <div class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.metadata.customText') }}</span>
-      <ul v-if="model.customText?.length" class="flex flex-col gap-1">
-        <li
-          v-for="(entry, i) in model.customText"
-          :key="i"
-          data-test="meta-text-entry"
-          class="flex items-center gap-2"
-        >
-          <span class="flex-1 truncate">{{ entry.description }}: {{ entry.value }}</span>
-          <UButton
-            data-test="meta-text-remove"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-x"
-            :aria-label="t('generate.metadata.remove')"
-            @click="removeText(i)"
+    <UFormField :label="t('generate.metadata.customText')">
+      <div class="flex flex-col gap-2">
+        <ul v-if="model.customText?.length" class="flex flex-col gap-1">
+          <li
+            v-for="(entry, i) in model.customText"
+            :key="i"
+            data-test="meta-text-entry"
+            class="flex items-center gap-2"
+          >
+            <span class="flex-1 truncate">{{ entry.description }}: {{ entry.value }}</span>
+            <UButton
+              data-test="meta-text-remove"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              icon="i-lucide-x"
+              :aria-label="t('generate.metadata.remove')"
+              @click="removeText(i)"
+            />
+          </li>
+        </ul>
+        <div class="flex flex-wrap gap-2">
+          <UInput
+            v-model="newTextDesc"
+            data-test="meta-text-desc"
+            :placeholder="t('generate.metadata.description')"
+            class="w-40"
+            @keydown.enter.prevent="addText"
           />
-        </li>
-      </ul>
-      <div class="flex flex-wrap gap-2">
-        <input
-          v-model="newTextDesc"
-          data-test="meta-text-desc"
-          type="text"
-          :placeholder="t('generate.metadata.description')"
-          class="w-40 rounded border px-2 py-1"
-          @keydown.enter.prevent="addText"
-        >
-        <input
-          v-model="newTextValue"
-          data-test="meta-text-value"
-          type="text"
-          :placeholder="t('generate.metadata.value')"
-          class="w-40 rounded border px-2 py-1"
-          @keydown.enter.prevent="addText"
-        >
-        <UButton
-          data-test="meta-text-add"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          icon="i-lucide-plus"
-          @click="addText"
-        >
-          {{ t('generate.metadata.add') }}
-        </UButton>
+          <UInput
+            v-model="newTextValue"
+            data-test="meta-text-value"
+            :placeholder="t('generate.metadata.value')"
+            class="w-40"
+            @keydown.enter.prevent="addText"
+          />
+          <UButton
+            data-test="meta-text-add"
+            color="neutral"
+            variant="outline"
+            size="xs"
+            icon="i-lucide-plus"
+            @click="addText"
+          >
+            {{ t('generate.metadata.add') }}
+          </UButton>
+        </div>
       </div>
-    </div>
+    </UFormField>
 
     <!-- Custom URL entries (ID3 only) -->
-    <div class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.metadata.customUrl') }}</span>
-      <ul v-if="model.customUrl?.length" class="flex flex-col gap-1">
-        <li
-          v-for="(entry, i) in model.customUrl"
-          :key="i"
-          data-test="meta-url-entry"
-          class="flex items-center gap-2"
-        >
-          <span class="flex-1 truncate">{{ entry.description }}: {{ entry.url }}</span>
-          <UButton
-            data-test="meta-url-remove"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-x"
-            :aria-label="t('generate.metadata.remove')"
-            @click="removeUrl(i)"
+    <UFormField :label="t('generate.metadata.customUrl')">
+      <div class="flex flex-col gap-2">
+        <ul v-if="model.customUrl?.length" class="flex flex-col gap-1">
+          <li
+            v-for="(entry, i) in model.customUrl"
+            :key="i"
+            data-test="meta-url-entry"
+            class="flex items-center gap-2"
+          >
+            <span class="flex-1 truncate">{{ entry.description }}: {{ entry.url }}</span>
+            <UButton
+              data-test="meta-url-remove"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              icon="i-lucide-x"
+              :aria-label="t('generate.metadata.remove')"
+              @click="removeUrl(i)"
+            />
+          </li>
+        </ul>
+        <div class="flex flex-wrap gap-2">
+          <UInput
+            v-model="newUrlDesc"
+            data-test="meta-url-desc"
+            :placeholder="t('generate.metadata.description')"
+            class="w-40"
+            @keydown.enter.prevent="addUrl"
           />
-        </li>
-      </ul>
-      <div class="flex flex-wrap gap-2">
-        <input
-          v-model="newUrlDesc"
-          data-test="meta-url-desc"
-          type="text"
-          :placeholder="t('generate.metadata.description')"
-          class="w-40 rounded border px-2 py-1"
-          @keydown.enter.prevent="addUrl"
-        >
-        <input
-          v-model="newUrlValue"
-          data-test="meta-url-value"
-          type="url"
-          :placeholder="t('generate.metadata.url')"
-          class="w-40 rounded border px-2 py-1"
-          @keydown.enter.prevent="addUrl"
-        >
-        <UButton
-          data-test="meta-url-add"
-          color="neutral"
-          variant="outline"
-          size="xs"
-          icon="i-lucide-plus"
-          @click="addUrl"
-        >
-          {{ t('generate.metadata.add') }}
-        </UButton>
+          <UInput
+            v-model="newUrlValue"
+            data-test="meta-url-value"
+            type="url"
+            :placeholder="t('generate.metadata.url')"
+            class="w-40"
+            @keydown.enter.prevent="addUrl"
+          />
+          <UButton
+            data-test="meta-url-add"
+            color="neutral"
+            variant="outline"
+            size="xs"
+            icon="i-lucide-plus"
+            @click="addUrl"
+          >
+            {{ t('generate.metadata.add') }}
+          </UButton>
+        </div>
       </div>
-    </div>
+    </UFormField>
   </fieldset>
 </template>

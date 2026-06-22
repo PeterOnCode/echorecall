@@ -72,59 +72,70 @@ function commitText() {
 
 const instructionsApplied = computed(() => props.item.model === INSTRUCTIONS_MODEL)
 const tagsSkipped = computed(() => isUntaggableFormat(props.item.format))
+
+// USelectMenu items: voices carry their own {id,label}; formats display the
+// uppercased extension but bind the format id (matching the prior <option> mapping).
+// MODELS is readonly, so a mutable copy is needed for USelectMenu's `items` type.
+const modelItems = [...MODELS]
+const formatItems = FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() }))
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 rounded border bg-elevated p-3" data-test="queue-item-editor">
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.form.text') }}</span>
-      <textarea
+  <div class="flex flex-col gap-3 rounded border border-default bg-elevated p-3" data-test="queue-item-editor">
+    <UFormField :label="t('generate.form.text')">
+      <UTextarea
         v-model="draftText"
         data-test="edit-text"
-        rows="3"
-        class="rounded border px-2 py-1"
+        :rows="3"
+        class="w-full"
         @input="textError = null"
         @blur="commitText"
       />
-      <span v-if="textError" data-test="edit-text-error" class="text-xs text-error">
-        {{ textError === 'empty' ? t('generate.edit.textEmpty') : t('generate.edit.textTooLong') }}
-      </span>
-    </label>
+      <template v-if="textError" #error>
+        <span data-test="edit-text-error">
+          {{ textError === 'empty' ? t('generate.edit.textEmpty') : t('generate.edit.textTooLong') }}
+        </span>
+      </template>
+    </UFormField>
 
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.voice') }}</span>
-        <select v-model="voiceId" data-test="edit-voice" class="rounded border px-2 py-1">
-          <option v-for="v in voices" :key="v.id" :value="v.id">{{ v.label }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.model') }}</span>
-        <select v-model="model" data-test="edit-model" class="rounded border px-2 py-1">
-          <option v-for="m in MODELS" :key="m" :value="m">{{ m }}</option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1 text-sm">
-        <span class="font-medium">{{ t('generate.form.format') }}</span>
-        <select v-model="format" data-test="edit-format" class="rounded border px-2 py-1">
-          <option v-for="f in FORMATS" :key="f.id" :value="f.id">{{ f.ext.toUpperCase() }}</option>
-        </select>
-      </label>
+      <UFormField :label="t('generate.form.voice')">
+        <USelectMenu
+          v-model="voiceId"
+          data-test="edit-voice"
+          value-key="id"
+          label-key="label"
+          :items="voices"
+          class="w-full"
+        />
+      </UFormField>
+      <UFormField :label="t('generate.form.model')">
+        <USelectMenu v-model="model" data-test="edit-model" :items="modelItems" class="w-full" />
+      </UFormField>
+      <UFormField :label="t('generate.form.format')">
+        <USelectMenu
+          v-model="format"
+          data-test="edit-format"
+          value-key="id"
+          label-key="label"
+          :items="formatItems"
+          class="w-full"
+        />
+      </UFormField>
     </div>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('generate.edit.instructions') }}</span>
-      <textarea
+    <UFormField :label="t('generate.edit.instructions')">
+      <UTextarea
         v-model.lazy="instructions"
         data-test="edit-instructions"
-        rows="2"
+        :rows="2"
         :placeholder="t('generate.edit.instructionsPlaceholder')"
-        class="rounded border px-2 py-1"
+        class="w-full"
       />
-      <span v-if="!instructionsApplied" data-test="edit-instructions-note" class="text-xs text-muted">
-        {{ t('generate.edit.instructionsNotApplied') }}
-      </span>
-    </label>
+      <template v-if="!instructionsApplied" #help>
+        <span data-test="edit-instructions-note">{{ t('generate.edit.instructionsNotApplied') }}</span>
+      </template>
+    </UFormField>
 
     <p v-if="tagsSkipped" data-test="edit-skip-warning" class="text-xs text-warning">
       {{ t('generate.edit.tagsSkipped') }}

@@ -19,6 +19,7 @@
     },
     "upload": {
       "label": ".txt feltöltése (soronként egy tétel)",
+      "choose": "Fájl kiválasztása",
       "added": "hozzáadva",
       "blank": "üres kihagyva",
       "tooLong": "túl hosszú",

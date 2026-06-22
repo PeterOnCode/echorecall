@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { flushPromises } from '@vue/test-utils'
 import { MAX_INPUT_LENGTH } from '#core/client'
 import QueueItemEditor from '~/components/generate/QueueItemEditor.vue'
 import { useQueue, type ItemPatch, type QueueItem } from '~/composables/useQueue'
@@ -40,14 +41,33 @@ function lastPatch(wrapper: Awaited<ReturnType<typeof mountEditor>>): ItemPatch 
   return emitted[emitted.length - 1]![0] as ItemPatch
 }
 
+// The voice/model/format controls are now `USelectMenu` (a button-triggered combobox,
+// not a native <select>), so `setValue` no longer applies. happy-dom can't reliably
+// drive the teleported listbox, so we simulate a user choosing an option by emitting
+// `update:modelValue` from the specific menu — located as the USelectMenu whose subtree
+// contains the preserved data-test trigger. This exercises the component's real v-model
+// wiring (the option-click behavior itself is covered by @nuxt/ui's own suite).
+async function pickSelect(
+  wrapper: Awaited<ReturnType<typeof mountEditor>>,
+  testId: string,
+  value: string,
+) {
+  const menu = wrapper
+    .findAllComponents({ name: 'USelectMenu' })
+    .find((c) => c.find(`[data-test="${testId}"]`).exists())
+  if (!menu) throw new Error(`USelectMenu [data-test="${testId}"] not found`)
+  menu.vm.$emit('update:modelValue', value)
+  await flushPromises()
+}
+
 describe('QueueItemEditor (per-row edit)', () => {
   it('emits a minimal patch when the voice, model, or format changes', async () => {
     const wrapper = await mountEditor(baseItem())
 
-    await wrapper.find('[data-test="edit-voice"]').setValue('echo')
+    await pickSelect(wrapper, 'edit-voice', 'echo')
     expect(lastPatch(wrapper)).toEqual({ voiceId: 'echo' })
 
-    await wrapper.find('[data-test="edit-format"]').setValue('flac')
+    await pickSelect(wrapper, 'edit-format', 'flac')
     expect(lastPatch(wrapper)).toEqual({ format: 'flac' })
   })
 
@@ -92,7 +112,7 @@ describe('QueueItemEditor (per-row edit)', () => {
     // No note while on the instructions-capable model.
     expect(wrapper.find('[data-test="edit-instructions-note"]').exists()).toBe(false)
 
-    await wrapper.find('[data-test="edit-model"]').setValue('tts-1')
+    await pickSelect(wrapper, 'edit-model', 'tts-1')
     expect(lastPatch(wrapper)).toEqual({ model: 'tts-1' })
 
     // Parent applies the patch; instructions are retained, not discarded.
@@ -108,7 +128,7 @@ describe('QueueItemEditor (per-row edit)', () => {
 
     expect(wrapper.find('[data-test="edit-skip-warning"]').exists()).toBe(false)
 
-    await wrapper.find('[data-test="edit-format"]').setValue('aac')
+    await pickSelect(wrapper, 'edit-format', 'aac')
     expect(lastPatch(wrapper)).toEqual({ format: 'aac' })
 
     await wrapper.setProps({ item: baseItem({ format: 'aac' }) })
