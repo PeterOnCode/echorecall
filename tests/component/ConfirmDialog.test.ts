@@ -66,6 +66,23 @@ describe('ConfirmDialog (UModal)', () => {
     wrapper.unmount()
   })
 
+  it('exposes the message to assistive tech as the dialog description', async () => {
+    const wrapper = await mountSuspended(ConfirmDialog, {
+      props: { open: true, title: 'Delete it?', message: 'This cannot be undone.' },
+    })
+    await flushPromises()
+
+    // The old bespoke dialog wired the message via aria-describedby; UModal must do
+    // the same (via its description) so screen-reader users hear the warning, not
+    // just the title.
+    const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement | null
+    expect(dialog).not.toBeNull()
+    const describedBy = dialog!.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    expect(document.getElementById(describedBy!)?.textContent).toContain('This cannot be undone.')
+    wrapper.unmount()
+  })
+
   it('emits confirm/cancel from the footer buttons', async () => {
     const wrapper = await mountSuspended(ConfirmDialog, { props: { open: true } })
     await flushPromises()

@@ -34,7 +34,13 @@ function onOpenChange(value: boolean) {
 </script>
 
 <template>
-  <UModal :open="open" :title="title" :dismissible="true" @update:open="onOpenChange">
+  <UModal
+    :open="open"
+    :title="title"
+    :description="message || undefined"
+    :dismissible="true"
+    @update:open="onOpenChange"
+  >
     <template #content>
       <div data-test="confirm-dialog" class="flex flex-col gap-3 p-4 sm:p-6">
         <h3 class="text-base font-semibold text-highlighted">{{ title }}</h3>
