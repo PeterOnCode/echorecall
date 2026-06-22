@@ -14,16 +14,17 @@ import { CalendarDate } from '@internationalized/date'
 // `USelectMenu` and the date range is a single range picker (UPopover + UCalendar).
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ confirm: [filter: BulkCleanFilter]; cancel: [] }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Voice filter via USelectMenu. reka-ui's Combobox reserves the empty string for
 // its own cleared state, so "any voice" uses a non-empty sentinel mapped back to
 // `undefined` (no filter) on confirm.
 const ALL = '__all__'
-const voiceItems = [
+// Computed so the translated "any voice" label tracks runtime locale changes.
+const voiceItems = computed(() => [
   { id: ALL, label: t('library.bulkClean.anyVoice') },
   ...VOICES.map((v) => ({ id: v.id, label: v.label })),
-]
+])
 const voiceId = ref(ALL)
 
 // Date range picker (FR-010/011). The single range selection maps to the same
@@ -67,7 +68,8 @@ function clearRange() {
 
 const rangeLabel = computed(() => {
   if (!fromIso.value && !toIso.value) return t('library.filters.anyDate')
-  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '…')
+  // Format in the active locale so the label matches the selected language.
+  const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleDateString(locale.value) : '…')
   return `${fmt(fromIso.value)} – ${fmt(toIso.value)}`
 })
 
