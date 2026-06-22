@@ -115,7 +115,7 @@ app/components/
 │   └── BulkCleanDialog.vue            # MIGRATE: bespoke modal→UModal, <select>→USelectMenu, 2×<input type=date>→date picker; drop scoped styles & focus handling  [P3]
 ├── settings/
 │   ├── DefaultTagsSettings.vue        # MIGRATE: 5×<input>→UInput in UFormField (preserve :disabled loading/saving)  [P3]
-│   └── OpenAiKeySettings.vue          # NO-OP: no raw interactive controls (verify; already UInput/UButton)
+│   └── OpenAiKeySettings.vue          # MIGRATE (Phase 6 correction): note was wrong — key field was a raw <input type=password>; →UInput/UFormField
 └── LibraryList.vue                    # REMOVE: dead component (unreferenced by any page/component) — YAGNI, not migrated
 
 app/pages/                             # unchanged composition; verify no raw controls (index/library/settings already wrapper-only)

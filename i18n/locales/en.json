@@ -85,8 +85,6 @@
       "format": "Format",
       "allVoices": "All voices",
       "allFormats": "All formats",
-      "from": "From",
-      "to": "To",
       "dateRange": "Date range",
       "anyDate": "Any date",
       "clearDates": "Clear"
@@ -109,8 +107,6 @@
       "description": "Permanently remove every saved item matching these filters, along with its audio. This can’t be undone.",
       "voice": "Voice",
       "anyVoice": "Any voice",
-      "from": "From",
-      "to": "To",
       "needFilter": "Choose a date range and/or a voice first.",
       "confirm": "Delete matching items",
       "cancel": "Cancel"

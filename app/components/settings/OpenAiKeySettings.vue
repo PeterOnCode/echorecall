@@ -46,19 +46,18 @@ async function onSave() {
       <template v-else>{{ t('settings.openaiKey.none') }}</template>
     </p>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.openaiKey.inputLabel') }}</span>
-      <input
+    <UFormField :label="t('settings.openaiKey.inputLabel')">
+      <UInput
         v-model="draft"
         data-test="key-input"
         type="password"
         autocomplete="off"
         :placeholder="t('settings.openaiKey.placeholder')"
         :disabled="storageDisabled || saving"
-        class="rounded border px-2 py-1"
+        class="w-full"
         @keydown.enter="onSave"
-      >
-    </label>
+      />
+    </UFormField>
 
     <div class="flex flex-wrap gap-2">
       <UButton
