@@ -1,35 +1,32 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 2.3.0 → 2.4.0
-Bump rationale: MINOR — the Technology Stack's Text-to-speech secret-handling clause
-  was relaxed to permit an in-app, encrypted, server-only OpenAI API key (set via the
-  Settings UI) in ADDITION to environment configuration, with a UI-set key taking
-  precedence over the env var (which remains a fallback). This expands stack guidance
-  without adding, removing, or redefining any core principle — MINOR, consistent with
-  how the 2.2.0→2.3.0 stack change was classified.
+Version change: 2.4.0 → 2.5.0
+Bump rationale: MINOR — the Technology Stack gains a new approved entry: an
+  audio-visualization / waveform library (`wavesurfer.js` with its regions and zoom
+  plugins) for the web UI, permitting client-side waveform display, zoom, and
+  loop-region playback. This expands the stack list without adding, removing, or
+  redefining any core principle — MINOR, consistent with how the 2.3.0→2.4.0 stack
+  change was classified. Requested by feature 005-dashboard-redesign (US6 / FR-016),
+  whose plan flagged the new dependency as outside the prior stack list.
 Modified principles: none — all five core principles unchanged.
 Modified sections:
-  - Technology Stack → Text-to-speech: the API key MAY now be supplied via environment
-    configuration OR set in-app via the Settings UI; an in-app key MUST be persisted
-    encrypted at rest (server-side secret) and takes precedence over OPENAI_API_KEY,
-    which remains a fallback. The key MUST stay server-only — never sent to the client,
-    never written to logs, never echoed in error messages.
-Added sections: none.
+  - Technology Stack: ADDED an "Audio visualization (web UI)" entry permitting
+    `wavesurfer.js` (+ regions/zoom plugins) for waveform display, zoom, and
+    loop-region playback. Scoped to the web adapter (`app/`): it MUST NOT be imported
+    by `src/core/` or the CLI (Principle IV), and MUST be used only for display and
+    playback — never to modify, trim, transcode, or export audio.
+Added sections: none (new bullet within existing Technology Stack section).
 Removed sections: none.
 Templates requiring updates:
   ✅ plan-template.md   — technology-agnostic; Constitution Check derived at plan time; no change
   ✅ spec-template.md   — technology-agnostic; no change required
   ✅ tasks-template.md  — generic scaffold; no change required
-  (verified 2026-06-17: no template hardcodes the OpenAI key / secret-handling clause)
+  (verified 2026-06-22: no template hardcodes the technology-stack list)
 Runtime docs:
-  ⚠ README.md — still documents env-only key (NUXT_OPENAI_API_KEY via .env), which
-    remains accurate for the shipped app. Update to describe the in-app Settings key
-    + .env fallback WHEN the Settings-tab feature ships (specs/specs-plan.md), not before.
+  ✅ no runtime-doc change required — the waveform library is introduced by feature
+    005's implementation; README/runtime docs update WHEN 005 ships, not before.
 Follow-up TODOs:
-  - RESOLVED TODO(openai-key-handling): key handling is now fully defined — environment
-    OR in-app encrypted (server-only), UI precedence with env fallback. The encryption
-    secret and store location are owned by the Settings feature's plan.
   - TODO(test-http-mocking): unchanged — confirm fetch interception (MSW /
     @mswjs/interceptors vs nock) before the first HTTP CLI test.
 -->
@@ -116,6 +113,12 @@ impulses. This principle keeps the build focused and the codebase auditable.
 
 - **Language**: TypeScript (latest stable, strict mode)
 - **Web framework**: Nuxt 4 (Vue 3, Nitro server, Vite) for the web UI
+- **Audio visualization (web UI)**: `wavesurfer.js` (with its regions and zoom
+  plugins) MAY be used in the Nuxt web UI for client-side waveform display, zoom, and
+  loop-region playback. This is a presentation-only concern: it MUST remain in the web
+  adapter (`app/`), MUST NOT be imported by `src/core/` or the CLI (Principle IV), and
+  MUST be used solely to display and play audio — never to modify, trim, transcode, or
+  export it.
 - **Runtime**: Node.js LTS for both the Nuxt web app / Nitro server and the CLI
 - **CLI command parser**: cac (commander is an acceptable alternative)
 - **CLI styling**: chalk
@@ -172,4 +175,4 @@ All PRs and reviews MUST verify compliance with the five core principles. Any
 deviation requires a Complexity Tracking entry in `plan.md` with explicit
 justification.
 
-**Version**: 2.4.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-17
+**Version**: 2.5.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-22
