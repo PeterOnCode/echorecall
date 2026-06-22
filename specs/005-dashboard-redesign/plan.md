@@ -15,7 +15,10 @@ detail pane is the per-item metadata editor with a **recording-date picker** def
 tomorrow; the toolbar exposes upload, previous/next item navigation, generate, save queue, open
 queue, and open settings. **Generate** processes checked items if any are checked else the whole
 queue, and **removes each successfully generated item** from the queue (failed items remain for
-retry). Queues are **saved/opened as local files** the user manages (export/import) — no
+retry). The existing form-level voice/model/format/speed selectors are retained as a compact
+**defaults bar** (FR-021), and the batch ".zip" download is **preserved** as a post-run
+"download this batch" of the run's successful items, independent of the queue (FR-022 — no
+regression). Queues are **saved/opened as local files** the user manages (export/import) — no
 server storage. On Library: the same two-pane layout (results table left, audio-tags panel
 right with previous/next navigation), plus a bottom **waveform player** (zoom + loop regions)
 for the selected recording.
@@ -129,6 +132,7 @@ app/
 │   ├── dashboard/
 │   │   └── DashboardWorkspace.vue     # NEW: shared resizable two-pane shell (UDashboardGroup/UDashboardPanel/UDashboardResizeHandle); #list + #detail slots; size persisted  [US1]
 │   ├── generate/
+│   │   ├── GenerateForm.vue           # ADAPT: compact "defaults bar" (voice/model/format/speed for new items, → useQueue form-level refs); text-add relocates to AddTextPanel  [US1]
 │   │   ├── GenerateToolbar.vue        # NEW: UDashboardToolbar — upload, prev, next, generate, save queue, open queue, open settings  [US2]
 │   │   ├── AddTextPanel.vue           # NEW: single ad-hoc text → queue (rejects empty)  [US4]
 │   │   ├── QueueList.vue              # ADAPT: UTable list pane — checkbox select column, source column, search, filters, column-visibility trigger  [US1/US3]
@@ -154,7 +158,7 @@ app/
 │   ├── useQueue.ts                    # ADAPT: add `source`/`sourceName`, selection (checkedIds), removeMany, client-side filters/search, serialize/deserialize  [US1/US3]
 │   ├── useQueueFile.ts                # NEW: export queue → local JSON file; import + validate (versioned)  [US2]
 │   ├── useViewPreferences.ts          # NEW: persist visible columns (localStorage); split size handled by @nuxt/ui dashboard storage  [US3]
-│   ├── useGeneration.ts              # ADAPT: generate checked-else-all; remove successfully-generated items from the queue  [US2]
+│   ├── useGeneration.ts              # ADAPT: generate checked-else-all; remove successfully-generated items; expose last-run successful ids for the batch download (FR-022)  [US2]
 │   └── useLibrary.ts                  # KEEP: query/load/update/remove/bulkClean unchanged (no server change)
 
 tests/

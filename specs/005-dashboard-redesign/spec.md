@@ -15,6 +15,8 @@
 - Q: What does the toolbar "Generate" action operate on? → A: Checked items if any are checked, otherwise the entire queue.
 - Q: What localization/accessibility bar must the new UI meet? → A: Full parity — all new strings localized (en/hu) and all new interactions keyboard- and screen-reader-accessible, gated by automated tests.
 - Q: After Generate runs, what happens to processed items in the queue? → A: Successfully generated items are removed from the queue (failed items remain).
+- Q: Where do the form-level voice/model/format/speed controls live in the redesign? → A: A "defaults bar" on the Generate surface sets them for newly added items; per-item voice/model/format stay editable in the detail editor (FR-021).
+- Q: What happens to the batch ".zip download-all" once successful items leave the queue? → A: Preserved as a post-run "download this batch" of the run's successful items, independent of the queue (FR-022).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -32,6 +34,7 @@ A user preparing a batch of recordings wants to see the list of items they are a
 2. **Given** the workspace is shown, **When** the user drags the divider between the two panes, **Then** the panes resize and the new split is retained when returning to the surface.
 3. **Given** a new item is added to the queue, **When** the user opens its metadata, **Then** the recording date is pre-filled with the next calendar day and can be changed with a date picker.
 4. **Given** no item is selected, **When** the surface loads, **Then** the editor pane shows an empty/placeholder state rather than stale data.
+5. **Given** the defaults bar, **When** the user sets a default voice/model/format/speed and adds a new item, **Then** the new item inherits those defaults while remaining individually editable in the detail editor.
 
 ---
 
@@ -49,6 +52,7 @@ A user wants all primary actions in one predictable place. A header toolbar expo
 2. **Given** an item is selected, **When** the user activates next (or previous), **Then** the adjacent item becomes the active selection and its details load in the editor.
 3. **Given** the first (or last) item is active, **When** the user activates previous (or next) past the end, **Then** the system behaves predictably (the control is disabled or the selection stops at the boundary) without error.
 4. **Given** some queue items are checked, **When** the user activates Generate, **Then** only the checked items are processed; **and given** no items are checked, **When** the user activates Generate, **Then** the entire queue is processed.
+5. **Given** a generation run produced one or more successful items, **When** the run completes, **Then** the user can download those items as a single archive even though they have left the queue.
 
 ---
 
@@ -142,7 +146,7 @@ A user adjusting application settings opens them as a modal dialog from the tool
 - **Recording with missing or unreadable audio**: the waveform player shows an unavailable state instead of failing.
 - **Very large queue / library**: search, filter, and rendering remain responsive at the high end of expected list sizes.
 - **Invalid or cleared recording date**: the field prevents or flags an invalid date rather than saving it.
-- **Partial generation failure**: when only some items generate successfully, the successful items leave the queue while the failed items remain, and the user is told which failed.
+- **Partial generation failure**: when only some items generate successfully, the successful items leave the queue while the failed items remain, and the user is told which failed. The batch download (FR-022) covers the run's successful items; when a run yields zero successes, no batch download is offered.
 - **No columns visible**: the column-visibility dialog prevents hiding every column.
 
 ## Requirements *(mandatory)*
@@ -160,7 +164,7 @@ A user adjusting application settings opens them as a modal dialog from the tool
 - **FR-004**: The Generate surface MUST provide a header toolbar exposing, at minimum: upload a file, previous item, next item, generate, save queue, open queue, and open settings.
 - **FR-005**: Previous/next controls MUST move the active selection to the adjacent queue item and load it into the detail pane, and MUST behave predictably at the first/last boundaries (disabled or stop, never error).
 - **FR-005a**: The Generate action MUST process the checked queue items when one or more are checked, and otherwise MUST process the entire queue.
-- **FR-005b**: After generation, each successfully generated item MUST be removed from the queue; any item that fails to generate MUST remain in the queue so the user can retry it.
+- **FR-005b**: After generation, each successfully generated item MUST be removed from the queue; any item that fails to generate MUST remain in the queue so the user can retry it. The just-generated batch MUST remain downloadable per FR-022.
 
 **Generate workspace & queue**
 
@@ -172,6 +176,8 @@ A user adjusting application settings opens them as a modal dialog from the tool
 - **FR-011**: The queue list MUST provide a leading selection (checkbox) column allowing one or many items to be selected and deleted together, with a confirmation step before deletion.
 - **FR-012**: Users MUST be able to choose which queue columns are visible via a settings control, the choice MUST persist across sessions, and the system MUST prevent hiding all columns.
 - **FR-013**: Users MUST be able to save the current queue by exporting it as a local file they manage, and to open a previously saved queue by importing such a file. The application MUST NOT store queues server-side and MUST NOT provide in-app saved-queue naming, listing, or deletion (out of scope for this release).
+- **FR-021**: The Generate surface MUST provide controls (a "defaults bar") to set the default voice, model, audio format, and speed applied to newly added queue items; each item's voice/model/format MUST remain individually editable in the detail editor.
+- **FR-022**: After a generation run, the Generate surface MUST allow downloading that run's successfully generated items as a single archive, independent of the queue (whose successful items have been removed per FR-005b). When a run produces no successful items, no batch download is offered.
 
 **Library workspace**
 

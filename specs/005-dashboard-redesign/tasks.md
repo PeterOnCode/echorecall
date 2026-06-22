@@ -62,13 +62,15 @@ no selection → empty detail state.
 - [ ] T007 [P] [US1] Rewrite `tests/component/QueueList.test.ts` red-first: rows render and clicking a row sets `active-id` (loads detail); `queue-row`/`queue-table` hooks
 - [ ] T008 [P] [US1] Rewrite `tests/component/MetadataFields.test.ts` red-first: `recordedAt` rendered as `UPopover`+`UCalendar`; new item defaults to **tomorrow**; editable/clearable (`meta-recordedAt-*`)
 - [ ] T009 [P] [US1] Rewrite `tests/component/Generate.test.ts` red-first: two-pane wiring — selecting a queue row loads the editor; empty selection shows `dashboard-detail-empty`
+- [ ] T009a [P] [US1] Create `tests/component/GenerateForm.test.ts` red-first: the defaults bar sets voice/model/format/speed (form-level `v-model`) so newly added items inherit them (FR-021)
 
 ### Implementation for User Story 1
 
 - [ ] T010 [US1] Adapt `app/components/generate/QueueList.vue` into the list pane (`UTable`, selectable rows emit/`v-model:active-id`) to pass T007
 - [ ] T011 [US1] Adapt `app/components/generate/MetadataFields.vue`: `recordedAt` → `UPopover`+`UCalendar`, default tomorrow, `CalendarDate`↔string via `@internationalized/date` to pass T008
+- [ ] T011a [US1] Adapt `app/components/generate/GenerateForm.vue` into a compact defaults bar (voice/model/format/speed → `useQueue` form-level refs); keep an interim text-add here until `AddTextPanel` (US4) replaces it to pass T009a (FR-021)
 - [ ] T012 [US1] Adapt `app/components/generate/QueueItemEditor.vue` to render in the detail pane (preserve `@blur` validate-and-commit)
-- [ ] T013 [US1] Rebuild `app/pages/index.vue` onto `DashboardWorkspace` (`#list`=QueueList, `#detail`=editor); wire `useQueue.activeId`; empty-state to pass T009
+- [ ] T013 [US1] Rebuild `app/pages/index.vue` onto `DashboardWorkspace` (`#list`=QueueList, `#detail`=editor); wire `useQueue.activeId`; empty-state to pass T009. **Preserve** the 003 default-tags pre-fill (onMounted fetch → `setDefaults`) and the `defaults-hint` (SC-008); **keep an interim add path** (existing `UploadDropzone` + text-add) until US2/US4 so the MVP is demoable
 - [ ] T014 [P] [US1] Add US1 i18n keys (detail empty-state, recording-date picker labels) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Generate workspace is functional and independently testable (MVP).
@@ -90,14 +92,16 @@ Save downloads a `.echoqueue.json` that Open re-imports.
 - [ ] T015 [P] [US2] Create `tests/component/GenerateToolbar.test.ts`: all `toolbar-*` actions present; prev disabled when `!hasPrev`, next when `!hasNext`; generate disabled rules; emits fire
 - [ ] T016 [P] [US2] Create `tests/unit/queue-file.test.ts`: export→import round-trips regeneratable rows; rejects bad `schema`/`version`/shape (malformed-import edge case)
 - [ ] T017 [P] [US2] Create `tests/integration/generate-remove-on-success.test.ts`: generate target = checked-else-all; successful items removed, failed items retained (FR-005a/FR-005b)
+- [ ] T017a [P] [US2] Extend `tests/integration/generate-remove-on-success.test.ts`: after a run, the run's successful ids are downloadable as one archive even though removed from the queue; no download offered when zero succeed (FR-022)
 
 ### Implementation for User Story 2
 
 - [ ] T018 [P] [US2] Create `app/composables/useQueueFile.ts` (`exportQueue` download; `importQueue` validate → ok/reason) to pass T016
 - [ ] T019 [US2] Extend `app/composables/useQueue.ts`: `serialize()`/`loadDocument()`, `visibleItems`-based `generateTarget`, `hasPrev`/`hasNext`/active-index navigation
-- [ ] T020 [US2] Adapt `app/composables/useGeneration.ts`: accept a target list (checked-else-all) and remove successfully generated items from the queue to pass T017
+- [ ] T020 [US2] Adapt `app/composables/useGeneration.ts`: accept a target list (checked-else-all), remove successfully generated items from the queue, and expose the run's successful ids as last-batch state (FR-022) to pass T017/T017a
 - [ ] T021 [US2] Create `app/components/generate/GenerateToolbar.vue` (`UDashboardToolbar`; emits upload/prev/next/generate/save-queue/open-queue/open-settings) to pass T015
 - [ ] T022 [US2] Wire the toolbar into `app/pages/index.vue` + `app/components/common/AppHeader.vue`: upload reuses `UploadDropzone` (hidden input out of tab order); save/open via `useQueueFile` (warn before replacing a non-empty queue); open-settings stubbed until US7
+- [ ] T022a [US2] Add a post-run "download this batch" affordance in `app/pages/index.vue` using `useGeneration` last-batch ids (reuse `downloadArchive`); hidden when a run yields no successes (FR-022) to pass T017a
 - [ ] T023 [P] [US2] Add US2 i18n keys (toolbar labels, save/open queue, import-replace confirmation, import-error messages) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Generate redesign (US1+US2) is a usable, demoable increment.
@@ -117,7 +121,7 @@ column persists and the last column can't be hidden.
 ### Tests for User Story 3 (red-first)
 
 - [ ] T024 [P] [US3] Create `tests/unit/view-preferences.test.ts`: `queueColumns` persists to localStorage; `setColumn` prevents hiding all columns
-- [ ] T025 [P] [US3] Extend `tests/component/QueueList.test.ts` red-first: search filters by filename+text; per-field filters + clear; select-all/row checkboxes drive `checked-ids`; `queue-row-source` shows filename vs "Text Entered"; `queue-delete-selected` confirms then removes
+- [ ] T025 [P] [US3] Extend `tests/component/QueueList.test.ts` red-first: search filters by filename+text; per-field filters + clear; select-all/row checkboxes drive `checked-ids`; `queue-row-source` shows filename vs "Text Entered"; `queue-delete-selected` confirms then removes; assert search/filter stays responsive with ≥200 seeded items (SC-003)
 - [ ] T026 [P] [US3] Create `tests/component/QueueColumnsDialog.test.ts`: toggles persist; last-visible toggle disabled; `queue-columns-*` hooks
 
 ### Implementation for User Story 3
