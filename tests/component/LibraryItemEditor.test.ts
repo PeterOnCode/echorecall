@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import LibraryItemEditor from '~/components/library/LibraryItemEditor.vue'
 import type { LibraryItem } from '~/composables/useLibrary'
+
+// The confirm-delete prompt is now a UModal, which teleports its panel to
+// document.body — so the confirmation hooks are queried there, not inside the
+// editor's own subtree.
+function confirmOverlay(test: string): HTMLElement | null {
+  return document.body.querySelector(`[data-test="${test}"]`)
+}
 
 // Component coverage for US5 (FR-030/031): the library item editor shows the
 // current filename (base editable, extension fixed) plus the full metadata set,
@@ -59,21 +67,27 @@ describe('LibraryItemEditor', () => {
     const wrapper = await mountEditor()
 
     await wrapper.find('[data-test="delete-item"]').trigger('click')
-    // The confirmation prompt is shown; nothing deleted yet.
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(true)
+    await flushPromises()
+    // The confirmation prompt is shown (teleported); nothing deleted yet.
+    expect(confirmOverlay('confirm-dialog')).not.toBeNull()
     expect(wrapper.emitted('delete')).toBeFalsy()
 
-    await wrapper.find('[data-test="confirm-ok"]').trigger('click')
+    ;(confirmOverlay('confirm-ok') as HTMLElement).click()
     expect(wrapper.emitted('delete')?.at(-1)?.[0]).toBe('gen-1')
+    wrapper.unmount()
   })
 
   it('cancelling the confirmation does not delete', async () => {
     const wrapper = await mountEditor()
 
     await wrapper.find('[data-test="delete-item"]').trigger('click')
-    await wrapper.find('[data-test="confirm-cancel"]').trigger('click')
+    await flushPromises()
+    ;(confirmOverlay('confirm-cancel') as HTMLElement).click()
+    await flushPromises()
 
     expect(wrapper.emitted('delete')).toBeFalsy()
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(false)
+    // Cancel closes the modal, so the teleported panel is gone.
+    expect(confirmOverlay('confirm-dialog')).toBeNull()
+    wrapper.unmount()
   })
 })

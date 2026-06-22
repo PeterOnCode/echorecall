@@ -28,57 +28,54 @@ async function onSave() {
       <template v-else>{{ t('settings.defaultTags.none') }}</template>
     </p>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.defaultTags.fields.artist') }}</span>
-      <input
+    <UFormField :label="t('settings.defaultTags.fields.artist')">
+      <UInput
         v-model="values.artist"
         data-test="default-artist"
         :disabled="loading || saving"
-        class="rounded border px-2 py-1"
-      >
-    </label>
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.defaultTags.fields.album') }}</span>
-      <input
+    <UFormField :label="t('settings.defaultTags.fields.album')">
+      <UInput
         v-model="values.album"
         data-test="default-album"
         :disabled="loading || saving"
-        class="rounded border px-2 py-1"
-      >
-    </label>
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.defaultTags.fields.genre') }}</span>
-      <input
+    <UFormField :label="t('settings.defaultTags.fields.genre')">
+      <UInput
         v-model="values.genre"
         data-test="default-genre"
         :disabled="loading || saving"
-        class="rounded border px-2 py-1"
-      >
-    </label>
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.defaultTags.fields.comment') }}</span>
-      <input
+    <UFormField :label="t('settings.defaultTags.fields.comment')">
+      <UInput
         v-model="values.comment"
         data-test="default-comment"
         :disabled="loading || saving"
-        class="rounded border px-2 py-1"
-      >
-    </label>
+        class="w-full"
+      />
+    </UFormField>
 
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('settings.defaultTags.fields.languages') }}</span>
-      <input
+    <UFormField
+      :label="t('settings.defaultTags.fields.languages')"
+      :help="t('settings.defaultTags.languagesHint')"
+    >
+      <UInput
         v-model="values.languages"
         data-test="default-languages"
         :placeholder="t('settings.defaultTags.languagesPlaceholder')"
         :disabled="loading || saving"
-        class="rounded border px-2 py-1"
-      >
-      <span class="text-xs text-muted">{{ t('settings.defaultTags.languagesHint') }}</span>
-    </label>
+        class="w-full"
+      />
+    </UFormField>
 
     <div class="flex flex-wrap gap-2">
       <UButton

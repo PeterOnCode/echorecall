@@ -3,11 +3,11 @@
 // FR-015). Purely presentational: the parent owns the `open` state and decides
 // what `confirm`/`cancel` do.
 //
-// Accessibility: it's a modal dialog (role="dialog" aria-modal), so when it
-// opens we move focus into it (the least-destructive Cancel button), trap Tab
-// focus inside it, let Escape cancel, and restore focus to whatever was focused
-// before it opened when it closes.
-const props = withDefaults(
+// Built on `UModal` (004 / US3): the design-system overlay provides the focus
+// trap, Escape-to-dismiss, backdrop click, and focus-return that were previously
+// hand-rolled, and it themes correctly in dark mode (fixing the old hardcoded-#fff
+// panel). The panel teleports to document.body.
+withDefaults(
   defineProps<{
     open: boolean
     title?: string
@@ -25,127 +25,35 @@ const props = withDefaults(
 
 const emit = defineEmits<{ confirm: []; cancel: [] }>()
 
-const dialog = ref<HTMLElement | null>(null)
-// The element focused before the dialog opened, so focus can return there on close.
-let previouslyFocused: HTMLElement | null = null
-
-const FOCUSABLE =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-
-function focusable(): HTMLElement[] {
-  return dialog.value ? Array.from(dialog.value.querySelectorAll<HTMLElement>(FOCUSABLE)) : []
-}
-
-watch(
-  () => props.open,
-  async (open) => {
-    if (typeof document === 'undefined') return
-    if (open) {
-      previouslyFocused = document.activeElement as HTMLElement | null
-      await nextTick()
-      focusable()[0]?.focus()
-    } else if (previouslyFocused) {
-      previouslyFocused.focus()
-      previouslyFocused = null
-    }
-  },
-  // `immediate` covers the case where the dialog is mounted already-open
-  // (e.g. behind a `v-if` on the component itself).
-  { immediate: true },
-)
-
-// If the parent unmounts the dialog while it's still open, return focus to
-// whatever had it before, so focus is never lost to a detached element.
-onUnmounted(() => {
-  if (previouslyFocused?.isConnected) previouslyFocused.focus()
-})
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    emit('cancel')
-    return
-  }
-  if (e.key !== 'Tab') return
-
-  const items = focusable()
-  if (items.length === 0) return
-  const first = items[0]!
-  const last = items[items.length - 1]!
-  const index = items.indexOf(document.activeElement as HTMLElement)
-
-  // Wrap focus so Tab/Shift+Tab never leave the open dialog.
-  if (e.shiftKey && index <= 0) {
-    e.preventDefault()
-    last.focus()
-  } else if (!e.shiftKey && (index === -1 || index === items.length - 1)) {
-    e.preventDefault()
-    first.focus()
-  }
+// UModal emits `update:open(false)` when the user dismisses it (Escape, backdrop
+// click). Because `open` is parent-controlled, that only fires on a user dismiss —
+// which is a cancel. Confirm/Cancel buttons emit directly.
+function onOpenChange(value: boolean) {
+  if (!value) emit('cancel')
 }
 </script>
 
 <template>
-  <div
-    v-if="open"
-    class="backdrop"
-    data-test="confirm-dialog"
-    @click.self="emit('cancel')"
-    @keydown="onKeydown"
-  >
-    <div
-      ref="dialog"
-      class="dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-dialog-title"
-      :aria-describedby="message ? 'confirm-dialog-message' : undefined"
-    >
-      <h3 id="confirm-dialog-title" class="title">{{ title }}</h3>
-      <p v-if="message" id="confirm-dialog-message" class="message">{{ message }}</p>
-      <div class="actions">
-        <button type="button" data-test="confirm-cancel" @click="emit('cancel')">
-          {{ cancelLabel }}
-        </button>
-        <button type="button" data-test="confirm-ok" class="danger" @click="emit('confirm')">
-          {{ confirmLabel }}
-        </button>
+  <UModal :open="open" :title="title" :dismissible="true" @update:open="onOpenChange">
+    <template #content>
+      <div data-test="confirm-dialog" class="flex flex-col gap-3 p-4 sm:p-6">
+        <h3 class="text-base font-semibold text-highlighted">{{ title }}</h3>
+        <p v-if="message" class="text-sm text-muted">{{ message }}</p>
+        <div class="flex justify-end gap-2">
+          <UButton
+            data-test="confirm-cancel"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="emit('cancel')"
+          >
+            {{ cancelLabel }}
+          </UButton>
+          <UButton data-test="confirm-ok" color="error" size="sm" @click="emit('confirm')">
+            {{ confirmLabel }}
+          </UButton>
+        </div>
       </div>
-    </div>
-  </div>
+    </template>
+  </UModal>
 </template>
-
-<style scoped>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 10;
-}
-.dialog {
-  background: #fff;
-  border-radius: 0.5rem;
-  padding: 1.25rem 1.5rem;
-  max-width: 24rem;
-  width: calc(100% - 2rem);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-.title {
-  margin: 0 0 0.5rem;
-}
-.message {
-  margin: 0 0 1rem;
-  color: #555;
-}
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-.danger {
-  color: #b60205;
-}
-</style>
