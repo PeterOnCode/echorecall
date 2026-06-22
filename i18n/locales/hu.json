@@ -85,8 +85,6 @@
       "format": "Formátum",
       "allVoices": "Minden hang",
       "allFormats": "Minden formátum",
-      "from": "Ettől",
-      "to": "Eddig",
       "dateRange": "Dátumtartomány",
       "anyDate": "Bármely dátum",
       "clearDates": "Törlés"
@@ -109,8 +107,6 @@
       "description": "Véglegesen eltávolítja az összes szűrőnek megfelelő mentett tételt a hangjával együtt. Ez nem vonható vissza.",
       "voice": "Hang",
       "anyVoice": "Bármely hang",
-      "from": "Ettől",
-      "to": "Eddig",
       "needFilter": "Először válassz dátumtartományt és/vagy hangot.",
       "confirm": "Megfelelő tételek törlése",
       "cancel": "Mégse"

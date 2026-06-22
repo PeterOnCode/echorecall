@@ -113,7 +113,12 @@ No raw interactive control (already `UButton`-based). Verify only; update select
 | `UButton` save/clear | (unchanged) | dt `default-save`/`default-clear`; `:loading`, `:disabled` rules |
 
 ### `settings/OpenAiKeySettings.vue`
-No raw interactive control (already `UInput`/`UButton`). Verify only.
+~~No raw interactive control (already `UInput`/`UButton`). Verify only.~~
+**Correction (Phase 6 / T030):** this note was wrong — the key field was still a raw
+`<input type=password data-test="key-input">`. Migrated to `UInput` (type=password) in
+`UFormField`, preserving `autocomplete=off`, the `key-input` hook, `@keydown.enter`→`onSave`,
+and `:disabled="storageDisabled || saving"`. The `key-save/key-clear/key-test` controls were
+already `UButton`.
 
 ---
 
