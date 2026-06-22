@@ -40,12 +40,15 @@ async function onChange(event: Event) {
 <template>
   <div class="flex flex-col gap-2">
     <span class="text-sm font-medium">{{ t('generate.upload.label') }}</span>
+    <!-- display:none (not sr-only) keeps the native input out of the tab order and
+         the a11y tree — the labelled UButton is the accessible trigger; .click()
+         still opens the picker. -->
     <input
       ref="fileInput"
       data-test="upload-input"
       type="file"
       accept=".txt,text/plain"
-      class="sr-only"
+      class="hidden"
       @change="onChange"
     >
     <div>
