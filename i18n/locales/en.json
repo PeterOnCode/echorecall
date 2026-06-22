@@ -86,7 +86,10 @@
       "allVoices": "All voices",
       "allFormats": "All formats",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "dateRange": "Date range",
+      "anyDate": "Any date",
+      "clearDates": "Clear"
     },
     "columns": {
       "name": "File name",

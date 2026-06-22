@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import type { TableColumn } from '@nuxt/ui'
 import type { BulkCleanFilter, LibraryQuery, Metadata } from '#core/client'
 import type { LibraryItem } from '../../composables/useLibrary'
 
-// The library discovery surface (US6 / FR-034–037). Controlled and network-free:
+// The library discovery surface (US6 / FR-034-037). Controlled and network-free:
 // it renders a search/filter bar, a sortable table, and pagination that all drive
 // a single `query` (v-model:query), plus a bulk-clean trigger. Row actions stay
 // inline — replay reuses AudioPlayer over the stored `audioUrl` (no provider
@@ -24,9 +25,17 @@ const editingId = defineModel<string | null>('editingId', { default: null })
 
 const { t } = useI18n()
 
-const COLUMN_COUNT = 5
+// Display columns; rendering is done entirely through cell/header slots so the
+// table is server-driven (no TanStack client sort). Each column id keys its slots.
+const columns: TableColumn<LibraryItem>[] = [
+  { id: 'name', accessorKey: 'filename' },
+  { id: 'voice', accessorKey: 'voiceId' },
+  { id: 'format', accessorKey: 'format' },
+  { id: 'createdAt', accessorKey: 'createdAt' },
+  { id: 'actions' },
+]
 
-// --- Sorting -------------------------------------------------------------------
+// --- Sorting (server-driven) ---------------------------------------------------
 type SortKey = NonNullable<LibraryQuery['sort']>
 
 function toggleSort(column: SortKey) {
@@ -57,12 +66,41 @@ function goToPage(page: number) {
 const playingId = ref<string | null>(null)
 const unavailableIds = ref<string[]>([])
 
+// One expanded region per row, driven by replay (player) / edit (editor); they are
+// mutually exclusive per row. UTable wants an { [rowId]: true } map; we derive it
+// from the two ids and never let the table mutate it (no built-in expand control).
+const expanded = computed<Record<string, boolean>>({
+  get: () => {
+    const r: Record<string, boolean> = {}
+    if (playingId.value) r[playingId.value] = true
+    if (editingId.value) r[editingId.value] = true
+    return r
+  },
+  set: () => {},
+})
+
+function rowMode(id: string): 'player' | 'editor' | 'none' {
+  if (editingId.value === id) return 'editor'
+  if (playingId.value === id) return 'player'
+  return 'none'
+}
+
 function toggleReplay(id: string) {
-  playingId.value = playingId.value === id ? null : id
+  if (playingId.value === id) {
+    playingId.value = null
+    return
+  }
+  playingId.value = id
+  if (editingId.value === id) editingId.value = null
 }
 
 function toggleEdit(id: string) {
-  editingId.value = editingId.value === id ? null : id
+  if (editingId.value === id) {
+    editingId.value = null
+    return
+  }
+  editingId.value = id
+  if (playingId.value === id) playingId.value = null
 }
 
 function downloadUrl(audioUrl: string): string {
@@ -114,106 +152,133 @@ function onBulkConfirm(filter: BulkCleanFilter) {
         : t('library.empty') }}
     </p>
 
-    <table v-else class="w-full border-collapse text-sm table-fixed">
-      <thead>
-        <tr class="border-b text-left">
-          <th class="py-2 pr-3">
-            <button type="button" data-test="sort-title" class="font-medium" @click="toggleSort('title')">
-              {{ t('library.columns.name') }} {{ sortIndicator('title') }}
-            </button>
-          </th>
-          <th class="py-2 pr-3">
-            <button type="button" data-test="sort-voice" class="font-medium" @click="toggleSort('voice')">
-              {{ t('library.columns.voice') }} {{ sortIndicator('voice') }}
-            </button>
-          </th>
-          <th class="py-2 pr-3">
-            <button type="button" data-test="sort-format" class="font-medium" @click="toggleSort('format')">
-              {{ t('library.columns.format') }} {{ sortIndicator('format') }}
-            </button>
-          </th>
-          <th class="py-2 pr-3">
-            <button
-              type="button"
-              data-test="sort-createdAt"
-              class="font-medium"
-              @click="toggleSort('createdAt')"
-            >
-              {{ t('library.columns.created') }} {{ sortIndicator('createdAt') }}
-            </button>
-          </th>
-          <th class="py-2 text-right font-medium">{{ t('library.columns.actions') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template v-for="g in items" :key="g.id">
-          <tr data-test="library-row" class="border-b align-top">
-            <td class="py-2 pr-3">
-              <p class="font-medium" :class="{ 'text-muted line-through': isUnavailable(g.id) }">
-                {{ g.filename }}
-              </p>
-              <p class="whitespace-normal break-words text-xs text-muted">{{ g.text }}</p>
-              <p v-if="isUnavailable(g.id)" data-test="row-unavailable" class="text-xs text-error">
-                {{ t('library.unavailable') }}
-              </p>
-            </td>
-            <td class="py-2 pr-3">{{ g.voiceId }}</td>
-            <td class="py-2 pr-3 uppercase">{{ g.format }}</td>
-            <td class="py-2 pr-3 whitespace-nowrap">{{ new Date(g.createdAt).toLocaleString() }}</td>
-            <td class="py-2">
-              <div class="flex justify-end gap-1">
-                <UButton
-                  data-test="replay"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  icon="i-lucide-play"
-                  :disabled="isUnavailable(g.id)"
-                  :aria-label="t('library.item.replay')"
-                  @click="toggleReplay(g.id)"
-                />
-                <UButton
-                  data-test="download"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  icon="i-lucide-download"
-                  :href="downloadUrl(g.audioUrl)"
-                  external
-                  download
-                  :aria-label="t('library.item.download')"
-                />
-                <UButton
-                  data-test="edit-item"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  icon="i-lucide-pencil"
-                  :aria-expanded="editingId === g.id"
-                  :aria-label="t('library.item.edit')"
-                  @click="toggleEdit(g.id)"
-                />
-              </div>
-            </td>
-          </tr>
-          <tr v-if="playingId === g.id" :key="`${g.id}-player`">
-            <td :colspan="COLUMN_COUNT" class="pb-3">
-              <AudioPlayer :src="g.audioUrl" :label="g.filename" @error="markUnavailable(g.id)" />
-            </td>
-          </tr>
-          <tr v-if="editingId === g.id" :key="`${g.id}-editor`">
-            <td :colspan="COLUMN_COUNT" class="pb-3">
-              <LibraryItemEditor
-                :item="g"
-                @save="(patch) => onEditorSave(g, patch)"
-                @delete="(id) => emit('delete', id)"
-                @cancel="editingId = null"
-              />
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
+    <UTable
+      v-else
+      :data="items"
+      :columns="columns"
+      :get-row-id="(row: LibraryItem) => row.id"
+      :expanded="expanded"
+    >
+      <template #name-header>
+        <UButton
+          data-test="sort-title"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="font-medium"
+          @click="toggleSort('title')"
+        >
+          {{ t('library.columns.name') }} {{ sortIndicator('title') }}
+        </UButton>
+      </template>
+      <template #voice-header>
+        <UButton
+          data-test="sort-voice"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="font-medium"
+          @click="toggleSort('voice')"
+        >
+          {{ t('library.columns.voice') }} {{ sortIndicator('voice') }}
+        </UButton>
+      </template>
+      <template #format-header>
+        <UButton
+          data-test="sort-format"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="font-medium"
+          @click="toggleSort('format')"
+        >
+          {{ t('library.columns.format') }} {{ sortIndicator('format') }}
+        </UButton>
+      </template>
+      <template #createdAt-header>
+        <UButton
+          data-test="sort-createdAt"
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          class="font-medium"
+          @click="toggleSort('createdAt')"
+        >
+          {{ t('library.columns.created') }} {{ sortIndicator('createdAt') }}
+        </UButton>
+      </template>
+      <template #actions-header>
+        <span class="font-medium">{{ t('library.columns.actions') }}</span>
+      </template>
+
+      <template #name-cell="{ row }">
+        <div data-test="library-row">
+          <p class="font-medium" :class="{ 'text-muted line-through': isUnavailable(row.original.id) }">
+            {{ row.original.filename }}
+          </p>
+          <p class="whitespace-normal break-words text-xs text-muted">{{ row.original.text }}</p>
+          <p v-if="isUnavailable(row.original.id)" data-test="row-unavailable" class="text-xs text-error">
+            {{ t('library.unavailable') }}
+          </p>
+        </div>
+      </template>
+      <template #voice-cell="{ row }">{{ row.original.voiceId }}</template>
+      <template #format-cell="{ row }"><span class="uppercase">{{ row.original.format }}</span></template>
+      <template #createdAt-cell="{ row }">
+        <span class="whitespace-nowrap">{{ new Date(row.original.createdAt).toLocaleString() }}</span>
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="flex justify-end gap-1">
+          <UButton
+            data-test="replay"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            icon="i-lucide-play"
+            :disabled="isUnavailable(row.original.id)"
+            :aria-label="t('library.item.replay')"
+            @click="toggleReplay(row.original.id)"
+          />
+          <UButton
+            data-test="download"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            icon="i-lucide-download"
+            :href="downloadUrl(row.original.audioUrl)"
+            external
+            download
+            :aria-label="t('library.item.download')"
+          />
+          <UButton
+            data-test="edit-item"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            icon="i-lucide-pencil"
+            :aria-expanded="editingId === row.original.id"
+            :aria-label="t('library.item.edit')"
+            @click="toggleEdit(row.original.id)"
+          />
+        </div>
+      </template>
+
+      <template #expanded="{ row }">
+        <AudioPlayer
+          v-if="rowMode(row.original.id) === 'player'"
+          :src="row.original.audioUrl"
+          :label="row.original.filename"
+          @error="markUnavailable(row.original.id)"
+        />
+        <LibraryItemEditor
+          v-else-if="rowMode(row.original.id) === 'editor'"
+          :item="row.original"
+          @save="(patch) => onEditorSave(row.original, patch)"
+          @delete="(id) => emit('delete', id)"
+          @cancel="editingId = null"
+        />
+      </template>
+    </UTable>
 
     <div v-if="items.length > 0" class="flex items-center justify-between gap-3 text-sm">
       <span data-test="page-status" class="text-muted">

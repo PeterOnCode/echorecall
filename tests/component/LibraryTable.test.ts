@@ -1,15 +1,16 @@
 import { describe, it, expect } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import LibraryTable from '~/components/library/LibraryTable.vue'
 import type { LibraryItem } from '~/composables/useLibrary'
 import type { LibraryQuery } from '#core/client'
 
-// Component coverage for US6 (FR-034–036): LibraryTable is the controlled
-// discovery surface — a search/filter bar, sortable column headers, and
-// pagination that all drive a single `query` (v-model:query, props down / events
-// up; the page owns the network call). It renders an empty-state message when no
-// rows match. It never touches the network: it is driven purely by `items`,
-// `total`, and `query`.
+// Component coverage for US6 (FR-034-036, FR-010): LibraryTable is the controlled
+// discovery surface, now built on UTable. Sort headers are server-driven (they
+// drive `query`, never client-sort); replay/edit open a single per-row #expanded
+// region (mutually exclusive); pagination disables at the bounds. Voice/format/
+// date-range filtering lives in LibrarySearchBar (covered by its own spec). The
+// table never touches the network: it is driven purely by `items`, `total`, `query`.
 
 function item(overrides: Partial<LibraryItem> = {}): LibraryItem {
   return {
@@ -56,28 +57,10 @@ describe('LibraryTable', () => {
     expect(wrapper.find('[data-test="library-empty"]').exists()).toBe(true)
   })
 
-  it('search input drives the query', async () => {
-    const wrapper = await mountTable()
-    await wrapper.find('[data-test="library-search"]').setValue('banana')
-    expect(lastQuery(wrapper).q).toBe('banana')
-  })
-
-  it('voice filter drives the query', async () => {
-    const wrapper = await mountTable()
-    await wrapper.find('[data-test="filter-voice"]').setValue('echo')
-    expect(lastQuery(wrapper).voiceId).toBe('echo')
-  })
-
-  it('format filter drives the query', async () => {
-    const wrapper = await mountTable()
-    await wrapper.find('[data-test="filter-format"]').setValue('wav')
-    expect(lastQuery(wrapper).format).toBe('wav')
-  })
-
-  it('a sortable header sets the sort column and toggles the order on repeat', async () => {
+  it('a sortable header sets the sort column and toggles the order on repeat (server-driven)', async () => {
     const wrapper = await mountTable()
     await wrapper.find('[data-test="sort-title"]').trigger('click')
-    expect(lastQuery(wrapper)).toMatchObject({ sort: 'title', order: 'asc' })
+    expect(lastQuery(wrapper)).toMatchObject({ sort: 'title', order: 'asc', page: 1 })
 
     // The parent applies the new query; clicking the same column flips the order.
     await wrapper.setProps({ query: { sort: 'title', order: 'asc' } })
@@ -85,15 +68,46 @@ describe('LibraryTable', () => {
     expect(lastQuery(wrapper)).toMatchObject({ sort: 'title', order: 'desc' })
   })
 
-  it('pagination drives the query and resets to page 1 on a search change', async () => {
-    // total 3 over pageSize 2 ⇒ two pages.
+  it('pagination drives the query and disables the controls at the bounds', async () => {
+    // total 3 over pageSize 2 ⇒ two pages; page 1 ⇒ prev disabled.
     const wrapper = await mountTable({ page: 1, pageSize: 2 }, 3)
+    expect(wrapper.find('[data-test="page-prev"]').attributes('disabled')).toBeDefined()
+
     await wrapper.find('[data-test="page-next"]').trigger('click')
     expect(lastQuery(wrapper).page).toBe(2)
 
+    // On the last page, next is disabled.
     await wrapper.setProps({ query: { page: 2, pageSize: 2 } })
-    await wrapper.find('[data-test="library-search"]').setValue('apple')
-    // Changing the search returns to the first page so results aren't hidden.
-    expect(lastQuery(wrapper)).toMatchObject({ q: 'apple', page: 1 })
+    expect(wrapper.find('[data-test="page-next"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('replay opens an AudioPlayer in the expanded row; edit swaps it for the editor (mutually exclusive)', async () => {
+    const wrapper = await mountTable()
+    expect(wrapper.find('audio').exists()).toBe(false)
+
+    // Replay the first row → player appears in the expanded region.
+    await wrapper.findAll('[data-test="replay"]')[0]!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('audio').exists()).toBe(true)
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(false)
+
+    // Edit the same row → editor replaces the player (one mode per row).
+    await wrapper.findAll('[data-test="edit-item"]')[0]!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(true)
+    expect(wrapper.find('audio').exists()).toBe(false)
+  })
+
+  it('a row whose audio fails to load shows unavailable and disables replay', async () => {
+    const wrapper = await mountTable()
+    await wrapper.findAll('[data-test="replay"]')[0]!.trigger('click')
+    await flushPromises()
+
+    // The AudioPlayer reports a load error → the row is marked unavailable.
+    await wrapper.find('audio').trigger('error')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="row-unavailable"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-test="replay"]')[0]!.attributes('disabled')).toBeDefined()
   })
 })

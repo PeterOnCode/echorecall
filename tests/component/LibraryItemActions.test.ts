@@ -1,73 +1,69 @@
 import { describe, expect, it } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
-import LibraryList from '~/components/LibraryList.vue'
+import LibraryTable from '~/components/library/LibraryTable.vue'
+import type { LibraryItem } from '~/composables/useLibrary'
 
-// Manage actions on each library entry (US3): download a stored clip and delete
-// it permanently behind a confirmation prompt (FR-014, FR-015). Download is a
-// plain link to the audio route with `?download=1` (the server sends it as an
-// attachment), so it needs no network logic here. Delete is destructive, so the
-// list never deletes on its own — it asks via ConfirmDialog and, only on
-// confirm, emits `delete` with the id for the page to carry out. Cancelling is a
-// no-op. The component stays network-free and prop-driven.
+// Row actions on each library entry (US6): replay reuses the stored audio inline,
+// download is a plain link to the audio route with `?download=1` (the server sends
+// it as an attachment), and edit toggles the inline editor in the expanded row.
+// Delete itself lives in the editor (its own spec). The table is network-free and
+// prop-driven; here we exercise the per-row action buttons on the migrated UTable.
 
-type LibraryItem = {
-  id: string
-  text: string
-  voiceId: string
-  createdAt: string
-  audioUrl: string
+function item(overrides: Partial<LibraryItem> = {}): LibraryItem {
+  return {
+    id: 'gen-1',
+    text: 'Hello world',
+    voiceId: 'alloy',
+    model: 'gpt-4o-mini-tts',
+    format: 'mp3',
+    speed: 1,
+    createdAt: '2026-06-18T08:00:00.000Z',
+    filename: 'hello.mp3',
+    metadata: { title: 'Hello' },
+    audioUrl: '/api/generations/gen-1/audio',
+    ...overrides,
+  }
 }
 
-const items: LibraryItem[] = [
-  {
-    id: '1',
-    text: 'First clip',
-    voiceId: 'alloy',
-    createdAt: '2026-06-15T11:00:00.000Z',
-    audioUrl: '/api/generations/1/audio',
-  },
-  {
-    id: '2',
-    text: 'Second clip',
-    voiceId: 'echo',
-    createdAt: '2026-06-15T10:00:00.000Z',
-    audioUrl: '/api/generations/2/audio',
-  },
-]
+const items: LibraryItem[] = [item({ id: '1', audioUrl: '/api/generations/1/audio' })]
 
-describe('LibraryList manage actions', () => {
+function mountTable() {
+  return mountSuspended(LibraryTable, { props: { items, total: items.length, query: {} } })
+}
+
+describe('LibraryTable row actions', () => {
   it('offers a download link to the entry audio with ?download=1', async () => {
-    const wrapper = await mountSuspended(LibraryList, { props: { generations: items } })
-
+    const wrapper = await mountTable()
     const link = wrapper.findAll('[data-test="download"]')[0]!
     expect(link.attributes('href')).toBe('/api/generations/1/audio?download=1')
     // The `download` attribute hints the browser to save rather than navigate.
     expect(link.attributes('download')).toBeDefined()
   })
 
-  it('asks for confirmation before deleting and emits delete only on confirm', async () => {
-    const wrapper = await mountSuspended(LibraryList, { props: { generations: items } })
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(false)
+  it('replay toggles the inline player open and closed', async () => {
+    const wrapper = await mountTable()
+    expect(wrapper.find('audio').exists()).toBe(false)
 
-    await wrapper.findAll('[data-test="delete"]')[0]!.trigger('click')
+    await wrapper.find('[data-test="replay"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('audio').exists()).toBe(true)
 
-    // Dialog opens; nothing deleted yet.
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(true)
-    expect(wrapper.emitted('delete')).toBeFalsy()
-
-    await wrapper.find('[data-test="confirm-ok"]').trigger('click')
-
-    expect(wrapper.emitted('delete')![0]).toEqual(['1'])
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(false)
+    await wrapper.find('[data-test="replay"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('audio').exists()).toBe(false)
   })
 
-  it('cancels without emitting delete', async () => {
-    const wrapper = await mountSuspended(LibraryList, { props: { generations: items } })
+  it('edit toggles the inline editor open and closed', async () => {
+    const wrapper = await mountTable()
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(false)
 
-    await wrapper.findAll('[data-test="delete"]')[0]!.trigger('click')
-    await wrapper.find('[data-test="confirm-cancel"]').trigger('click')
+    await wrapper.find('[data-test="edit-item"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(true)
 
-    expect(wrapper.emitted('delete')).toBeFalsy()
-    expect(wrapper.find('[data-test="confirm-dialog"]').exists()).toBe(false)
+    await wrapper.find('[data-test="edit-item"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(false)
   })
 })

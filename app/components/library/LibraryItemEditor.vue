@@ -58,19 +58,14 @@ function confirmDelete() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 rounded border bg-elevated p-3" data-test="library-item-editor">
-    <label class="flex flex-col gap-1 text-sm">
-      <span class="font-medium">{{ t('library.editor.filename') }}</span>
-      <div class="flex items-center gap-1">
-        <input
-          v-model="filenameBase"
-          data-test="edit-filename"
-          type="text"
-          class="flex-1 rounded border px-2 py-1"
-        >
-        <span data-test="filename-ext" class="text-sm text-muted">{{ ext }}</span>
-      </div>
-    </label>
+  <div class="flex flex-col gap-3 rounded border border-default bg-elevated p-3" data-test="library-item-editor">
+    <UFormField :label="t('library.editor.filename')">
+      <UInput v-model="filenameBase" data-test="edit-filename" class="w-full">
+        <template #trailing>
+          <span data-test="filename-ext" class="text-sm text-muted">{{ ext }}</span>
+        </template>
+      </UInput>
+    </UFormField>
 
     <MetadataFields v-model="metadata" />
 

@@ -86,7 +86,10 @@
       "allVoices": "Minden hang",
       "allFormats": "Minden formátum",
       "from": "Ettől",
-      "to": "Eddig"
+      "to": "Eddig",
+      "dateRange": "Dátumtartomány",
+      "anyDate": "Bármely dátum",
+      "clearDates": "Törlés"
     },
     "columns": {
       "name": "Fájlnév",
