@@ -68,7 +68,9 @@
     "actions": {
       "generate": "Létrehozás",
       "downloadAll": "Összes letöltése (.zip)"
-    }
+    },
+    "toolbar": {},
+    "columns": {}
   },
   "library": {
     "title": "Könyvtár",
@@ -132,7 +134,9 @@
       "retag": "Nem sikerült frissíteni a metaadatokat.",
       "delete": "Nem sikerült törölni a tételt. Próbáld újra.",
       "bulkClean": "Nem sikerült a könyvtár takarítása. Próbáld újra."
-    }
+    },
+    "tags": {},
+    "waveform": {}
   },
   "settings": {
     "title": "Beállítások",
@@ -191,6 +195,7 @@
         "save": "Nem sikerült menteni az alapértelmezett címkéket. Próbáld újra.",
         "clear": "Nem sikerült törölni az alapértelmezett címkéket. Próbáld újra."
       }
-    }
+    },
+    "modal": {}
   }
 }

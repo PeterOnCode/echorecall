@@ -68,7 +68,9 @@
     "actions": {
       "generate": "Generate",
       "downloadAll": "Download all (.zip)"
-    }
+    },
+    "toolbar": {},
+    "columns": {}
   },
   "library": {
     "title": "Library",
@@ -132,7 +134,9 @@
       "retag": "Could not update the metadata.",
       "delete": "Could not delete that item. Please try again.",
       "bulkClean": "Could not clean the library. Please try again."
-    }
+    },
+    "tags": {},
+    "waveform": {}
   },
   "settings": {
     "title": "Settings",
@@ -191,6 +195,7 @@
         "save": "Could not save the default tags. Please try again.",
         "clear": "Could not clear the default tags. Please try again."
       }
-    }
+    },
+    "modal": {}
   }
 }

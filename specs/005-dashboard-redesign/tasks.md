@@ -28,8 +28,8 @@ and `i18n/`; **no `src/core/`, `server/`, or schema files are touched** (FR-018)
 
 **Purpose**: Shared scaffolding used across stories.
 
-- [ ] T001 [P] Add new i18n namespace placeholders for the redesign to `i18n/locales/en.json` and `i18n/locales/hu.json` (`generate.toolbar.*`, `generate.queue.*`, `generate.columns.*`, `library.tags.*`, `library.waveform.*`, `settings.modal.*`)
-- [ ] T002 [P] Add a red-first automated en/hu key-parity test for the new namespaces in `tests/unit/i18n-parity.test.ts` (FR-019/SC-009 — fails until story keys are added)
+- [X] T001 [P] Add new i18n namespace placeholders for the redesign to `i18n/locales/en.json` and `i18n/locales/hu.json` (`generate.toolbar`, `generate.columns`, `library.tags`, `library.waveform`, `settings.modal`; `generate.queue` already exists — keys filled per story)
+- [X] T002 [P] Add a red-first automated en/hu key-parity test for the new namespaces in `tests/unit/i18n-parity.test.ts` (FR-019/SC-009)
 
 ---
 
