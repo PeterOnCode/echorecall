@@ -79,7 +79,27 @@
       "generate": "Generate",
       "downloadAll": "Download all (.zip)"
     },
-    "toolbar": {},
+    "toolbar": {
+      "upload": "Upload",
+      "prev": "Previous item",
+      "next": "Next item",
+      "generate": "Generate",
+      "generateSelected": "Generate {count} selected",
+      "saveQueue": "Save queue",
+      "openQueue": "Open queue",
+      "settings": "Settings"
+    },
+    "queueFile": {
+      "replaceTitle": "Replace current queue?",
+      "replaceMessage": "Opening this file replaces the {count} item(s) currently in your queue.",
+      "replaceConfirm": "Replace",
+      "replaceCancel": "Cancel",
+      "error": {
+        "schema": "That file isn’t an EchoRecall queue file.",
+        "version": "That queue file was made by a newer version and can’t be opened.",
+        "shape": "That queue file is damaged or invalid."
+      }
+    },
     "columns": {}
   },
   "library": {

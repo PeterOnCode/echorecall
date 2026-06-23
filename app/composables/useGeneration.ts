@@ -8,12 +8,19 @@ function extractApiError(e: unknown): string {
 
 /**
  * Drives batch generation: one request per queue row with per-item progress and
- * isolated failures (a failing item never aborts the rest, FR-006/007), then a
- * single `.zip` download of the successful items (FR-008).
+ * isolated failures (a failing item never aborts the rest, FR-006/007). On the
+ * 005 redesign each successfully generated row is removed from the queue while
+ * failures remain for retry (FR-005b); the run's successful generation ids are
+ * kept in {@link useGeneration.lastBatchIds} so the page can still offer a single
+ * `.zip` download of that batch after the rows have left the queue (FR-022).
  */
 export function useGeneration() {
   const voices = ref<Voice[]>([])
   const generating = ref(false)
+  // Saved generation ids of the most recent run's successes — drives the post-run
+  // "download this batch" affordance. Reset at the start of every run, so a run
+  // with zero successes offers no download (FR-022).
+  const lastBatchIds = ref<string[]>([])
 
   async function loadVoices() {
     const res = await $fetch<{ voices: Voice[] }>('/api/voices')
@@ -23,6 +30,7 @@ export function useGeneration() {
   async function generateItem(item: QueueItem, speed: number) {
     item.status = 'generating'
     item.error = undefined
+    item.result = undefined // clear any stale result so it signals only this run's success
     try {
       const entry = await $fetch<{ id: string; audioUrl?: string; skippedTags?: string[] }>(
         '/api/generations',
@@ -51,15 +59,33 @@ export function useGeneration() {
     }
   }
 
-  /** Generate every not-yet-done item in order, isolating per-item failures. */
-  async function generateAll(items: QueueItem[], speed: number) {
+  /**
+   * Generate every not-yet-done item in the target list in order, isolating
+   * per-item failures. The target is chosen by the caller (checked-else-all,
+   * FR-005a). Each success is recorded in {@link lastBatchIds} and, when a
+   * `remove` callback is given, dropped from the queue (FR-005b); failures stay.
+   */
+  async function generateAll(
+    items: QueueItem[],
+    speed: number,
+    remove?: (clientId: string) => void,
+  ) {
     generating.value = true
+    const succeeded: string[] = []
     try {
       for (const item of items) {
-        if (item.status !== 'done') await generateItem(item, speed)
+        if (item.status === 'done') continue
+        await generateItem(item, speed)
+        // `result` is set only on success (and cleared at the start of each attempt),
+        // so it is the reliable per-run success signal — failures leave it undefined.
+        if (item.result) {
+          succeeded.push(item.result.id)
+          remove?.(item.clientId)
+        }
       }
     } finally {
       generating.value = false
+      lastBatchIds.value = succeeded
     }
   }
 
@@ -81,5 +107,5 @@ export function useGeneration() {
     URL.revokeObjectURL(url)
   }
 
-  return { voices, generating, loadVoices, generateItem, generateAll, downloadArchive }
+  return { voices, generating, lastBatchIds, loadVoices, generateItem, generateAll, downloadArchive }
 }

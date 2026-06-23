@@ -79,7 +79,27 @@
       "generate": "Létrehozás",
       "downloadAll": "Összes letöltése (.zip)"
     },
-    "toolbar": {},
+    "toolbar": {
+      "upload": "Feltöltés",
+      "prev": "Előző tétel",
+      "next": "Következő tétel",
+      "generate": "Létrehozás",
+      "generateSelected": "{count} kijelölt létrehozása",
+      "saveQueue": "Lista mentése",
+      "openQueue": "Lista megnyitása",
+      "settings": "Beállítások"
+    },
+    "queueFile": {
+      "replaceTitle": "Lecseréled a jelenlegi listát?",
+      "replaceMessage": "A fájl megnyitása lecseréli a listában jelenleg szereplő {count} tételt.",
+      "replaceConfirm": "Csere",
+      "replaceCancel": "Mégse",
+      "error": {
+        "schema": "Ez a fájl nem EchoRecall listafájl.",
+        "version": "Ez a listafájl újabb verzióval készült, és nem nyitható meg.",
+        "shape": "Ez a listafájl sérült vagy érvénytelen."
+      }
+    },
     "columns": {}
   },
   "library": {

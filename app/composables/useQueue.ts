@@ -1,5 +1,8 @@
 import type { Format, ListItem, Metadata, Model } from '#core/client'
 import { MAX_INPUT_LENGTH, formatInfo, parseUploadText } from '#core/client'
+// Types only (imported by relative path per the repo typecheck gotcha): the saved-
+// queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
+import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
 
 export type ItemStatus = 'queued' | 'generating' | 'done' | 'failed'
 
@@ -85,7 +88,7 @@ export function useQueue() {
     const itemMetadata = cloneMetadata(metadata.value)
     if (itemMetadata.recordedAt === undefined) itemMetadata.recordedAt = tomorrowIso()
     return {
-      clientId: globalThis.crypto.randomUUID(),
+      clientId: newClientId(),
       text,
       voiceId: voiceId.value,
       model: model.value,
@@ -229,16 +232,89 @@ export function useQueue() {
   }
 
   /**
-   * Apply the current form-level metadata to every not-yet-generated row that
-   * hasn't been edited individually. Called right before generation so the
-   * metadata shown on the form reaches the whole batch — including rows added
-   * before it was filled (US2 has a single shared editor). A row with its own
-   * per-row metadata edit (US3) is left untouched so its values survive generation.
+   * Apply the current form-level metadata to every not-yet-generated row in the
+   * batch that hasn't been edited individually. Called right before generation so
+   * the metadata shown on the form reaches the batch — including rows added before
+   * it was filled (single shared editor). A row with its own per-row metadata edit
+   * is left untouched so its values survive generation. The batch defaults to the
+   * whole queue, but the caller passes the actual generate target (checked-else-all)
+   * so rows that are NOT being generated are never silently overwritten (FR-005a).
    */
-  function applyMetadataToPending(): void {
-    for (const item of items.value) {
+  function applyMetadataToPending(target: QueueItem[] = items.value): void {
+    for (const item of target) {
       if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(metadata.value)
     }
+  }
+
+  // The rows currently shown by the list pane. For US2 this is the whole queue;
+  // US3 narrows it by search/filters. `generateTarget` and the prev/next
+  // navigation derive from it so they always track what the user can see.
+  const visibleItems = computed(() => items.value)
+
+  /**
+   * What a Generate run processes (FR-005a): the checked rows if any are checked,
+   * otherwise every visible row. A fresh array so removing rows on success (US2)
+   * can't disturb the in-flight iteration.
+   */
+  const generateTarget = computed(() =>
+    checkedIds.value.size > 0
+      ? visibleItems.value.filter((i) => checkedIds.value.has(i.clientId))
+      : [...visibleItems.value],
+  )
+
+  // Active-selection navigation for the toolbar prev/next (FR-005), over the
+  // visible rows; disabled at the boundaries.
+  const activeIndex = computed(() => visibleItems.value.findIndex((i) => i.clientId === activeId.value))
+  const hasPrev = computed(() => activeIndex.value > 0)
+  const hasNext = computed(
+    () => activeIndex.value >= 0 && activeIndex.value < visibleItems.value.length - 1,
+  )
+  function selectPrev(): void {
+    if (hasPrev.value) activeId.value = visibleItems.value[activeIndex.value - 1]!.clientId
+  }
+  function selectNext(): void {
+    if (hasNext.value) activeId.value = visibleItems.value[activeIndex.value + 1]!.clientId
+  }
+
+  /** Snapshot the queue as a versioned saved-queue document (regeneratable inputs only). */
+  function serialize(): QueueFileDocument {
+    return {
+      schema: 'echorecall.queue',
+      version: 1,
+      items: items.value.map((item) => {
+        const fileItem: QueueFileItem = {
+          text: item.text,
+          voiceId: item.voiceId,
+          model: item.model,
+          format: item.format,
+          metadata: cloneMetadata(item.metadata),
+          source: item.source,
+        }
+        if (item.instructions !== undefined) fileItem.instructions = item.instructions
+        if (item.source === 'upload' && item.sourceName !== undefined) {
+          fileItem.sourceName = item.sourceName
+        }
+        return fileItem
+      }),
+    }
+  }
+
+  /** Replace the queue with the rows from an imported document (fresh ids/state). */
+  function loadDocument(doc: QueueFileDocument): void {
+    items.value = doc.items.map((fileItem) => ({
+      clientId: newClientId(),
+      text: fileItem.text,
+      voiceId: fileItem.voiceId,
+      model: fileItem.model,
+      format: fileItem.format,
+      metadata: cloneMetadata(fileItem.metadata),
+      status: 'queued',
+      source: fileItem.source,
+      ...(fileItem.instructions !== undefined ? { instructions: fileItem.instructions } : {}),
+      ...(fileItem.sourceName !== undefined ? { sourceName: fileItem.sourceName } : {}),
+    }))
+    checkedIds.value = new Set()
+    activeId.value = null
   }
 
   return {
@@ -250,6 +326,15 @@ export function useQueue() {
     metadata,
     activeId,
     checkedIds,
+    visibleItems,
+    generateTarget,
+    activeIndex,
+    hasPrev,
+    hasNext,
+    selectPrev,
+    selectNext,
+    serialize,
+    loadDocument,
     addItem,
     addItems,
     addFromUpload,
@@ -267,6 +352,23 @@ export function useQueue() {
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
 function cloneMetadata(metadata: Metadata): Metadata {
   return JSON.parse(JSON.stringify(metadata)) as Metadata
+}
+
+/**
+ * A unique client id for a queue row. Prefers `crypto.randomUUID`, but falls back
+ * to a v4-shaped id when it is unavailable — `crypto.randomUUID` requires a secure
+ * context, so a self-hosted deployment reached over plain HTTP on a LAN address
+ * (not `localhost`) would otherwise crash on add/import. These ids are ephemeral,
+ * client-only keys, so the non-cryptographic fallback is acceptable.
+ */
+function newClientId(): string {
+  const cryptoObj = globalThis.crypto
+  if (typeof cryptoObj?.randomUUID === 'function') return cryptoObj.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const rand = Math.floor(Math.random() * 16)
+    const value = char === 'x' ? rand : (rand % 4) + 8
+    return value.toString(16)
+  })
 }
 
 /** Tomorrow as a local-day `YYYY-MM-DD` string (the recording-date default, FR-008). */

@@ -97,7 +97,7 @@ describe('Generate form — default tag values (US10)', () => {
     await wrapper.find('[data-test="add-item"]').trigger('click')
 
     postedBodies.length = 0
-    await wrapper.find('[data-test="generate-all"]').trigger('click')
+    await wrapper.find('[data-test="toolbar-generate"]').trigger('click')
 
     await vi.waitFor(() => {
       const sent = postedBodies.find((b) => b.text === 'hello')

@@ -14,8 +14,17 @@ export default defineConfig({
   // which references the core through the '#core' alias. The Nuxt-provided alias
   // only exists in the Nuxt env config, so resolve it here too. Scoped to an
   // exact match so it never shadows '#core/client'.
+  //
+  // The 005 client composables under app/ (e.g. useQueue/useQueueFile) import the
+  // browser-safe '#core/client' subset for value imports (MAX_INPUT_LENGTH,
+  // isKnownModel/Format). Their pure logic is unit/integration-tested in this node
+  // env, so resolve that alias here too (exact match — never shadows '#core').
   resolve: {
     alias: [
+      {
+        find: /^#core\/client$/,
+        replacement: fileURLToPath(new URL('./src/core/client.ts', import.meta.url)),
+      },
       {
         find: /^#core$/,
         replacement: fileURLToPath(new URL('./src/core/index.ts', import.meta.url)),
