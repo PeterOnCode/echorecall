@@ -34,6 +34,8 @@
       "genre": "Genre",
       "comment": "Comment",
       "recordedAt": "Recording date",
+      "recordedAtPlaceholder": "No date set",
+      "recordedAtClear": "Clear date",
       "track": "Track",
       "languages": "Languages",
       "languagePlaceholder": "ISO code, e.g. eng",
@@ -55,7 +57,15 @@
       "edit": "Edit item",
       "download": "Download",
       "filenamePreview": "Will be saved as {name}",
-      "filenameFallback": "a unique name (.{ext})"
+      "filenameFallback": "a unique name (.{ext})",
+      "columns": {
+        "text": "Item",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "workspace": {
+      "detailEmpty": "Select an item to edit its details."
     },
     "edit": {
       "instructions": "Voice instructions",

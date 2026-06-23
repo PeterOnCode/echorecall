@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Metadata } from '#core/client'
+import { parseDate, type CalendarDate } from '@internationalized/date'
 
 // Editor for the full, standards-oriented tag set (US2 / FR-018): scalar fields,
 // multi-value `languages`, and repeatable `customText` / `customUrl`. Controlled
@@ -7,10 +8,10 @@ import type { Metadata } from '#core/client'
 // owner (form-level defaults, queue row, or library item) stays the source of
 // truth. Saving replaces the whole set — clearing a field removes it (FR-023).
 const model = defineModel<Metadata>({ required: true })
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 /** A computed bound to one scalar field that drops the key when cleared. */
-function scalar(key: 'title' | 'artist' | 'album' | 'genre' | 'comment' | 'recordedAt' | 'track') {
+function scalar(key: 'title' | 'artist' | 'album' | 'genre' | 'comment' | 'track') {
   return computed<string>({
     get: () => model.value[key] ?? '',
     // Clearing a field removes it (FR-023): set undefined, which the JSON clone in
@@ -26,7 +27,6 @@ const scalarFields = [
   { key: 'artist', test: 'meta-artist' },
   { key: 'album', test: 'meta-album' },
   { key: 'genre', test: 'meta-genre' },
-  { key: 'recordedAt', test: 'meta-recordedAt' },
   { key: 'track', test: 'meta-track' },
 ] as const
 
@@ -35,9 +35,38 @@ const artist = scalar('artist')
 const album = scalar('album')
 const genre = scalar('genre')
 const comment = scalar('comment')
-const recordedAt = scalar('recordedAt')
 const track = scalar('track')
-const bound = { title, artist, album, genre, recordedAt, track }
+const bound = { title, artist, album, genre, track }
+
+// Recording date (005 redesign / FR-008): a UPopover + UCalendar picker that maps
+// the stored `YYYY-MM-DD` string to/from a CalendarDate. A legacy/unparseable value
+// (e.g. an old year-only entry) reads as "no date" until the user picks one. The
+// field stays clearable — clearing drops the key (FR-023).
+const recordedDate = computed<CalendarDate | undefined>({
+  get: () => {
+    const value = model.value.recordedAt
+    if (!value) return undefined
+    try {
+      return parseDate(value)
+    } catch {
+      return undefined
+    }
+  },
+  set: (value) => {
+    model.value = { ...model.value, recordedAt: value ? value.toString() : undefined }
+  },
+})
+
+/** Localized label for the picker trigger, or a placeholder when no date is set. */
+const recordedLabel = computed(() => {
+  const date = recordedDate.value
+  if (!date) return t('generate.metadata.recordedAtPlaceholder')
+  return new Date(date.year, date.month - 1, date.day).toLocaleDateString(locale.value)
+})
+
+function clearRecordedAt() {
+  recordedDate.value = undefined
+}
 
 // Languages (multi-value, ID3 TLAN).
 const newLanguage = ref('')
@@ -101,6 +130,37 @@ function removeUrl(index: number) {
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <UFormField v-for="f in scalarFields" :key="f.key" :label="t(`generate.metadata.${f.key}`)">
         <UInput v-model="bound[f.key].value" :data-test="f.test" class="w-full" />
+      </UFormField>
+
+      <!-- Recording date: a calendar picker (FR-008), defaulting to tomorrow on new rows. -->
+      <UFormField :label="t('generate.metadata.recordedAt')">
+        <UPopover>
+          <UButton
+            data-test="meta-recordedAt-trigger"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-calendar"
+            class="w-full justify-start"
+          >
+            {{ recordedLabel }}
+          </UButton>
+          <template #content>
+            <div class="flex flex-col gap-2 p-2">
+              <UCalendar v-model="recordedDate" data-test="meta-recordedAt-calendar" />
+              <div class="flex justify-end">
+                <UButton
+                  data-test="meta-recordedAt-clear"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="clearRecordedAt"
+                >
+                  {{ t('generate.metadata.recordedAtClear') }}
+                </UButton>
+              </div>
+            </div>
+          </template>
+        </UPopover>
       </UFormField>
     </div>
 

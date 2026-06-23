@@ -79,13 +79,18 @@ export function useQueue() {
   const checkedIds = ref<Set<string>>(new Set())
 
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
+    // A new row's recording date defaults to tomorrow (FR-008/data-model §1), unless
+    // the shared form metadata already carries one. Stored as a `YYYY-MM-DD` string so
+    // it round-trips through the metadata editor's calendar picker and the queue file.
+    const itemMetadata = cloneMetadata(metadata.value)
+    if (itemMetadata.recordedAt === undefined) itemMetadata.recordedAt = tomorrowIso()
     return {
       clientId: globalThis.crypto.randomUUID(),
       text,
       voiceId: voiceId.value,
       model: model.value,
       format: format.value,
-      metadata: cloneMetadata(metadata.value),
+      metadata: itemMetadata,
       status: 'queued',
       source,
       ...(sourceName ? { sourceName } : {}),
@@ -262,4 +267,12 @@ export function useQueue() {
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
 function cloneMetadata(metadata: Metadata): Metadata {
   return JSON.parse(JSON.stringify(metadata)) as Metadata
+}
+
+/** Tomorrow as a local-day `YYYY-MM-DD` string (the recording-date default, FR-008). */
+function tomorrowIso(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }

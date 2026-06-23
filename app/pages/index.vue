@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { Metadata } from '#core/client'
-import type { UploadSummary } from '../composables/useQueue'
+import type { ItemPatch, QueueItem, UploadSummary } from '../composables/useQueue'
 
-// US1 batch studio: build a generation list (typed and/or uploaded), then a
-// single Generate produces audio per item with isolated failures, each saved to
-// the library, with a batch `.zip` download of the successful items.
+// Generate workspace (005 redesign / US1): a resizable two-pane dashboard — the
+// queue list on the left, the selected item's metadata editor on the right. The
+// defaults bar (voice/model/format/speed) and the interim upload + text-add path
+// build the queue (the centralized toolbar arrives in US2); the shared metadata
+// editor still pre-fills new rows from the deployment default tags (003). A single
+// Generate produces audio per item with isolated failures, each saved to the
+// library, with a batch `.zip` download of the successful items.
 const {
   items,
   voiceId,
@@ -12,6 +16,7 @@ const {
   format,
   speed,
   metadata,
+  activeId,
   addItem,
   addFromUpload,
   removeItem,
@@ -25,6 +30,11 @@ const { t } = useI18n()
 const uploadSummary = ref<UploadSummary | null>(null)
 // Whether any saved default tag was applied (003) — drives the form hint.
 const defaultsApplied = ref(false)
+
+// The row shown in the detail pane; null → the pane shows its empty state (FR-003).
+const activeItem = computed<QueueItem | null>(
+  () => items.value.find((i) => i.clientId === activeId.value) ?? null,
+)
 
 onMounted(async () => {
   await loadVoices()
@@ -51,8 +61,13 @@ function onUploaded(content: string) {
   uploadSummary.value = addFromUpload(content)
 }
 
-// The (optional) metadata editor lives in a collapsible accordion section, open by
-// default so the fields are visible without an extra click.
+/** Apply a per-row edit from the detail-pane editor to the active item only. */
+function onUpdate(patch: ItemPatch) {
+  if (activeId.value) updateItem(activeId.value, patch)
+}
+
+// The shared (form-level) metadata editor lives in a collapsible accordion, open by
+// default. It seeds new rows and is stamped onto un-edited rows at generation.
 const metadataSections = [{ label: t('generate.metadata.legend'), slot: 'metadata' as const, value: 'metadata' }]
 
 const doneIds = computed(() =>
@@ -97,13 +112,24 @@ async function onDownloadAll() {
       </template>
     </UAccordion>
 
-    <QueueList
-      :items="items"
-      :voices="voices"
-      :shared-metadata="metadata"
-      @remove="removeItem"
-      @update="updateItem"
-    />
+    <DashboardWorkspace storage-key="generate-workspace" :detail-empty="!activeItem">
+      <template #list>
+        <QueueList v-model:active-id="activeId" :items="items" @remove="removeItem" />
+      </template>
+      <template #detail>
+        <QueueItemEditor
+          v-if="activeItem"
+          :item="activeItem"
+          :voices="voices"
+          @update="onUpdate"
+        />
+      </template>
+      <template #empty>
+        <p data-test="generate-detail-empty" class="text-sm text-muted">
+          {{ t('generate.workspace.detailEmpty') }}
+        </p>
+      </template>
+    </DashboardWorkspace>
 
     <div class="flex gap-3">
       <UButton

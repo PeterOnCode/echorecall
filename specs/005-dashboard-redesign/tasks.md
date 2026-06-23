@@ -59,19 +59,19 @@ no selection → empty detail state.
 
 ### Tests for User Story 1 (red-first)
 
-- [ ] T007 [P] [US1] Rewrite `tests/component/QueueList.test.ts` red-first: rows render and clicking a row sets `active-id` (loads detail); `queue-row`/`queue-table` hooks
-- [ ] T008 [P] [US1] Rewrite `tests/component/MetadataFields.test.ts` red-first: `recordedAt` rendered as `UPopover`+`UCalendar`; new item defaults to **tomorrow**; editable/clearable (`meta-recordedAt-*`)
-- [ ] T009 [P] [US1] Rewrite `tests/component/Generate.test.ts` red-first: two-pane wiring — selecting a queue row loads the editor; empty selection shows `dashboard-detail-empty`
-- [ ] T009a [P] [US1] Create `tests/component/GenerateForm.test.ts` red-first: the defaults bar sets voice/model/format/speed (form-level `v-model`) so newly added items inherit them (FR-021)
+- [X] T007 [P] [US1] Rewrite `tests/component/QueueList.test.ts` red-first: rows render and clicking a row sets `active-id` (loads detail); `queue-row`/`queue-table` hooks
+- [X] T008 [P] [US1] Rewrite `tests/component/MetadataFields.test.ts` red-first: `recordedAt` rendered as `UPopover`+`UCalendar`; new item defaults to **tomorrow**; editable/clearable (`meta-recordedAt-*`)
+- [X] T009 [P] [US1] Rewrite `tests/component/Generate.test.ts` red-first: two-pane wiring — selecting a queue row loads the editor; empty selection shows `dashboard-detail-empty`
+- [X] T009a [P] [US1] Create `tests/component/GenerateForm.test.ts` red-first: the defaults bar sets voice/model/format/speed (form-level `v-model`) so newly added items inherit them (FR-021)
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Adapt `app/components/generate/QueueList.vue` into the list pane (`UTable`, selectable rows emit/`v-model:active-id`) to pass T007
-- [ ] T011 [US1] Adapt `app/components/generate/MetadataFields.vue`: `recordedAt` → `UPopover`+`UCalendar`, default tomorrow, `CalendarDate`↔string via `@internationalized/date` to pass T008
-- [ ] T011a [US1] Adapt `app/components/generate/GenerateForm.vue` into a compact defaults bar (voice/model/format/speed → `useQueue` form-level refs); keep an interim text-add here until `AddTextPanel` (US4) replaces it to pass T009a (FR-021)
-- [ ] T012 [US1] Adapt `app/components/generate/QueueItemEditor.vue` to render in the detail pane (preserve `@blur` validate-and-commit)
-- [ ] T013 [US1] Rebuild `app/pages/index.vue` onto `DashboardWorkspace` (`#list`=QueueList, `#detail`=editor); wire `useQueue.activeId`; empty-state to pass T009. **Preserve** the 003 default-tags pre-fill (onMounted fetch → `setDefaults`) and the `defaults-hint` (SC-008); **keep an interim add path** (existing `UploadDropzone` + text-add) until US2/US4 so the MVP is demoable
-- [ ] T014 [P] [US1] Add US1 i18n keys (detail empty-state, recording-date picker labels) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T010 [US1] Adapt `app/components/generate/QueueList.vue` into the list pane (`UTable`, selectable rows emit/`v-model:active-id`) to pass T007
+- [X] T011 [US1] Adapt `app/components/generate/MetadataFields.vue`: `recordedAt` → `UPopover`+`UCalendar`, default tomorrow, `CalendarDate`↔string via `@internationalized/date` to pass T008
+- [X] T011a [US1] Adapt `app/components/generate/GenerateForm.vue` into a compact defaults bar (voice/model/format/speed → `useQueue` form-level refs); keep an interim text-add here until `AddTextPanel` (US4) replaces it to pass T009a (FR-021)
+- [X] T012 [US1] Adapt `app/components/generate/QueueItemEditor.vue` to render in the detail pane (preserve `@blur` validate-and-commit)
+- [X] T013 [US1] Rebuild `app/pages/index.vue` onto `DashboardWorkspace` (`#list`=QueueList, `#detail`=editor); wire `useQueue.activeId`; empty-state to pass T009. **Preserve** the 003 default-tags pre-fill (onMounted fetch → `setDefaults`) and the `defaults-hint` (SC-008); **keep an interim add path** (existing `UploadDropzone` + text-add) until US2/US4 so the MVP is demoable
+- [X] T014 [P] [US1] Add US1 i18n keys (detail empty-state, recording-date picker labels) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Generate workspace is functional and independently testable (MVP).
 
