@@ -93,8 +93,8 @@ describe('Generate form — default tag values (US10)', () => {
     await wrapper.find('[data-test="meta-artist"]').setValue('Custom Artist')
     await wrapper.find('[data-test="meta-genre"]').setValue('')
 
-    await wrapper.find('[data-test="add-text"]').setValue('hello')
-    await wrapper.find('[data-test="add-item"]').trigger('click')
+    await wrapper.find('[data-test="add-text-input"]').setValue('hello')
+    await wrapper.find('[data-test="add-text-submit"]').trigger('click')
 
     postedBodies.length = 0
     await wrapper.find('[data-test="toolbar-generate"]').trigger('click')

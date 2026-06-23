@@ -197,8 +197,9 @@ function onDeleteSelected() {
       v-model:format="format"
       v-model:speed="speed"
       :voices="voices"
-      @add="onAdd"
     />
+
+    <AddTextPanel @add="onAdd" />
 
     <UploadDropzone ref="dropzone" :summary="uploadSummary" @uploaded="onUploaded" />
 

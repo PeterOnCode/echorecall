@@ -6,9 +6,8 @@ import GenerateForm from '~/components/generate/GenerateForm.vue'
 
 // Component coverage for the 005 redesign "defaults bar" (US1 / FR-021): the
 // compact form-level controls (voice / model / format / speed) that newly added
-// queue rows inherit, plus the interim text-add path kept here until US4's
-// AddTextPanel replaces it. The controls are controlled via v-model; we assert
-// each emits its update and that Add only fires for non-empty text.
+// queue rows inherit. The controls are controlled via v-model; we assert each emits
+// its update. Ad-hoc text entry moved to AddTextPanel in US4 (its own test).
 
 const voices = [
   { id: 'alloy', label: 'Alloy' },
@@ -32,9 +31,9 @@ function pickMenu(w: VueWrapper, testId: string, value: string) {
 }
 
 describe('GenerateForm (defaults bar)', () => {
-  it('renders the four default controls and the text-add path', async () => {
+  it('renders the four default controls', async () => {
     const wrapper = await mountForm()
-    for (const id of ['voice', 'model', 'format', 'speed', 'add-text', 'add-item']) {
+    for (const id of ['voice', 'model', 'format', 'speed']) {
       expect(wrapper.find(`[data-test="${id}"]`).exists(), id).toBe(true)
     }
   })
@@ -53,25 +52,5 @@ describe('GenerateForm (defaults bar)', () => {
     pickMenu(wrapper, 'format', 'flac')
     await flushPromises()
     expect(wrapper.emitted('update:format')?.at(-1)?.[0]).toBe('flac')
-  })
-
-  it('emits add with the trimmed text and clears the box', async () => {
-    const wrapper = await mountForm()
-
-    const box = wrapper.find('[data-test="add-text"]')
-    await box.setValue('  hello world  ')
-    await wrapper.find('[data-test="add-item"]').trigger('click')
-
-    expect(wrapper.emitted('add')?.at(-1)?.[0]).toBe('hello world')
-    expect((box.element as HTMLTextAreaElement).value).toBe('')
-  })
-
-  it('does not emit add for empty/whitespace text', async () => {
-    const wrapper = await mountForm()
-
-    await wrapper.find('[data-test="add-text"]').setValue('   ')
-    await wrapper.find('[data-test="add-item"]').trigger('click')
-
-    expect(wrapper.emitted('add')).toBeFalsy()
   })
 })

@@ -146,13 +146,13 @@ source; empty input is rejected with a reason.
 
 ### Tests for User Story 4 (red-first)
 
-- [ ] T033 [P] [US4] Create `tests/component/AddTextPanel.test.ts`: add creates a `source:'text'` row; empty input rejected (`add-text-*`)
+- [X] T033 [P] [US4] Create `tests/component/AddTextPanel.test.ts`: add creates a `source:'text'` row; empty input rejected (`add-text-*`)
 
 ### Implementation for User Story 4
 
-- [ ] T034 [US4] Create `app/components/generate/AddTextPanel.vue` (text input + add; rejects empty via `validateItemText`) to pass T033
-- [ ] T035 [US4] Wire `AddTextPanel` into `app/pages/index.vue` (calls `addItem`, sets `source:'text'`)
-- [ ] T036 [P] [US4] Add US4 i18n keys (add-text label/placeholder/empty error) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T034 [US4] Create `app/components/generate/AddTextPanel.vue` (text input + add; rejects empty via `validateItemText`) to pass T033
+- [X] T035 [US4] Wire `AddTextPanel` into `app/pages/index.vue` (calls `addItem`, sets `source:'text'`)
+- [X] T036 [P] [US4] Add US4 i18n keys (add-text label/placeholder/empty error) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Ad-hoc text entry works alongside upload.
 

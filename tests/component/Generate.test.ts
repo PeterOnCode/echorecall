@@ -8,8 +8,8 @@ import GeneratePage from '~/pages/index.vue'
 // Component coverage for the 005 Generate workspace (US1 / FR-001..008): the
 // surface is a resizable two-pane dashboard — the queue list on the left, the
 // per-item metadata editor on the right. Selecting a row loads it into the detail
-// pane; with nothing selected the detail pane shows its empty state. The interim
-// upload + text-add path (kept until US2/US4) still builds the queue, and a single
+// pane; with nothing selected the detail pane shows its empty state. The upload
+// dropzone and the AddTextPanel (US4) build the queue, and a single
 // Generate produces audio per item with isolated per-item failures. The TTS
 // endpoints are mocked at the HTTP boundary (no provider/network), so this drives
 // the real queue + generate composables and the redesigned Generate page UI.
@@ -56,8 +56,8 @@ async function mountPage() {
 }
 
 async function addTyped(wrapper: Awaited<ReturnType<typeof mountPage>>, text: string) {
-  await wrapper.find('[data-test="add-text"]').setValue(text)
-  await wrapper.find('[data-test="add-item"]').trigger('click')
+  await wrapper.find('[data-test="add-text-input"]').setValue(text)
+  await wrapper.find('[data-test="add-text-submit"]').trigger('click')
 }
 
 function setFile(wrapper: Awaited<ReturnType<typeof mountPage>>, file: File) {
