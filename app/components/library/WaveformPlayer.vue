@@ -72,6 +72,12 @@ function build(src: string) {
     playing.value = false
   })
   instance.on('error', (error: Error) => {
+    // Ignore errors from a torn-down/superseded instance. wavesurfer's `load()`
+    // emits `error` for the AbortError raised when `destroy()` aborts an in-flight
+    // load during a rebuild, and `destroy()` does not detach our handler — so a
+    // stale abort would otherwise stick the live player in the unavailable state
+    // and hide the valid new waveform. Only the current instance may flip it.
+    if (instance !== ws) return
     // A missing/undecodable file leaves the panel usable: show the unavailable
     // notice and let the consumer react, rather than throwing (FR-016 edge case).
     unavailable.value = true

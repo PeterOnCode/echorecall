@@ -98,6 +98,28 @@ describe('WaveformPlayer (US6)', () => {
     expect(wrapper.emitted('error')).toBeTruthy()
   })
 
+  it('ignores a stale error from a torn-down instance during a rebuild', async () => {
+    const wrapper = await mountSuspended(WaveformPlayer, { props: { src: SRC } })
+    const first = wavesurferState.instance!
+
+    // Select another recording before the first finishes loading: rebuild destroys
+    // `first` (wavesurfer aborts its in-flight load and emits an AbortError via the
+    // load() try/catch) and builds a fresh instance.
+    await wrapper.setProps({ src: '/api/generations/gen-2/audio' })
+    await flushPromises()
+    const second = wavesurferState.instance!
+    expect(second).not.toBe(first)
+
+    // The stale abort error from the destroyed first instance must NOT flip the
+    // live player into the unavailable state, or it would hide the valid waveform.
+    first.emit('error', new DOMException('aborted', 'AbortError'))
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="waveform-unavailable"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="waveform-canvas"]').exists()).toBe(true)
+    expect(wrapper.emitted('error')).toBeFalsy()
+  })
+
   it('destroys the instance on unmount', async () => {
     const wrapper = await mountSuspended(WaveformPlayer, { props: { src: SRC } })
     const instance = wavesurferState.instance!
