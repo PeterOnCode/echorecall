@@ -5,12 +5,13 @@ import LibraryTable from '~/components/library/LibraryTable.vue'
 import type { LibraryItem } from '~/composables/useLibrary'
 import type { LibraryQuery } from '#core/client'
 
-// Component coverage for US6 (FR-034-036, FR-010): LibraryTable is the controlled
-// discovery surface, now built on UTable. Sort headers are server-driven (they
-// drive `query`, never client-sort); replay/edit open a single per-row #expanded
-// region (mutually exclusive); pagination disables at the bounds. Voice/format/
-// date-range filtering lives in LibrarySearchBar (covered by its own spec). The
-// table never touches the network: it is driven purely by `items`, `total`, `query`.
+// Component coverage for US5 (005 redesign / FR-014): LibraryTable is the Library
+// *list pane* — a controlled, server-driven discovery table (the search bar sits
+// above it, sort headers + pagination drive `query`, never client-sort). Selecting
+// a row emits `selected-id` so the page loads that recording into the audio-tags
+// detail pane; the old inline `#expanded` region (inline player + inline editor) is
+// gone — playback and tag editing now live in the detail pane / waveform. The table
+// never touches the network: it is driven purely by `items`, `total`, `query`.
 
 function item(overrides: Partial<LibraryItem> = {}): LibraryItem {
   return {
@@ -81,33 +82,26 @@ describe('LibraryTable', () => {
     expect(wrapper.find('[data-test="page-next"]').attributes('disabled')).toBeDefined()
   })
 
-  it('replay opens an AudioPlayer in the expanded row; edit swaps it for the editor (mutually exclusive)', async () => {
+  it('selecting a row emits selected-id and marks the active row', async () => {
     const wrapper = await mountTable()
-    expect(wrapper.find('audio').exists()).toBe(false)
+    const rows = wrapper.findAll('[data-test="library-row"]')
+    await rows[1]!.trigger('click')
 
-    // Replay the first row → player appears in the expanded region.
-    await wrapper.findAll('[data-test="replay"]')[0]!.trigger('click')
-    await flushPromises()
-    expect(wrapper.find('audio').exists()).toBe(true)
-    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(false)
+    const emitted = wrapper.emitted('update:selectedId') as (string | null)[][] | undefined
+    expect(emitted!.at(-1)![0]).toBe('b')
 
-    // Edit the same row → editor replaces the player (one mode per row).
-    await wrapper.findAll('[data-test="edit-item"]')[0]!.trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(true)
-    expect(wrapper.find('audio').exists()).toBe(false)
+    // Once the parent applies the selection, the active row reflects it.
+    await wrapper.setProps({ selectedId: 'b' })
+    expect(wrapper.findAll('[data-test="library-row"]')[1]!.attributes('aria-pressed')).toBe('true')
+    expect(wrapper.findAll('[data-test="library-row"]')[0]!.attributes('aria-pressed')).toBe('false')
   })
 
-  it('a row whose audio fails to load shows unavailable and disables replay', async () => {
+  it('no longer renders an inline player or inline editor (selection drives the detail pane)', async () => {
     const wrapper = await mountTable()
-    await wrapper.findAll('[data-test="replay"]')[0]!.trigger('click')
+    await wrapper.findAll('[data-test="library-row"]')[0]!.trigger('click')
     await flushPromises()
 
-    // The AudioPlayer reports a load error → the row is marked unavailable.
-    await wrapper.find('audio').trigger('error')
-    await flushPromises()
-
-    expect(wrapper.find('[data-test="row-unavailable"]').exists()).toBe(true)
-    expect(wrapper.findAll('[data-test="replay"]')[0]!.attributes('disabled')).toBeDefined()
+    expect(wrapper.find('audio').exists()).toBe(false)
+    expect(wrapper.find('[data-test="library-item-editor"]').exists()).toBe(false)
   })
 })

@@ -1,27 +1,23 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { BulkCleanFilter, LibraryQuery, Metadata } from '#core/client'
+import type { BulkCleanFilter, LibraryQuery } from '#core/client'
 import type { LibraryItem } from '../../composables/useLibrary'
 
-// The library discovery surface (US6 / FR-034-037). Controlled and network-free:
-// it renders a search/filter bar, a sortable table, and pagination that all drive
-// a single `query` (v-model:query), plus a bulk-clean trigger. Row actions stay
-// inline — replay reuses AudioPlayer over the stored `audioUrl` (no provider
-// call), edit opens the existing LibraryItemEditor in an expanded row, and a row
-// whose stored audio fails to load shows an "unavailable" badge (FR-029 edge
-// case). The page owns the network: it provides `items`/`total`, reloads on
-// `update:query`, and handles `save` / `delete` / `bulk-clean`.
+// The Library list pane (005 redesign / US5 · FR-014): a controlled, server-driven
+// discovery table. The search/filter bar sits above it, sortable headers and
+// pagination drive a single `query` (v-model:query) — never a client-side sort —
+// and a bulk-clean trigger removes batches. Clicking a row sets the active id
+// (v-model:selected-id) so the page loads that recording into the audio-tags detail
+// pane; tag editing, delete, and playback now live in that pane / the waveform, so
+// the old inline expanded region is gone. Download stays as a per-row link (a plain
+// attachment URL — no provider call). The page owns the network: it provides
+// `items`/`total`, reloads on `update:query`, and carries out `bulk-clean`.
 const props = defineProps<{ items: LibraryItem[]; total: number }>()
-const emit = defineEmits<{
-  save: [item: LibraryItem, patch: { filename: string; metadata: Metadata }]
-  delete: [id: string]
-  'bulk-clean': [filter: BulkCleanFilter]
-}>()
+const emit = defineEmits<{ 'bulk-clean': [filter: BulkCleanFilter] }>()
 
 const query = defineModel<LibraryQuery>('query', { required: true })
-// Which row's inline editor is open. Two-way bound so the page can close it after
-// a successful save (the network result lands there).
-const editingId = defineModel<string | null>('editingId', { default: null })
+// The active row, shown in the detail pane; null → the pane shows its empty state.
+const selectedId = defineModel<string | null>('selectedId', { default: null })
 
 const { t } = useI18n()
 
@@ -34,6 +30,11 @@ const columns: TableColumn<LibraryItem>[] = [
   { id: 'createdAt', accessorKey: 'createdAt' },
   { id: 'actions' },
 ]
+
+// --- Selection (drives the detail pane) ----------------------------------------
+function select(id: string) {
+  selectedId.value = id
+}
 
 // --- Sorting (server-driven) ---------------------------------------------------
 type SortKey = NonNullable<LibraryQuery['sort']>
@@ -63,63 +64,8 @@ function goToPage(page: number) {
 }
 
 // --- Row actions (local, network-free) -----------------------------------------
-const playingId = ref<string | null>(null)
-const unavailableIds = ref<string[]>([])
-
-// One expanded region per row, driven by replay (player) / edit (editor); they are
-// mutually exclusive per row. UTable wants an { [rowId]: true } map; we derive it
-// from the two ids and never let the table mutate it (no built-in expand control).
-const expanded = computed<Record<string, boolean>>({
-  get: () => {
-    const r: Record<string, boolean> = {}
-    if (playingId.value) r[playingId.value] = true
-    if (editingId.value) r[editingId.value] = true
-    return r
-  },
-  set: () => {},
-})
-
-function rowMode(id: string): 'player' | 'editor' | 'none' {
-  if (editingId.value === id) return 'editor'
-  if (playingId.value === id) return 'player'
-  return 'none'
-}
-
-function toggleReplay(id: string) {
-  if (playingId.value === id) {
-    playingId.value = null
-    return
-  }
-  playingId.value = id
-  if (editingId.value === id) editingId.value = null
-}
-
-function toggleEdit(id: string) {
-  if (editingId.value === id) {
-    editingId.value = null
-    return
-  }
-  editingId.value = id
-  if (playingId.value === id) playingId.value = null
-}
-
 function downloadUrl(audioUrl: string): string {
   return `${audioUrl}?download=1`
-}
-
-function isUnavailable(id: string): boolean {
-  return unavailableIds.value.includes(id)
-}
-
-// The stored file is gone (or unreadable): the <audio> element errors loading the
-// src. Mark the row so the user sees it instead of a silently broken control.
-function markUnavailable(id: string) {
-  if (!unavailableIds.value.includes(id)) unavailableIds.value = [...unavailableIds.value, id]
-  if (playingId.value === id) playingId.value = null
-}
-
-function onEditorSave(item: LibraryItem, patch: { filename: string; metadata: Metadata }) {
-  emit('save', item, patch)
 }
 
 // --- Bulk clean ----------------------------------------------------------------
@@ -157,7 +103,6 @@ function onBulkConfirm(filter: BulkCleanFilter) {
       :data="items"
       :columns="columns"
       :get-row-id="(row: LibraryItem) => row.id"
-      :expanded="expanded"
     >
       <template #name-header>
         <UButton
@@ -212,15 +157,18 @@ function onBulkConfirm(filter: BulkCleanFilter) {
       </template>
 
       <template #name-cell="{ row }">
-        <div data-test="library-row">
-          <p class="font-medium" :class="{ 'text-muted line-through': isUnavailable(row.original.id) }">
+        <button
+          type="button"
+          data-test="library-row"
+          :aria-pressed="selectedId === row.original.id"
+          class="flex w-full flex-col items-start gap-0.5 text-left"
+          @click="select(row.original.id)"
+        >
+          <span class="font-medium" :class="{ 'text-primary': selectedId === row.original.id }">
             {{ row.original.filename }}
-          </p>
-          <p class="whitespace-normal break-words text-xs text-muted">{{ row.original.text }}</p>
-          <p v-if="isUnavailable(row.original.id)" data-test="row-unavailable" class="text-xs text-error">
-            {{ t('library.unavailable') }}
-          </p>
-        </div>
+          </span>
+          <span class="whitespace-normal break-words text-xs text-muted">{{ row.original.text }}</span>
+        </button>
       </template>
       <template #voice-cell="{ row }">{{ row.original.voiceId }}</template>
       <template #format-cell="{ row }"><span class="uppercase">{{ row.original.format }}</span></template>
@@ -229,16 +177,6 @@ function onBulkConfirm(filter: BulkCleanFilter) {
       </template>
       <template #actions-cell="{ row }">
         <div class="flex justify-end gap-1">
-          <UButton
-            data-test="replay"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-play"
-            :disabled="isUnavailable(row.original.id)"
-            :aria-label="t('library.item.replay')"
-            @click="toggleReplay(row.original.id)"
-          />
           <UButton
             data-test="download"
             color="neutral"
@@ -250,33 +188,7 @@ function onBulkConfirm(filter: BulkCleanFilter) {
             download
             :aria-label="t('library.item.download')"
           />
-          <UButton
-            data-test="edit-item"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-pencil"
-            :aria-expanded="editingId === row.original.id"
-            :aria-label="t('library.item.edit')"
-            @click="toggleEdit(row.original.id)"
-          />
         </div>
-      </template>
-
-      <template #expanded="{ row }">
-        <AudioPlayer
-          v-if="rowMode(row.original.id) === 'player'"
-          :src="row.original.audioUrl"
-          :label="row.original.filename"
-          @error="markUnavailable(row.original.id)"
-        />
-        <LibraryItemEditor
-          v-else-if="rowMode(row.original.id) === 'editor'"
-          :item="row.original"
-          @save="(patch) => onEditorSave(row.original, patch)"
-          @delete="(id) => emit('delete', id)"
-          @cancel="editingId = null"
-        />
       </template>
     </UTable>
 

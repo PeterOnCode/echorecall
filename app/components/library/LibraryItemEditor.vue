@@ -7,13 +7,15 @@ import type { LibraryItem } from '../../composables/useLibrary'
 // patch (the new base filename + the whole metadata set) and a `delete`, leaving
 // the network calls to the page (useLibrary.rename / updateMetadata / remove).
 // The extension is immutable, so only the base name is editable and the
-// extension is shown read-only beside it. `MetadataFields` and `ConfirmDialog`
-// are resolved via Nuxt's component auto-import.
+// extension is shown read-only beside it. In the 005 redesign it renders inside the
+// always-visible audio-tags detail pane (AudioTagsPanel), so there is no inline
+// "cancel": switching to another recording re-seeds the drafts from the new prop
+// (see the `watch` below). `MetadataFields` and `ConfirmDialog` are resolved via
+// Nuxt's component auto-import.
 const props = defineProps<{ item: LibraryItem }>()
 const emit = defineEmits<{
   save: [patch: { filename: string; metadata: Metadata }]
   delete: [id: string]
-  cancel: []
 }>()
 const { t } = useI18n()
 
@@ -72,15 +74,6 @@ function confirmDelete() {
     <div class="flex flex-wrap items-center gap-2">
       <UButton data-test="save-item" color="primary" size="sm" @click="save">
         {{ t('library.editor.save') }}
-      </UButton>
-      <UButton
-        data-test="cancel-edit"
-        color="neutral"
-        variant="ghost"
-        size="sm"
-        @click="emit('cancel')"
-      >
-        {{ t('library.editor.cancel') }}
       </UButton>
       <UButton
         data-test="delete-item"
