@@ -120,18 +120,18 @@ column persists and the last column can't be hidden.
 
 ### Tests for User Story 3 (red-first)
 
-- [ ] T024 [P] [US3] Create `tests/unit/view-preferences.test.ts`: `queueColumns` persists to localStorage; `setColumn` prevents hiding all columns
-- [ ] T025 [P] [US3] Extend `tests/component/QueueList.test.ts` red-first: search filters by filename+text; per-field filters + clear; select-all/row checkboxes drive `checked-ids`; `queue-row-source` shows filename vs "Text Entered"; `queue-delete-selected` confirms then removes; assert search/filter stays responsive with ≥200 seeded items (SC-003)
-- [ ] T026 [P] [US3] Create `tests/component/QueueColumnsDialog.test.ts`: toggles persist; last-visible toggle disabled; `queue-columns-*` hooks
+- [X] T024 [P] [US3] Create `tests/unit/view-preferences.test.ts`: `queueColumns` persists to localStorage; `setColumn` prevents hiding all columns
+- [X] T025 [P] [US3] Extend `tests/component/QueueList.test.ts` red-first: search filters by filename+text; per-field filters + clear; select-all/row checkboxes drive `checked-ids`; `queue-row-source` shows filename vs "Text Entered"; `queue-delete-selected` confirms then removes; assert search/filter stays responsive with ≥200 seeded items (SC-003)
+- [X] T026 [P] [US3] Create `tests/component/QueueColumnsDialog.test.ts`: toggles persist; last-visible toggle disabled; `queue-columns-*` hooks
 
 ### Implementation for User Story 3
 
-- [ ] T027 [P] [US3] Create `app/composables/useViewPreferences.ts` (`queueColumns` localStorage-backed, SSR-guarded; `setColumn` guard) to pass T024
-- [ ] T028 [P] [US3] Create `app/components/generate/QueueColumnsDialog.vue` (`UModal`, `v-model:columns`) to pass T026
-- [ ] T029 [US3] Extend `app/composables/useQueue.ts`: `searchTerm`/`filters` + `visibleItems` computed (client-side over filename/text + voice/format/album/recordedAt/language)
-- [ ] T030 [US3] Extend `app/components/generate/QueueList.vue`: search input, filter `USelectMenu`s + date picker, leading `UCheckbox` select column, source column, `queue-delete-selected` (reuse `ConfirmDialog`), columns trigger, bind `visibleColumns` to pass T025
-- [ ] T031 [US3] Wire columns dialog + multi-select delete (`removeMany`) into `app/pages/index.vue`
-- [ ] T032 [P] [US3] Add US3 i18n keys (search, filter labels, column names, "Text Entered", delete confirmation) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T027 [P] [US3] Create `app/composables/useViewPreferences.ts` (`queueColumns` localStorage-backed, SSR-guarded; `setColumn` guard) to pass T024
+- [X] T028 [P] [US3] Create `app/components/generate/QueueColumnsDialog.vue` (`UModal`, `v-model:columns`) to pass T026
+- [X] T029 [US3] Extend `app/composables/useQueue.ts`: `searchTerm`/`filters` + `visibleItems` computed (client-side over filename/text + voice/format/album/recordedAt/language)
+- [X] T030 [US3] Extend `app/components/generate/QueueList.vue`: search input, filter `USelectMenu`s + date picker, leading `UCheckbox` select column, source column, `queue-delete-selected` (reuse `ConfirmDialog`), columns trigger, bind `visibleColumns` to pass T025
+- [X] T031 [US3] Wire columns dialog + multi-select delete (`removeMany`) into `app/pages/index.vue`
+- [X] T032 [P] [US3] Add US3 i18n keys (search, filter labels, column names, "Text Entered", delete confirmation) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Long queues are searchable, filterable, prunable, and configurable.
 

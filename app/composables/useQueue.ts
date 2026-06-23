@@ -35,6 +35,19 @@ export interface UploadSummary {
 /** Fields a single queue row can be edited with (US3); each key is optional. */
 export type ItemPatch = Partial<Pick<ListItem, 'text' | 'voiceId' | 'model' | 'format' | 'instructions' | 'metadata'>>
 
+/**
+ * Client-side queue filters (005 · US3 / FR-010, data-model §2). Each set field
+ * narrows the visible rows; an unset field imposes no constraint. Applied in-memory
+ * over the queue alongside the free-text search.
+ */
+export interface QueueFilters {
+  voiceId?: string
+  format?: Format
+  album?: string
+  recordedAt?: string
+  language?: string
+}
+
 /** Why a text edit was refused (empty after trim, or over the input cap). */
 export type TextRejection = 'empty' | 'tooLong'
 
@@ -80,6 +93,10 @@ export function useQueue() {
   // Multi-select set (by clientId) backing the checkbox column — used for bulk
   // delete and as the Generate target (checked-else-all).
   const checkedIds = ref<Set<string>>(new Set())
+  // Free-text search (over item text + uploaded filename) and per-field filters that
+  // narrow the visible rows client-side (US3 / FR-009/010).
+  const searchTerm = ref('')
+  const filters = ref<QueueFilters>({})
 
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
     // A new row's recording date defaults to tomorrow (FR-008/data-model §1), unless
@@ -246,20 +263,38 @@ export function useQueue() {
     }
   }
 
-  // The rows currently shown by the list pane. For US2 this is the whole queue;
-  // US3 narrows it by search/filters. `generateTarget` and the prev/next
-  // navigation derive from it so they always track what the user can see.
-  const visibleItems = computed(() => items.value)
+  // The rows currently shown by the list pane: the queue narrowed by the free-text
+  // search and the per-field filters (US3 / FR-009/010), order preserved. A simple
+  // O(n) scan per change — adequate well past the ≥200-row target (SC-003) without
+  // virtualization. `generateTarget` and the prev/next navigation derive from it so
+  // they always track what the user can see.
+  const visibleItems = computed(() => {
+    const term = searchTerm.value.trim().toLowerCase()
+    const f = filters.value
+    return items.value.filter((item) => {
+      if (term && !`${item.text} ${item.sourceName ?? ''}`.toLowerCase().includes(term)) return false
+      if (f.voiceId && item.voiceId !== f.voiceId) return false
+      if (f.format && item.format !== f.format) return false
+      if (f.album && (item.metadata?.album ?? '') !== f.album) return false
+      if (f.recordedAt && (item.metadata?.recordedAt ?? '') !== f.recordedAt) return false
+      if (f.language && !(item.metadata?.languages ?? []).includes(f.language)) return false
+      return true
+    })
+  })
 
   /**
    * What a Generate run processes (FR-005a): the checked rows if any are checked,
-   * otherwise every visible row. A fresh array so removing rows on success (US2)
-   * can't disturb the in-flight iteration.
+   * otherwise the ENTIRE queue. Derived from `items`, not `visibleItems`: search and
+   * filters are a view-only concern (US3) and must never change what gets generated —
+   * a checked row hidden by a filter is still processed, and with nothing checked the
+   * whole queue runs regardless of any active filter. (Only metadata stamping and the
+   * prev/next navigation track the visible set.) A fresh array so removing rows on
+   * success (US2) can't disturb the in-flight iteration.
    */
   const generateTarget = computed(() =>
     checkedIds.value.size > 0
-      ? visibleItems.value.filter((i) => checkedIds.value.has(i.clientId))
-      : [...visibleItems.value],
+      ? items.value.filter((i) => checkedIds.value.has(i.clientId))
+      : [...items.value],
   )
 
   // Active-selection navigation for the toolbar prev/next (FR-005), over the
@@ -326,6 +361,8 @@ export function useQueue() {
     metadata,
     activeId,
     checkedIds,
+    searchTerm,
+    filters,
     visibleItems,
     generateTarget,
     activeIndex,

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import QueueList from '~/components/generate/QueueList.vue'
+import type { QueueColumnId } from '~/composables/useViewPreferences'
 import type { QueueItem } from '~/composables/useQueue'
+
+function allColumns(): Record<QueueColumnId, boolean> {
+  return { source: true, voice: true, format: true, recordedAt: true, language: true, status: true }
+}
 
 // Component coverage for the 005 redesign list pane (US1 / FR-001/003): the queue
 // renders as a selectable table — one row per item — and clicking a row sets the
@@ -79,5 +85,88 @@ describe('QueueList (list pane)', () => {
     const statuses = wrapper.findAll('[data-test="item-status"]').map((s) => s.text())
     expect(statuses[0]).toMatch(/done/i)
     expect(statuses[1]).toMatch(/fail/i)
+  })
+})
+
+describe('QueueList (curation – US3)', () => {
+  it('emits the search term as the user types (v-model:search)', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: { items: [item()], visibleColumns: allColumns() },
+    })
+    await wrapper.find('[data-test="queue-search"]').setValue('hello')
+    const emitted = wrapper.emitted('update:search')
+    expect(emitted).toBeTruthy()
+    expect(emitted!.at(-1)![0]).toBe('hello')
+  })
+
+  it('shows the source as the filename for uploads and a label for typed text', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: {
+        items: [
+          item({ clientId: 'u', source: 'upload', sourceName: 'notes.txt' }),
+          item({ clientId: 't', source: 'text' }),
+        ],
+        visibleColumns: allColumns(),
+      },
+    })
+    const sources = wrapper.findAll('[data-test="queue-row-source"]')
+    expect(sources[0]!.text()).toContain('notes.txt')
+    expect(sources[1]!.text()).not.toContain('notes.txt')
+    expect(sources[1]!.text().trim().length).toBeGreaterThan(0)
+  })
+
+  it('row and header checkboxes drive checked-ids', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: {
+        items: [item({ clientId: 'a' }), item({ clientId: 'b' })],
+        checkedIds: new Set<string>(),
+        visibleColumns: allColumns(),
+      },
+    })
+
+    await wrapper.findAll('[data-test="queue-row-checkbox"]')[0]!.trigger('click')
+    let emitted = wrapper.emitted('update:checkedIds')
+    expect(emitted).toBeTruthy()
+    expect([...(emitted!.at(-1)![0] as Set<string>)]).toEqual(['a'])
+
+    await wrapper.find('[data-test="queue-select-all"]').trigger('click')
+    emitted = wrapper.emitted('update:checkedIds')
+    expect([...(emitted!.at(-1)![0] as Set<string>)].sort()).toEqual(['a', 'b'])
+  })
+
+  it('requests the column dialog from the columns button', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: { items: [item()], visibleColumns: allColumns() },
+    })
+    await wrapper.find('[data-test="queue-columns-button"]').trigger('click')
+    expect(wrapper.emitted('open-columns')).toBeTruthy()
+  })
+
+  it('deletes the checked rows only after confirmation', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: {
+        items: [item({ clientId: 'a' }), item({ clientId: 'b' })],
+        checkedIds: new Set<string>(['a']),
+        visibleColumns: allColumns(),
+      },
+    })
+
+    await wrapper.find('[data-test="queue-delete-selected"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.emitted('delete-selected')).toBeFalsy() // not until confirmed
+
+    // ConfirmDialog teleports to document.body.
+    ;(document.body.querySelector('[data-test="confirm-ok"]') as HTMLElement).click()
+    await flushPromises()
+    expect(wrapper.emitted('delete-selected')).toBeTruthy()
+    wrapper.unmount()
+  })
+
+  it('omits a column when visibleColumns turns it off', async () => {
+    const wrapper = await mountSuspended(QueueList, {
+      props: { items: [item()], visibleColumns: { ...allColumns(), voice: false } },
+    })
+    expect(wrapper.find('[data-test="queue-col-voice"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="queue-col-status"]').exists()).toBe(true)
   })
 })

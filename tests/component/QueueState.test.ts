@@ -100,3 +100,90 @@ describe('useQueue – client id fallback in non-secure contexts (005 · US2)', 
     }
   })
 })
+
+describe('useQueue – search & filters (005 · US3 · T029)', () => {
+  it('search narrows by item text and uploaded filename, case-insensitively', () => {
+    const q = useQueue()
+    const typed = q.addItem('Hello world')!
+    q.addFromUpload('from a file', 'meeting-notes.txt')
+
+    q.searchTerm.value = 'hello'
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([typed.clientId])
+
+    q.searchTerm.value = 'MEETING' // matches the uploaded row by its filename
+    expect(q.visibleItems.value.map((i) => i.text)).toEqual(['from a file'])
+
+    q.searchTerm.value = ''
+    expect(q.visibleItems.value).toHaveLength(2)
+  })
+
+  it('filters by voice, format, album, recordedAt and language', () => {
+    const q = useQueue()
+    q.addItem('a')
+    q.addItem('b')
+    const [a, b] = q.items.value
+    Object.assign(a!, {
+      voiceId: 'alloy',
+      format: 'mp3',
+      metadata: { album: 'Briefing', recordedAt: '2026-06-24', languages: ['eng'] },
+    })
+    Object.assign(b!, {
+      voiceId: 'echo',
+      format: 'flac',
+      metadata: { album: 'Notes', recordedAt: '2026-06-25', languages: ['hun'] },
+    })
+
+    q.filters.value = { voiceId: 'alloy' }
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([a!.clientId])
+    q.filters.value = { format: 'flac' }
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([b!.clientId])
+    q.filters.value = { album: 'Briefing' }
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([a!.clientId])
+    q.filters.value = { recordedAt: '2026-06-25' }
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([b!.clientId])
+    q.filters.value = { language: 'hun' }
+    expect(q.visibleItems.value.map((i) => i.clientId)).toEqual([b!.clientId])
+
+    q.filters.value = {}
+    expect(q.visibleItems.value).toHaveLength(2)
+  })
+
+  it('stays responsive over a large queue (≥200 items, SC-003)', () => {
+    const q = useQueue()
+    for (let i = 0; i < 250; i++) q.addItem(`item ${i}`)
+    const start = performance.now()
+    q.searchTerm.value = 'item 1'
+    const matches = q.visibleItems.value
+    const elapsed = performance.now() - start
+    expect(matches.length).toBeGreaterThan(0)
+    expect(elapsed).toBeLessThan(100)
+  })
+})
+
+describe('useQueue – generate target ignores search/filters (FR-005a)', () => {
+  it('processes the entire queue (not just visible rows) when nothing is checked', () => {
+    const q = useQueue()
+    q.addItem('alpha')
+    q.addItem('beta')
+
+    // A search that hides "beta" must not shrink the generate target: with nothing
+    // checked, FR-005a generates the entire queue regardless of the active filter.
+    q.searchTerm.value = 'alpha'
+    expect(q.visibleItems.value).toHaveLength(1)
+    expect(q.generateTarget.value.map((i) => i.text).sort()).toEqual(['alpha', 'beta'])
+  })
+
+  it('still includes a checked row that the active filter hides', () => {
+    const q = useQueue()
+    const a = q.addItem('alpha')!
+    q.addItem('beta')
+
+    // Check "alpha", then search "beta" so only "beta" is visible and the checked
+    // "alpha" row is filtered out of view. FR-005a still targets the checked row
+    // even though it is no longer visible.
+    q.toggleChecked(a.clientId)
+    q.searchTerm.value = 'beta'
+    expect(q.visibleItems.value.map((i) => i.clientId)).not.toContain(a.clientId)
+    expect(q.generateTarget.value.map((i) => i.clientId)).toEqual([a.clientId])
+  })
+})
