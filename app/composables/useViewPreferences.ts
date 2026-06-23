@@ -32,9 +32,15 @@ function readStored(): Partial<Record<QueueColumnId, boolean>> {
   try {
     const raw = storage()?.getItem(STORAGE_KEY)
     if (!raw) return {}
-    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const parsed = JSON.parse(raw)
+    // JSON.parse can yield null or a primitive (e.g. "null", "42"); only an object
+    // has column flags to read, so anything else falls back to the defaults.
+    if (!parsed || typeof parsed !== 'object') return {}
     const result: Partial<Record<QueueColumnId, boolean>> = {}
-    for (const id of COLUMN_IDS) if (typeof parsed[id] === 'boolean') result[id] = parsed[id] as boolean
+    for (const id of COLUMN_IDS) {
+      const value = (parsed as Record<string, unknown>)[id]
+      if (typeof value === 'boolean') result[id] = value
+    }
     return result
   } catch {
     return {}

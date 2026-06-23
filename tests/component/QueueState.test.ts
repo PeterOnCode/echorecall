@@ -159,3 +159,31 @@ describe('useQueue – search & filters (005 · US3 · T029)', () => {
     expect(elapsed).toBeLessThan(100)
   })
 })
+
+describe('useQueue – generate target ignores search/filters (FR-005a)', () => {
+  it('processes the entire queue (not just visible rows) when nothing is checked', () => {
+    const q = useQueue()
+    q.addItem('alpha')
+    q.addItem('beta')
+
+    // A search that hides "beta" must not shrink the generate target: with nothing
+    // checked, FR-005a generates the entire queue regardless of the active filter.
+    q.searchTerm.value = 'alpha'
+    expect(q.visibleItems.value).toHaveLength(1)
+    expect(q.generateTarget.value.map((i) => i.text).sort()).toEqual(['alpha', 'beta'])
+  })
+
+  it('still includes a checked row that the active filter hides', () => {
+    const q = useQueue()
+    const a = q.addItem('alpha')!
+    q.addItem('beta')
+
+    // Check "alpha", then search "beta" so only "beta" is visible and the checked
+    // "alpha" row is filtered out of view. FR-005a still targets the checked row
+    // even though it is no longer visible.
+    q.toggleChecked(a.clientId)
+    q.searchTerm.value = 'beta'
+    expect(q.visibleItems.value.map((i) => i.clientId)).not.toContain(a.clientId)
+    expect(q.generateTarget.value.map((i) => i.clientId)).toEqual([a.clientId])
+  })
+})

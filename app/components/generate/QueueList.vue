@@ -112,11 +112,11 @@ function distinct(values: (string | undefined)[]): string[] {
 }
 const albumItems = computed(() => [
   { id: ALL, label: t('generate.queue.filters.allAlbums') },
-  ...distinct(props.items.map((i) => i.metadata.album)).map((a) => ({ id: a, label: a })),
+  ...distinct(props.items.map((i) => i.metadata?.album)).map((a) => ({ id: a, label: a })),
 ])
 const languageItems = computed(() => [
   { id: ALL, label: t('generate.queue.filters.allLanguages') },
-  ...distinct(props.items.flatMap((i) => i.metadata.languages ?? [])).map((l) => ({ id: l, label: l })),
+  ...distinct(props.items.flatMap((i) => i.metadata?.languages ?? [])).map((l) => ({ id: l, label: l })),
 ])
 
 const voiceFilter = computed<string>({
@@ -359,14 +359,14 @@ function onCancelDelete() {
           <span data-test="queue-col-recordedAt" class="font-medium">{{ t('generate.columns.recordedAt') }}</span>
         </template>
         <template #recordedAt-cell="{ row }">
-          <span class="text-sm tabular-nums">{{ row.original.metadata.recordedAt ?? '—' }}</span>
+          <span class="text-sm tabular-nums">{{ row.original.metadata?.recordedAt ?? '—' }}</span>
         </template>
 
         <template #language-header>
           <span data-test="queue-col-language" class="font-medium">{{ t('generate.columns.language') }}</span>
         </template>
         <template #language-cell="{ row }">
-          <span class="text-sm">{{ (row.original.metadata.languages ?? []).join(', ') || '—' }}</span>
+          <span class="text-sm">{{ (row.original.metadata?.languages ?? []).join(', ') || '—' }}</span>
         </template>
 
         <template #status-header>

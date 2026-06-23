@@ -275,22 +275,26 @@ export function useQueue() {
       if (term && !`${item.text} ${item.sourceName ?? ''}`.toLowerCase().includes(term)) return false
       if (f.voiceId && item.voiceId !== f.voiceId) return false
       if (f.format && item.format !== f.format) return false
-      if (f.album && (item.metadata.album ?? '') !== f.album) return false
-      if (f.recordedAt && (item.metadata.recordedAt ?? '') !== f.recordedAt) return false
-      if (f.language && !(item.metadata.languages ?? []).includes(f.language)) return false
+      if (f.album && (item.metadata?.album ?? '') !== f.album) return false
+      if (f.recordedAt && (item.metadata?.recordedAt ?? '') !== f.recordedAt) return false
+      if (f.language && !(item.metadata?.languages ?? []).includes(f.language)) return false
       return true
     })
   })
 
   /**
    * What a Generate run processes (FR-005a): the checked rows if any are checked,
-   * otherwise every visible row. A fresh array so removing rows on success (US2)
-   * can't disturb the in-flight iteration.
+   * otherwise the ENTIRE queue. Derived from `items`, not `visibleItems`: search and
+   * filters are a view-only concern (US3) and must never change what gets generated —
+   * a checked row hidden by a filter is still processed, and with nothing checked the
+   * whole queue runs regardless of any active filter. (Only metadata stamping and the
+   * prev/next navigation track the visible set.) A fresh array so removing rows on
+   * success (US2) can't disturb the in-flight iteration.
    */
   const generateTarget = computed(() =>
     checkedIds.value.size > 0
-      ? visibleItems.value.filter((i) => checkedIds.value.has(i.clientId))
-      : [...visibleItems.value],
+      ? items.value.filter((i) => checkedIds.value.has(i.clientId))
+      : [...items.value],
   )
 
   // Active-selection navigation for the toolbar prev/next (FR-005), over the
