@@ -39,10 +39,10 @@ and `i18n/`; **no `src/core/`, `server/`, or schema files are touched** (FR-018)
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T003 Write red-first component test for the shared workspace in `tests/component/DashboardWorkspace.test.ts` (renders `#list`/`#detail` slots, `dashboard-detail-empty` placeholder, resize handle present, split persists across remount under `storageKey`)
-- [ ] T004 Create `app/components/dashboard/DashboardWorkspace.vue` using `UDashboardGroup`/`UDashboardPanel`/`UDashboardResizeHandle` (props `storageKey`, `defaultRatio?`, `detailEmpty?`; slots `#list`/`#detail`/`#footer?`; `data-test` per contract) to pass T003
-- [ ] T005 Write red-first unit test for foundational queue state in `tests/unit/queue-state.test.ts` (`source`/`sourceName` set by add vs upload, `activeId`, `checkedIds`, `toggleChecked`, `toggleAll`, `removeMany`)
-- [ ] T006 Extend `app/composables/useQueue.ts`: add `source`/`sourceName` to `QueueItem`, `activeId`/`checkedIds` refs and `toggleChecked`/`toggleAll`/`removeMany`; `addFromUpload(content, filename)` gains the filename arg; `makeItem` sets `source` to pass T005
+- [X] T003 Write red-first component test for the shared workspace in `tests/component/DashboardWorkspace.test.ts` (renders `#list`/`#detail` slots, `dashboard-detail-empty` placeholder, resize handle present + keyed to `storageKey` for FR-002 persistence)
+- [X] T004 Create `app/components/dashboard/DashboardWorkspace.vue` using `UDashboardGroup`/`UDashboardPanel`/`UDashboardResizeHandle` (props `storageKey`, `defaultRatio?`, `detailEmpty?`; slots `#list`/`#detail`/`#empty`/`#footer?`; `data-test` per contract) to pass T003
+- [X] T005 Write red-first test for foundational queue state in `tests/component/QueueState.test.ts` (`source`/`sourceName` set by add vs upload, `activeId`, `checkedIds`, `toggleChecked`, `toggleAll`, `removeMany`) — in the Nuxt env, not `tests/unit`, since the composable relies on Nuxt auto-imports
+- [X] T006 Extend `app/composables/useQueue.ts`: add `source`/`sourceName` to `QueueItem`, `activeId`/`checkedIds` refs and `toggleChecked`/`toggleAll`/`removeMany`; `addFromUpload(content, filename)` gains the filename arg; `makeItem` sets `source` to pass T005
 
 **Checkpoint**: Shared shell + queue state ready — user stories can begin.
 

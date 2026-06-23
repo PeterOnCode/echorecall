@@ -25,6 +25,7 @@ function item(overrides: Partial<QueueItem> = {}): QueueItem {
     format: 'mp3',
     metadata: {},
     status: 'queued',
+    source: 'text',
     ...overrides,
   }
 }
