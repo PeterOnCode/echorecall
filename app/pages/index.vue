@@ -97,11 +97,14 @@ const canGenerate = computed(() => items.value.length > 0)
 
 async function onGenerate() {
   if (!canGenerate.value || generating.value) return
-  // Apply the form-level metadata to the whole batch (incl. rows added before it
-  // was filled) just before generating, then process the chosen target and remove
-  // each success from the queue.
-  applyMetadataToPending()
-  await generateAll(generateTarget.value, speed.value, removeItem)
+  // Resolve the target once (checked-else-all) and use the same snapshot for both
+  // stamping and generation: apply the form-level metadata to the batch's un-edited
+  // rows (incl. rows added before it was filled) — but only the rows actually being
+  // generated, so unchecked rows are never silently overwritten — then process them
+  // and remove each success from the queue.
+  const target = generateTarget.value
+  applyMetadataToPending(target)
+  await generateAll(target, speed.value, removeItem)
 }
 
 /** Download the most recent run's successful items as one `.zip` (FR-022). */

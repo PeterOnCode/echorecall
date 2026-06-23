@@ -59,6 +59,16 @@ describe('GenerateToolbar', () => {
     expect(isDisabled(running, 'toolbar-generate')).toBe(true)
   })
 
+  it('disables the queue-mutating actions (upload, open-queue) during a run', async () => {
+    // Mutating the queue mid-run (uploading rows, or replacing it via open-queue)
+    // races the in-flight generation loop, so those entry points lock while busy;
+    // save-queue is read-only and stays available.
+    const wrapper = await mountSuspended(GenerateToolbar, { props: { ...BASE, generating: true } })
+    expect(isDisabled(wrapper, 'toolbar-upload')).toBe(true)
+    expect(isDisabled(wrapper, 'toolbar-open-queue')).toBe(true)
+    expect(isDisabled(wrapper, 'toolbar-save-queue')).toBe(false)
+  })
+
   it('advertises the selection on the generate control when rows are checked', async () => {
     const none = await mountSuspended(GenerateToolbar, { props: { ...BASE, checkedCount: 0 } })
     const some = await mountSuspended(GenerateToolbar, { props: { ...BASE, checkedCount: 2 } })

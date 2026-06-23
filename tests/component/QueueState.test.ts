@@ -67,3 +67,36 @@ describe('useQueue – selection & active item (005 · T006)', () => {
     expect(q.activeId.value).toBeNull()
   })
 })
+
+describe('useQueue – metadata stamping scoped to the generate target (005 · US2)', () => {
+  it('stamps the shared form metadata only onto the rows being generated', () => {
+    const q = useQueue()
+    const a = q.addItem('a')!
+    const b = q.addItem('b')!
+    q.toggleChecked(a.clientId) // only A is targeted (checked-else-all → just A)
+    q.metadata.value = { title: 'Shared' }
+
+    q.applyMetadataToPending(q.generateTarget.value)
+
+    expect(q.items.value.find((i) => i.clientId === a.clientId)!.metadata.title).toBe('Shared')
+    // B isn't part of this run, so it must not be silently overwritten.
+    expect(q.items.value.find((i) => i.clientId === b.clientId)!.metadata.title).toBeUndefined()
+  })
+})
+
+describe('useQueue – client id fallback in non-secure contexts (005 · US2)', () => {
+  it('still mints a unique id when crypto.randomUUID is unavailable (HTTP/LAN)', () => {
+    const original = globalThis.crypto.randomUUID
+    // Simulate a non-secure context where randomUUID is undefined.
+    Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true })
+    try {
+      const q = useQueue()
+      const a = q.addItem('a')!
+      const b = q.addItem('b')!
+      expect(a.clientId).toMatch(/^[0-9a-f-]{36}$/i)
+      expect(a.clientId).not.toBe(b.clientId)
+    } finally {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true })
+    }
+  })
+})

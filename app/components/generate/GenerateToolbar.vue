@@ -42,6 +42,7 @@ const generateTitle = computed(() =>
         variant="outline"
         icon="i-lucide-upload"
         :label="t('generate.toolbar.upload')"
+        :disabled="generating"
         @click="emit('upload')"
       />
       <UButton
@@ -92,6 +93,7 @@ const generateTitle = computed(() =>
         icon="i-lucide-folder-open"
         :aria-label="t('generate.toolbar.openQueue')"
         :title="t('generate.toolbar.openQueue')"
+        :disabled="generating"
         @click="emit('open-queue')"
       />
       <UButton
