@@ -41,6 +41,12 @@ function teardown() {
 }
 
 function build(src: string) {
+  // Idempotent guard: rebuilds defer the actual build to `nextTick` (so the
+  // `v-if`'d canvas can re-render first), which decouples teardown from build. If
+  // `src` changes several times in quick succession, more than one deferred build
+  // can run — destroy any live instance here so `ws` is never overwritten while an
+  // earlier WaveSurfer (DOM + WebAudio) is still alive.
+  if (ws) teardown()
   const container = waveformEl.value
   if (!container) return
 
