@@ -57,8 +57,8 @@ function onAdd(text: string) {
   addItem(text)
 }
 
-function onUploaded(content: string) {
-  uploadSummary.value = addFromUpload(content)
+function onUploaded(content: string, filename: string) {
+  uploadSummary.value = addFromUpload(content, filename)
 }
 
 /** Apply a per-row edit from the detail-pane editor to the active item only. */

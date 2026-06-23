@@ -59,14 +59,16 @@ describe('QueueList (list pane)', () => {
     expect(emitted!.at(-1)![0]).toBe('b')
   })
 
-  it('marks the active row as selected for assistive technology', async () => {
+  it('marks the active row as pressed for assistive technology', async () => {
     const wrapper = await mountSuspended(QueueList, {
       props: { items: [item({ clientId: 'a' }), item({ clientId: 'b' })], activeId: 'a' },
     })
 
+    // The row is a toggle button, so it exposes its active state via aria-pressed
+    // (aria-selected is not a valid state for role="button").
     const rows = wrapper.findAll('[data-test="queue-row"]')
-    expect(rows[0]!.attributes('aria-selected')).toBe('true')
-    expect(rows[1]!.attributes('aria-selected')).toBe('false')
+    expect(rows[0]!.attributes('aria-pressed')).toBe('true')
+    expect(rows[1]!.attributes('aria-pressed')).toBe('false')
   })
 
   it('shows each row’s live generation status', async () => {

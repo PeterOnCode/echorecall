@@ -52,7 +52,7 @@ function setActive(clientId: string) {
           <button
             type="button"
             data-test="queue-row"
-            :aria-selected="activeId === row.original.clientId"
+            :aria-pressed="activeId === row.original.clientId"
             class="flex w-full items-center gap-2 text-left"
             :class="{ 'font-medium text-primary': activeId === row.original.clientId }"
             @click="setActive(row.original.clientId)"
