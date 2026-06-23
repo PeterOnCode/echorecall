@@ -209,7 +209,15 @@
       "next": "Next recording",
       "empty": "Select a recording to edit its tags."
     },
-    "waveform": {}
+    "waveform": {
+      "region": "Waveform player",
+      "play": "Play",
+      "pause": "Pause",
+      "zoom": "Zoom",
+      "addRegion": "Add loop region",
+      "loop": "Loop region",
+      "unavailable": "Audio unavailable for this recording."
+    }
   },
   "settings": {
     "title": "Settings",

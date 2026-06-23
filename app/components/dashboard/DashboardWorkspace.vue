@@ -59,12 +59,21 @@ withDefaults(
     </UDashboardPanel>
 
     <UDashboardPanel id="detail" data-test="dashboard-detail-pane" :ui="{ root: 'min-h-0' }">
-      <div v-if="detailEmpty" data-test="dashboard-detail-empty">
-        <slot name="empty" />
+      <!-- The detail content scrolls within the pane so the optional `#footer` (the
+           Library waveform player, US6) stays pinned at the bottom and visible even
+           when the editor is taller than the pane. Without this the panel root is a
+           plain flex column with no overflow, so a tall editor pushes the footer past
+           the group's `overflow-hidden` boundary and it is clipped out of view. -->
+      <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div v-if="detailEmpty" data-test="dashboard-detail-empty">
+          <slot name="empty" />
+        </div>
+        <slot v-else name="detail" />
       </div>
-      <slot v-else name="detail" />
 
-      <slot name="footer" />
+      <div v-if="$slots.footer" class="shrink-0 p-3 pt-0">
+        <slot name="footer" />
+      </div>
     </UDashboardPanel>
   </UDashboardGroup>
 </template>

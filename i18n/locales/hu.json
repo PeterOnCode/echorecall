@@ -209,7 +209,15 @@
       "next": "Következő felvétel",
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez."
     },
-    "waveform": {}
+    "waveform": {
+      "region": "Hullámforma lejátszó",
+      "play": "Lejátszás",
+      "pause": "Szünet",
+      "zoom": "Nagyítás",
+      "addRegion": "Ciklusszakasz hozzáadása",
+      "loop": "Szakasz ismétlése",
+      "unavailable": "A felvételhez nem érhető el hang."
+    }
   },
   "settings": {
     "title": "Beállítások",

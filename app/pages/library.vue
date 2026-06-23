@@ -120,6 +120,15 @@ async function onBulkClean(filter: BulkCleanFilter) {
           @delete="onDelete"
         />
       </template>
+      <template #footer>
+        <!-- US6 / FR-016: a bottom waveform review player (zoom + loop regions) for
+             the selected recording; absent until a row is chosen. -->
+        <WaveformPlayer
+          v-if="selectedItem"
+          :src="selectedItem.audioUrl"
+          :label="selectedItem.filename"
+        />
+      </template>
     </DashboardWorkspace>
   </section>
 </template>
