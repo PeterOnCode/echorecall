@@ -5,11 +5,14 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import { MAX_INPUT_LENGTH, MAX_UPLOAD_BYTES } from '#core/client'
 import GeneratePage from '~/pages/index.vue'
 
-// Component coverage for the US1 batch studio (FR-001..008): build a generation
-// list by typing and/or uploading a `.txt`, then a single Generate produces audio
-// per item with isolated per-item failures. The TTS endpoints are mocked at the
-// HTTP boundary (no provider/network), so this drives the real queue + generate
-// composables and the Generate page UI.
+// Component coverage for the 005 Generate workspace (US1 / FR-001..008): the
+// surface is a resizable two-pane dashboard — the queue list on the left, the
+// per-item metadata editor on the right. Selecting a row loads it into the detail
+// pane; with nothing selected the detail pane shows its empty state. The interim
+// upload + text-add path (kept until US2/US4) still builds the queue, and a single
+// Generate produces audio per item with isolated per-item failures. The TTS
+// endpoints are mocked at the HTTP boundary (no provider/network), so this drives
+// the real queue + generate composables and the redesigned Generate page UI.
 
 registerEndpoint('/api/voices', () => ({
   voices: [
@@ -63,16 +66,48 @@ function setFile(wrapper: Awaited<ReturnType<typeof mountPage>>, file: File) {
   return input.trigger('change')
 }
 
-describe('Generate page (batch studio)', () => {
+async function selectRow(wrapper: Awaited<ReturnType<typeof mountPage>>, index: number) {
+  await wrapper.findAll('[data-test="queue-row"]')[index]!.trigger('click')
+  await flushPromises()
+}
+
+describe('Generate page (two-pane workspace)', () => {
   it('appends a queue row when typing text and clicking Add', async () => {
     const wrapper = await mountPage()
-    expect(wrapper.findAll('[data-test="queue-item"]')).toHaveLength(0)
+    expect(wrapper.findAll('[data-test="queue-row"]')).toHaveLength(0)
 
     await addTyped(wrapper, 'Hello world')
 
-    const rows = wrapper.findAll('[data-test="queue-item"]')
+    const rows = wrapper.findAll('[data-test="queue-row"]')
     expect(rows).toHaveLength(1)
     expect(rows[0]!.text()).toContain('Hello world')
+  })
+
+  it('shows the detail empty state until a row is selected', async () => {
+    const wrapper = await mountPage()
+    // Nothing selected on load → empty placeholder, no editor.
+    expect(wrapper.find('[data-test="dashboard-detail-empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="queue-item-editor"]').exists()).toBe(false)
+
+    await addTyped(wrapper, 'still nothing selected')
+    expect(wrapper.find('[data-test="dashboard-detail-empty"]').exists()).toBe(true)
+  })
+
+  it('loads the selected row into the detail-pane editor and swaps on reselection', async () => {
+    const wrapper = await mountPage()
+    await addTyped(wrapper, 'first item')
+    await addTyped(wrapper, 'second item')
+
+    await selectRow(wrapper, 0)
+    let editor = wrapper.find('[data-test="queue-item-editor"]')
+    expect(editor.exists()).toBe(true)
+    expect((editor.find('[data-test="edit-text"]').element as HTMLTextAreaElement).value).toBe('first item')
+
+    await selectRow(wrapper, 1)
+    editor = wrapper.find('[data-test="queue-item-editor"]')
+    expect((editor.find('[data-test="edit-text"]').element as HTMLTextAreaElement).value).toBe('second item')
+    // Editing in the detail pane no longer needs the table.
+    expect(wrapper.find('[data-test="dashboard-detail-empty"]').exists()).toBe(false)
   })
 
   it('appends one row per valid uploaded line after existing rows and shows the summary', async () => {
@@ -83,7 +118,7 @@ describe('Generate page (batch studio)', () => {
     await setFile(wrapper, new File([content], 'batch.txt', { type: 'text/plain' }))
     await flushPromises()
 
-    const rows = wrapper.findAll('[data-test="queue-item"]')
+    const rows = wrapper.findAll('[data-test="queue-row"]')
     // existing typed row + two valid uploaded lines, appended in order
     expect(rows).toHaveLength(3)
     expect(rows[0]!.text()).toContain('typed first')
@@ -103,7 +138,7 @@ describe('Generate page (batch studio)', () => {
     await setFile(wrapper, tooBig)
     await flushPromises()
 
-    expect(wrapper.findAll('[data-test="queue-item"]')).toHaveLength(0)
+    expect(wrapper.findAll('[data-test="queue-row"]')).toHaveLength(0)
     expect(wrapper.find('[data-test="upload-error"]').exists()).toBe(true)
   })
 
@@ -112,15 +147,12 @@ describe('Generate page (batch studio)', () => {
     const speed = wrapper.find('[data-test="speed"]')
     const el = speed.element as HTMLInputElement
 
-    // Above max → clamped to 4 (the migrated UInputNumber enforces min/max; a raw
-    // number input would keep the typed value, so this is a red-first signal).
     await speed.setValue('5')
     await speed.trigger('change')
     await speed.trigger('blur')
     await flushPromises()
     expect(el.value).toBe('4')
 
-    // Below min → clamped to 0.25.
     await speed.setValue('0.1')
     await speed.trigger('change')
     await speed.trigger('blur')
@@ -146,6 +178,7 @@ describe('Generate page (batch studio)', () => {
     const wrapper = await mountPage()
     // Row first, metadata after — the order that previously left the row untagged.
     await addTyped(wrapper, 'metadata-after')
+    // Nothing selected → the single visible meta-title is the shared form editor.
     await wrapper.find('[data-test="meta-title"]').setValue('Shared Title')
 
     postedBodies.length = 0
@@ -162,11 +195,11 @@ describe('Generate page (batch studio)', () => {
     await addTyped(wrapper, 'per-row')
     await addTyped(wrapper, 'shared')
 
-    // Shared form metadata is meant for untouched rows only.
+    // Shared form metadata (no row selected) is meant for untouched rows only.
     await wrapper.find('[data-test="meta-title"]').setValue('Shared Title')
 
-    // Open the first row's editor and give it its own title.
-    await wrapper.findAll('[data-test="edit-item"]')[0]!.trigger('click')
+    // Select the first row and give it its own title in the detail-pane editor.
+    await selectRow(wrapper, 0)
     await wrapper.find('[data-test="queue-item-editor"] [data-test="meta-title"]').setValue('Per-row Title')
 
     postedBodies.length = 0

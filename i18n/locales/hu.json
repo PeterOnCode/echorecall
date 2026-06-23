@@ -34,6 +34,8 @@
       "genre": "Műfaj",
       "comment": "Megjegyzés",
       "recordedAt": "Felvétel dátuma",
+      "recordedAtPlaceholder": "Nincs dátum megadva",
+      "recordedAtClear": "Dátum törlése",
       "track": "Szám",
       "languages": "Nyelvek",
       "languagePlaceholder": "ISO kód, pl. hun",
@@ -55,7 +57,15 @@
       "edit": "Tétel szerkesztése",
       "download": "Letöltés",
       "filenamePreview": "Mentés néven: {name}",
-      "filenameFallback": "egyedi név (.{ext})"
+      "filenameFallback": "egyedi név (.{ext})",
+      "columns": {
+        "text": "Tétel",
+        "status": "Állapot",
+        "actions": "Műveletek"
+      }
+    },
+    "workspace": {
+      "detailEmpty": "Válassz egy tételt a részletek szerkesztéséhez."
     },
     "edit": {
       "instructions": "Hangutasítások",
@@ -68,7 +78,9 @@
     "actions": {
       "generate": "Létrehozás",
       "downloadAll": "Összes letöltése (.zip)"
-    }
+    },
+    "toolbar": {},
+    "columns": {}
   },
   "library": {
     "title": "Könyvtár",
@@ -132,7 +144,9 @@
       "retag": "Nem sikerült frissíteni a metaadatokat.",
       "delete": "Nem sikerült törölni a tételt. Próbáld újra.",
       "bulkClean": "Nem sikerült a könyvtár takarítása. Próbáld újra."
-    }
+    },
+    "tags": {},
+    "waveform": {}
   },
   "settings": {
     "title": "Beállítások",
@@ -191,6 +205,7 @@
         "save": "Nem sikerült menteni az alapértelmezett címkéket. Próbáld újra.",
         "clear": "Nem sikerült törölni az alapértelmezett címkéket. Próbáld újra."
       }
-    }
+    },
+    "modal": {}
   }
 }

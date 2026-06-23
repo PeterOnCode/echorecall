@@ -10,7 +10,7 @@ const props = withDefaults(
   defineProps<{ summary?: UploadSummary | null; maxBytes?: number }>(),
   { summary: null, maxBytes: MAX_UPLOAD_BYTES },
 )
-const emit = defineEmits<{ uploaded: [content: string] }>()
+const emit = defineEmits<{ uploaded: [content: string, filename: string] }>()
 const { t } = useI18n()
 
 const error = ref<string | null>(null)
@@ -32,7 +32,8 @@ async function onChange(event: Event) {
     return
   }
   const content = await file.text()
-  emit('uploaded', content)
+  // Carry the originating filename so the queue's source column can show it (FR-006).
+  emit('uploaded', content, file.name)
   input.value = '' // allow re-selecting the same file
 }
 </script>

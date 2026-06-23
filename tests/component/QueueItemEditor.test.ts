@@ -27,6 +27,7 @@ function baseItem(overrides: Partial<QueueItem> = {}): QueueItem {
     instructions: 'Speak slowly',
     metadata: { title: 'My Title' },
     status: 'queued',
+    source: 'text',
     ...overrides,
   }
 }

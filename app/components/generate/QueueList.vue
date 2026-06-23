@@ -1,26 +1,22 @@
 <script setup lang="ts">
-import { formatInfo, slugify } from '#core/client'
-import type { Metadata, Voice } from '#core/client'
-import type { ItemPatch, QueueItem } from '../../composables/useQueue'
+import type { TableColumn } from '@nuxt/ui'
+import type { QueueItem } from '../../composables/useQueue'
 
-// Renders the ephemeral queue with each row's live generation status. A row that
-// hasn't generated yet (queued/failed) can be expanded into a per-row editor
-// (US3); rows can also be removed. `sharedMetadata` is the form-level tag set
-// that gets stamped onto un-edited rows at generation, used here for an accurate
-// filename preview (US4).
-const props = defineProps<{ items: QueueItem[]; voices: Voice[]; sharedMetadata?: Metadata }>()
-const emit = defineEmits<{ remove: [clientId: string]; update: [clientId: string, patch: ItemPatch] }>()
+// The Generate list pane (005 redesign / US1 · FR-001/003): the ephemeral queue
+// rendered as a selectable table. Clicking a row sets the active id (v-model) so
+// the detail pane loads that item's metadata editor — per-row editing now lives
+// there, not inline. Search, filters, the checkbox column, and the source column
+// land in US3; this is the minimal selectable list the workspace needs.
+defineProps<{ items: QueueItem[] }>()
+const activeId = defineModel<string | null>('activeId', { default: null })
+const emit = defineEmits<{ remove: [clientId: string] }>()
 const { t } = useI18n()
 
-// Which row's editor is open (one at a time). A row is editable until it has
-// successfully generated; a failed row stays editable so it can be fixed + retried.
-const editingId = ref<string | null>(null)
-function canEdit(item: QueueItem): boolean {
-  return item.status === 'queued' || item.status === 'failed'
-}
-function toggleEdit(clientId: string): void {
-  editingId.value = editingId.value === clientId ? null : clientId
-}
+const columns: TableColumn<QueueItem>[] = [
+  { id: 'text', accessorKey: 'text' },
+  { id: 'status' },
+  { id: 'actions' },
+]
 
 const STATUS_COLOR: Record<QueueItem['status'], string> = {
   queued: 'text-muted',
@@ -29,30 +25,8 @@ const STATUS_COLOR: Record<QueueItem['status'], string> = {
   failed: 'text-error',
 }
 
-/** Human notice for tags skipped by the chosen format (FR-021). */
-function skippedLabel(skipped: string[]): string {
-  if (skipped.includes('*')) return t('generate.metadata.skippedAll')
-  return t('generate.metadata.skipped', { fields: skipped.join(', ') })
-}
-
-/**
- * Live preview of the filename this row will be saved under (US4 / FR-025–027):
- * the title slug + the format extension, matching the server's naming. Uses the
- * same `slugify` the server uses so the preview is accurate; an empty/un-sluggable
- * title shows the unique-name fallback (the server substitutes a UUID). The
- * collision suffix is not predictable client-side and is omitted.
- *
- * The effective title is the shared form metadata for an un-edited row — that is
- * what `applyMetadataToPending()` stamps on it at generation — and the row's own
- * title once it has been edited individually (US3), so the preview tracks what the
- * file will actually be named in both flows.
- */
-function filenamePreview(item: QueueItem): string {
-  const ext = formatInfo(item.format)?.ext ?? item.format
-  const title = item.metadataEdited ? item.metadata.title : props.sharedMetadata?.title
-  const slug = slugify(title ?? '')
-  const name = slug ? `${slug}.${ext}` : t('generate.queue.filenameFallback', { ext })
-  return t('generate.queue.filenamePreview', { name })
+function setActive(clientId: string) {
+  activeId.value = clientId
 }
 </script>
 
@@ -61,91 +35,55 @@ function filenamePreview(item: QueueItem): string {
     <p v-if="items.length === 0" data-test="queue-empty" class="text-sm text-muted">
       {{ t('generate.queue.empty') }}
     </p>
-    <ul v-else class="flex flex-col gap-2">
-      <li
-        v-for="item in items"
-        :key="item.clientId"
-        data-test="queue-item"
-        class="flex flex-col gap-2 rounded border p-2"
-      >
-        <div class="flex items-center gap-3">
-          <span class="flex-1 truncate">{{ item.text }}</span>
+
+    <div v-else data-test="queue-table">
+      <UTable :data="items" :columns="columns" :get-row-id="(row: QueueItem) => row.clientId">
+        <template #text-header>
+          <span class="font-medium">{{ t('generate.queue.columns.text') }}</span>
+        </template>
+        <template #status-header>
+          <span class="font-medium">{{ t('generate.queue.columns.status') }}</span>
+        </template>
+        <template #actions-header>
+          <span class="sr-only">{{ t('generate.queue.columns.actions') }}</span>
+        </template>
+
+        <template #text-cell="{ row }">
+          <button
+            type="button"
+            data-test="queue-row"
+            :aria-pressed="activeId === row.original.clientId"
+            class="flex w-full items-center gap-2 text-left"
+            :class="{ 'font-medium text-primary': activeId === row.original.clientId }"
+            @click="setActive(row.original.clientId)"
+          >
+            <span class="flex-1 truncate">{{ row.original.text }}</span>
+            <span v-if="row.original.error" class="text-xs text-error" :title="row.original.error">⚠</span>
+          </button>
+        </template>
+        <template #status-cell="{ row }">
           <span
             data-test="item-status"
             class="text-xs uppercase"
-            :class="STATUS_COLOR[item.status]"
+            :class="STATUS_COLOR[row.original.status]"
           >
-            {{ item.status }}
+            {{ row.original.status }}
           </span>
-          <span v-if="item.error" class="text-xs text-error" :title="item.error">⚠</span>
-          <UButton
-            v-if="canEdit(item)"
-            data-test="edit-item"
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-pencil"
-            size="xs"
-            :aria-expanded="editingId === item.clientId"
-            :aria-label="t('generate.queue.edit')"
-            @click="toggleEdit(item.clientId)"
-          />
-          <UButton
-            data-test="remove-item"
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-x"
-            size="xs"
-            :aria-label="t('generate.queue.remove')"
-            @click="emit('remove', item.clientId)"
-          />
-        </div>
-
-        <!-- Live filename preview (US4): what this row will be saved as, updating
-             as the title/format change. Shown only before it has generated. -->
-        <p
-          v-if="canEdit(item)"
-          data-test="filename-preview"
-          class="text-xs text-muted"
-        >
-          {{ filenamePreview(item) }}
-        </p>
-
-        <!-- Per-row editor (US3): open/close via the pencil; edits apply to this
-             row only and reflect immediately. -->
-        <QueueItemEditor
-          v-if="editingId === item.clientId && canEdit(item)"
-          :item="item"
-          :voices="voices"
-          @update="(patch) => emit('update', item.clientId, patch)"
-        />
-
-        <!-- A finished item is playable + downloadable in place; all items are
-             also saved to the library and bundled by Download all (.zip). -->
-        <div v-if="item.status === 'done' && item.result" class="flex items-center gap-3">
-          <AudioPlayer :src="item.result.audioUrl" :label="item.text" class="flex-1" />
-          <UButton
-            data-test="item-download"
-            color="neutral"
-            variant="outline"
-            size="xs"
-            icon="i-lucide-download"
-            :href="`${item.result.audioUrl}?download=1`"
-            external
-            download
-            :aria-label="t('generate.queue.download')"
-          />
-        </div>
-
-        <!-- Tags the chosen format couldn't carry (FR-021) — informational, the
-             clip still generated and saved. -->
-        <p
-          v-if="item.status === 'done' && item.result?.skippedTags?.length"
-          data-test="item-skipped"
-          class="text-xs text-warning"
-        >
-          {{ skippedLabel(item.result.skippedTags) }}
-        </p>
-      </li>
-    </ul>
+        </template>
+        <template #actions-cell="{ row }">
+          <div class="flex justify-end">
+            <UButton
+              data-test="remove-item"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-x"
+              size="xs"
+              :aria-label="t('generate.queue.remove')"
+              @click="emit('remove', row.original.clientId)"
+            />
+          </div>
+        </template>
+      </UTable>
+    </div>
   </div>
 </template>

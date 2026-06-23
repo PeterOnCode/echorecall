@@ -9,6 +9,13 @@ export interface QueueItem extends ListItem {
   error?: string
   result?: { id: string; audioUrl: string; skippedTags?: string[] }
   /**
+   * Where the row came from (005 source column): `'upload'` carries the uploaded
+   * filename in {@link QueueItem.sourceName}; `'text'` is an ad-hoc typed entry.
+   */
+  source: 'upload' | 'text'
+  /** The uploaded file's name when `source === 'upload'`; absent for typed rows. */
+  sourceName?: string
+  /**
    * Set once the row's metadata is edited individually (US3). Tells
    * {@link useQueue.applyMetadataToPending} to leave this row alone so its per-row
    * metadata survives generation instead of being overwritten by the shared form set.
@@ -64,16 +71,29 @@ export function useQueue() {
   // Form-level metadata applied to every newly-added row (US2). Each row gets its
   // own deep copy so later per-row edits (US3) never mutate the shared defaults.
   const metadata = ref<Metadata>({})
+  // Which row is shown in the detail editor (005 redesign); driven by list
+  // selection and toolbar prev/next navigation.
+  const activeId = ref<string | null>(null)
+  // Multi-select set (by clientId) backing the checkbox column — used for bulk
+  // delete and as the Generate target (checked-else-all).
+  const checkedIds = ref<Set<string>>(new Set())
 
-  function makeItem(text: string): QueueItem {
+  function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
+    // A new row's recording date defaults to tomorrow (FR-008/data-model §1), unless
+    // the shared form metadata already carries one. Stored as a `YYYY-MM-DD` string so
+    // it round-trips through the metadata editor's calendar picker and the queue file.
+    const itemMetadata = cloneMetadata(metadata.value)
+    if (itemMetadata.recordedAt === undefined) itemMetadata.recordedAt = tomorrowIso()
     return {
       clientId: globalThis.crypto.randomUUID(),
       text,
       voiceId: voiceId.value,
       model: model.value,
       format: format.value,
-      metadata: cloneMetadata(metadata.value),
+      metadata: itemMetadata,
       status: 'queued',
+      source,
+      ...(sourceName ? { sourceName } : {}),
     }
   }
 
@@ -81,7 +101,7 @@ export function useQueue() {
   function addItem(text: string): QueueItem | null {
     const trimmed = text.trim()
     if (trimmed.length === 0) return null
-    const item = makeItem(trimmed)
+    const item = makeItem(trimmed, 'text')
     items.value.push(item)
     return item
   }
@@ -90,10 +110,16 @@ export function useQueue() {
     for (const text of texts) addItem(text)
   }
 
-  /** Parse uploaded `.txt` content into appended rows and report the summary. */
-  function addFromUpload(content: string): UploadSummary {
+  /**
+   * Parse uploaded `.txt` content into appended rows and report the summary. Each
+   * row is tagged `source: 'upload'` and carries the originating `filename` (when
+   * provided) so the queue's source column can show it (FR-006).
+   */
+  function addFromUpload(content: string, filename?: string): UploadSummary {
     const parsed = parseUploadText(content)
-    addItems(parsed.items.map((i) => i.text))
+    for (const parsedItem of parsed.items) {
+      items.value.push(makeItem(parsedItem.text, 'upload', filename))
+    }
     return {
       added: parsed.added,
       skippedBlank: parsed.skippedBlank,
@@ -103,6 +129,46 @@ export function useQueue() {
 
   function removeItem(clientId: string): void {
     items.value = items.value.filter((i) => i.clientId !== clientId)
+    forget([clientId])
+  }
+
+  /** Drop client ids from the checked set and clear the active id if it was removed. */
+  function forget(clientIds: string[]): void {
+    if (checkedIds.value.size > 0) {
+      const next = new Set(checkedIds.value)
+      for (const id of clientIds) next.delete(id)
+      checkedIds.value = next
+    }
+    if (activeId.value !== null && clientIds.includes(activeId.value)) activeId.value = null
+  }
+
+  /** Remove several rows at once (multi-select delete), clearing their state. */
+  function removeMany(clientIds: string[]): void {
+    const drop = new Set(clientIds)
+    items.value = items.value.filter((i) => !drop.has(i.clientId))
+    forget(clientIds)
+  }
+
+  /** Toggle one row's membership in the checked set (reassigned for reactivity). */
+  function toggleChecked(clientId: string): void {
+    const next = new Set(checkedIds.value)
+    if (next.has(clientId)) next.delete(clientId)
+    else next.add(clientId)
+    checkedIds.value = next
+  }
+
+  /**
+   * Header-checkbox behaviour over the given rows: if every one is already
+   * checked, clear them; otherwise check them all. Operates on the rows passed in
+   * (the currently visible/filtered set), leaving any off-list selection intact.
+   */
+  function toggleAll(rows: QueueItem[]): void {
+    const ids = rows.map((r) => r.clientId)
+    const allChecked = ids.length > 0 && ids.every((id) => checkedIds.value.has(id))
+    const next = new Set(checkedIds.value)
+    if (allChecked) for (const id of ids) next.delete(id)
+    else for (const id of ids) next.add(id)
+    checkedIds.value = next
   }
 
   /**
@@ -136,6 +202,8 @@ export function useQueue() {
 
   function clear(): void {
     items.value = []
+    checkedIds.value = new Set()
+    activeId.value = null
   }
 
   /**
@@ -180,10 +248,15 @@ export function useQueue() {
     format,
     speed,
     metadata,
+    activeId,
+    checkedIds,
     addItem,
     addItems,
     addFromUpload,
     removeItem,
+    removeMany,
+    toggleChecked,
+    toggleAll,
     updateItem,
     applyMetadataToPending,
     setDefaults,
@@ -194,4 +267,12 @@ export function useQueue() {
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
 function cloneMetadata(metadata: Metadata): Metadata {
   return JSON.parse(JSON.stringify(metadata)) as Metadata
+}
+
+/** Tomorrow as a local-day `YYYY-MM-DD` string (the recording-date default, FR-008). */
+function tomorrowIso(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
