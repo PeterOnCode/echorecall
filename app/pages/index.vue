@@ -21,6 +21,9 @@ const {
   metadata,
   activeId,
   checkedIds,
+  searchTerm,
+  filters,
+  visibleItems,
   generateTarget,
   hasPrev,
   hasNext,
@@ -31,13 +34,18 @@ const {
   addItem,
   addFromUpload,
   removeItem,
+  removeMany,
   updateItem,
   applyMetadataToPending,
   setDefaults,
 } = useQueue()
 const { voices, generating, lastBatchIds, loadVoices, generateAll, downloadArchive } = useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
+const { queueColumns } = useViewPreferences()
 const { t } = useI18n()
+
+// Whether the column-visibility chooser is open (US3 / FR-012).
+const columnsOpen = ref(false)
 
 const uploadSummary = ref<UploadSummary | null>(null)
 // Whether any saved default tag was applied (003) — drives the form hint.
@@ -158,6 +166,11 @@ function onCancelReplace() {
   pendingDoc.value = null
   confirmReplace.value = false
 }
+
+/** Remove all checked rows (the QueueList confirms before emitting this — FR-011). */
+function onDeleteSelected() {
+  removeMany([...checkedIds.value])
+}
 </script>
 
 <template>
@@ -202,7 +215,18 @@ function onCancelReplace() {
 
     <DashboardWorkspace storage-key="generate-workspace" :detail-empty="!activeItem">
       <template #list>
-        <QueueList v-model:active-id="activeId" :items="items" @remove="removeItem" />
+        <QueueList
+          v-model:active-id="activeId"
+          v-model:checked-ids="checkedIds"
+          v-model:search="searchTerm"
+          v-model:filters="filters"
+          :items="visibleItems"
+          :voices="voices"
+          :visible-columns="queueColumns"
+          @remove="removeItem"
+          @open-columns="columnsOpen = true"
+          @delete-selected="onDeleteSelected"
+        />
       </template>
       <template #detail>
         <QueueItemEditor
@@ -255,5 +279,7 @@ function onCancelReplace() {
       @confirm="onConfirmReplace"
       @cancel="onCancelReplace"
     />
+
+    <QueueColumnsDialog v-model:open="columnsOpen" v-model:columns="queueColumns" />
   </div>
 </template>

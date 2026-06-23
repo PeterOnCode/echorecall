@@ -62,6 +62,30 @@
         "text": "Item",
         "status": "Status",
         "actions": "Actions"
+      },
+      "searchLabel": "Search",
+      "searchPlaceholder": "Search text or filename…",
+      "textEntered": "Text Entered",
+      "selectAll": "Select all rows",
+      "selectRow": "Select row",
+      "deleteSelected": "Delete selected ({count})",
+      "deleteTitle": "Delete selected items?",
+      "deleteMessage": "This removes {count} item(s) from the queue. This can’t be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "filters": {
+        "voice": "Voice",
+        "format": "Format",
+        "album": "Album",
+        "recordedAt": "Recording date",
+        "language": "Language",
+        "allVoices": "All voices",
+        "allFormats": "All formats",
+        "allAlbums": "All albums",
+        "allLanguages": "All languages",
+        "anyDate": "Any date",
+        "clearDate": "Clear date",
+        "clear": "Clear filters"
       }
     },
     "workspace": {
@@ -100,7 +124,16 @@
         "shape": "That queue file is damaged or invalid."
       }
     },
-    "columns": {}
+    "columns": {
+      "title": "Columns",
+      "apply": "Done",
+      "source": "Source",
+      "voice": "Voice",
+      "format": "Format",
+      "recordedAt": "Recording date",
+      "language": "Language",
+      "status": "Status"
+    }
   },
   "library": {
     "title": "Library",

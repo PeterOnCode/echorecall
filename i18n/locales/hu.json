@@ -62,6 +62,30 @@
         "text": "Tétel",
         "status": "Állapot",
         "actions": "Műveletek"
+      },
+      "searchLabel": "Keresés",
+      "searchPlaceholder": "Keresés szövegben vagy fájlnévben…",
+      "textEntered": "Beírt szöveg",
+      "selectAll": "Összes sor kijelölése",
+      "selectRow": "Sor kijelölése",
+      "deleteSelected": "Kijelöltek törlése ({count})",
+      "deleteTitle": "Törlöd a kijelölt tételeket?",
+      "deleteMessage": "Ez {count} tételt eltávolít a listából. Ez nem vonható vissza.",
+      "deleteConfirm": "Törlés",
+      "deleteCancel": "Mégse",
+      "filters": {
+        "voice": "Hang",
+        "format": "Formátum",
+        "album": "Album",
+        "recordedAt": "Felvétel dátuma",
+        "language": "Nyelv",
+        "allVoices": "Minden hang",
+        "allFormats": "Minden formátum",
+        "allAlbums": "Minden album",
+        "allLanguages": "Minden nyelv",
+        "anyDate": "Bármely dátum",
+        "clearDate": "Dátum törlése",
+        "clear": "Szűrők törlése"
       }
     },
     "workspace": {
@@ -100,7 +124,16 @@
         "shape": "Ez a listafájl sérült vagy érvénytelen."
       }
     },
-    "columns": {}
+    "columns": {
+      "title": "Oszlopok",
+      "apply": "Kész",
+      "source": "Forrás",
+      "voice": "Hang",
+      "format": "Formátum",
+      "recordedAt": "Felvétel dátuma",
+      "language": "Nyelv",
+      "status": "Állapot"
+    }
   },
   "library": {
     "title": "Könyvtár",
