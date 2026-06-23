@@ -89,20 +89,20 @@ Save downloads a `.echoqueue.json` that Open re-imports.
 
 ### Tests for User Story 2 (red-first)
 
-- [ ] T015 [P] [US2] Create `tests/component/GenerateToolbar.test.ts`: all `toolbar-*` actions present; prev disabled when `!hasPrev`, next when `!hasNext`; generate disabled rules; emits fire
-- [ ] T016 [P] [US2] Create `tests/unit/queue-file.test.ts`: export→import round-trips regeneratable rows; rejects bad `schema`/`version`/shape (malformed-import edge case)
-- [ ] T017 [P] [US2] Create `tests/integration/generate-remove-on-success.test.ts`: generate target = checked-else-all; successful items removed, failed items retained (FR-005a/FR-005b)
-- [ ] T017a [P] [US2] Extend `tests/integration/generate-remove-on-success.test.ts`: after a run, the run's successful ids are downloadable as one archive even though removed from the queue; no download offered when zero succeed (FR-022)
+- [X] T015 [P] [US2] Create `tests/component/GenerateToolbar.test.ts`: all `toolbar-*` actions present; prev disabled when `!hasPrev`, next when `!hasNext`; generate disabled rules; emits fire
+- [X] T016 [P] [US2] Create `tests/unit/queue-file.test.ts`: export→import round-trips regeneratable rows; rejects bad `schema`/`version`/shape (malformed-import edge case)
+- [X] T017 [P] [US2] Create `tests/integration/generate-remove-on-success.test.ts`: generate target = checked-else-all; successful items removed, failed items retained (FR-005a/FR-005b)
+- [X] T017a [P] [US2] Extend `tests/integration/generate-remove-on-success.test.ts`: after a run, the run's successful ids are downloadable as one archive even though removed from the queue; no download offered when zero succeed (FR-022)
 
 ### Implementation for User Story 2
 
-- [ ] T018 [P] [US2] Create `app/composables/useQueueFile.ts` (`exportQueue` download; `importQueue` validate → ok/reason) to pass T016
-- [ ] T019 [US2] Extend `app/composables/useQueue.ts`: `serialize()`/`loadDocument()`, `visibleItems`-based `generateTarget`, `hasPrev`/`hasNext`/active-index navigation
-- [ ] T020 [US2] Adapt `app/composables/useGeneration.ts`: accept a target list (checked-else-all), remove successfully generated items from the queue, and expose the run's successful ids as last-batch state (FR-022) to pass T017/T017a
-- [ ] T021 [US2] Create `app/components/generate/GenerateToolbar.vue` (`UDashboardToolbar`; emits upload/prev/next/generate/save-queue/open-queue/open-settings) to pass T015
-- [ ] T022 [US2] Wire the toolbar into `app/pages/index.vue` + `app/components/common/AppHeader.vue`: upload reuses `UploadDropzone` (hidden input out of tab order); save/open via `useQueueFile` (warn before replacing a non-empty queue); open-settings stubbed until US7
-- [ ] T022a [US2] Add a post-run "download this batch" affordance in `app/pages/index.vue` using `useGeneration` last-batch ids (reuse `downloadArchive`); hidden when a run yields no successes (FR-022) to pass T017a
-- [ ] T023 [P] [US2] Add US2 i18n keys (toolbar labels, save/open queue, import-replace confirmation, import-error messages) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T018 [P] [US2] Create `app/composables/useQueueFile.ts` (`exportQueue` download; `importQueue` validate → ok/reason) to pass T016
+- [X] T019 [US2] Extend `app/composables/useQueue.ts`: `serialize()`/`loadDocument()`, `visibleItems`-based `generateTarget`, `hasPrev`/`hasNext`/active-index navigation
+- [X] T020 [US2] Adapt `app/composables/useGeneration.ts`: accept a target list (checked-else-all), remove successfully generated items from the queue, and expose the run's successful ids as last-batch state (FR-022) to pass T017/T017a
+- [X] T021 [US2] Create `app/components/generate/GenerateToolbar.vue` (`UDashboardToolbar`; emits upload/prev/next/generate/save-queue/open-queue/open-settings) to pass T015
+- [X] T022 [US2] Wire the toolbar into `app/pages/index.vue` + `app/components/common/AppHeader.vue`: upload reuses `UploadDropzone` (hidden input out of tab order); save/open via `useQueueFile` (warn before replacing a non-empty queue); open-settings stubbed until US7
+- [X] T022a [US2] Add a post-run "download this batch" affordance in `app/pages/index.vue` using `useGeneration` last-batch ids (reuse `downloadArchive`); hidden when a run yields no successes (FR-022) to pass T017a
+- [X] T023 [P] [US2] Add US2 i18n keys (toolbar labels, save/open queue, import-replace confirmation, import-error messages) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Generate redesign (US1+US2) is a usable, demoable increment.
 

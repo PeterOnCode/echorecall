@@ -36,6 +36,10 @@ async function onChange(event: Event) {
   emit('uploaded', content, file.name)
   input.value = '' // allow re-selecting the same file
 }
+
+// Let the centralized toolbar's Upload action reuse this same hidden input (and its
+// accept/size guards) instead of duplicating the picker (005 · US2 / research §R3).
+defineExpose({ open: () => fileInput.value?.click() })
 </script>
 
 <template>

@@ -2,13 +2,16 @@
 import type { Metadata } from '#core/client'
 import type { ItemPatch, QueueItem, UploadSummary } from '../composables/useQueue'
 
-// Generate workspace (005 redesign / US1): a resizable two-pane dashboard — the
-// queue list on the left, the selected item's metadata editor on the right. The
-// defaults bar (voice/model/format/speed) and the interim upload + text-add path
-// build the queue (the centralized toolbar arrives in US2); the shared metadata
-// editor still pre-fills new rows from the deployment default tags (003). A single
-// Generate produces audio per item with isolated failures, each saved to the
-// library, with a batch `.zip` download of the successful items.
+// Generate workspace (005 redesign / US1+US2): a resizable two-pane dashboard —
+// the queue list on the left, the selected item's metadata editor on the right —
+// driven by a centralized GenerateToolbar (upload, prev/next, generate, save/open
+// queue, settings). The defaults bar (voice/model/format/speed) and the interim
+// text-add path build the queue (the ad-hoc text panel arrives in US4); the shared
+// metadata editor still pre-fills new rows from the deployment default tags (003).
+// Generate targets the checked rows if any are checked, else the whole queue, and
+// removes each successfully generated row (failures stay for retry); the run's
+// successes remain downloadable as one batch `.zip` afterwards (FR-022). Queues are
+// saved to / opened from local files the user owns — no server storage (FR-013).
 const {
   items,
   voiceId,
@@ -17,6 +20,14 @@ const {
   speed,
   metadata,
   activeId,
+  checkedIds,
+  generateTarget,
+  hasPrev,
+  hasNext,
+  selectPrev,
+  selectNext,
+  serialize,
+  loadDocument,
   addItem,
   addFromUpload,
   removeItem,
@@ -24,12 +35,24 @@ const {
   applyMetadataToPending,
   setDefaults,
 } = useQueue()
-const { voices, generating, loadVoices, generateAll, downloadArchive } = useGeneration()
+const { voices, generating, lastBatchIds, loadVoices, generateAll, downloadArchive } = useGeneration()
+const { exportQueue, importQueue } = useQueueFile()
 const { t } = useI18n()
 
 const uploadSummary = ref<UploadSummary | null>(null)
 // Whether any saved default tag was applied (003) — drives the form hint.
 const defaultsApplied = ref(false)
+
+// Refs to imperative DOM/child handles: the upload dropzone (toolbar Upload reuses
+// its hidden input + size guard) and the hidden "open queue" file input.
+const dropzone = ref<{ open: () => void } | null>(null)
+const queueFileInput = ref<HTMLInputElement | null>(null)
+
+// Import flow state: a parsed-but-not-yet-applied document awaiting confirmation
+// (only when replacing a non-empty queue), plus the last import error message.
+const pendingDoc = ref<ReturnType<typeof serialize> | null>(null)
+const confirmReplace = ref(false)
+const importError = ref<string | null>(null)
 
 // The row shown in the detail pane; null → the pane shows its empty state (FR-003).
 const activeItem = computed<QueueItem | null>(
@@ -70,26 +93,88 @@ function onUpdate(patch: ItemPatch) {
 // default. It seeds new rows and is stamped onto un-edited rows at generation.
 const metadataSections = [{ label: t('generate.metadata.legend'), slot: 'metadata' as const, value: 'metadata' }]
 
-const doneIds = computed(() =>
-  items.value.filter((i) => i.status === 'done' && i.result).map((i) => i.result!.id),
-)
-const canGenerate = computed(() => items.value.length > 0 && !generating.value)
+const canGenerate = computed(() => items.value.length > 0)
 
 async function onGenerate() {
-  if (!canGenerate.value) return
+  if (!canGenerate.value || generating.value) return
   // Apply the form-level metadata to the whole batch (incl. rows added before it
-  // was filled) just before generating.
+  // was filled) just before generating, then process the chosen target and remove
+  // each success from the queue.
   applyMetadataToPending()
-  await generateAll(items.value, speed.value)
+  await generateAll(generateTarget.value, speed.value, removeItem)
 }
 
-async function onDownloadAll() {
-  await downloadArchive(doneIds.value)
+/** Download the most recent run's successful items as one `.zip` (FR-022). */
+async function onDownloadBatch() {
+  await downloadArchive(lastBatchIds.value)
+}
+
+// Toolbar Upload reuses the dropzone's hidden input (and its accept/size guards).
+function onToolbarUpload() {
+  dropzone.value?.open()
+}
+
+/** Save the current queue to a local `.echoqueue.json` file (FR-013). */
+function onSaveQueue() {
+  exportQueue(serialize())
+}
+
+/** Open the local file picker for a saved queue. */
+function onOpenQueue() {
+  queueFileInput.value?.click()
+}
+
+/** Validate a picked queue file; replace the queue (confirming first if non-empty). */
+async function onQueueFileChosen(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // allow re-selecting the same file
+  if (!file) return
+
+  const result = await importQueue(file)
+  if (!result.ok) {
+    importError.value = t(`generate.queueFile.error.${result.reason}`)
+    return
+  }
+  importError.value = null
+  if (items.value.length > 0) {
+    pendingDoc.value = result.doc
+    confirmReplace.value = true
+  } else {
+    loadDocument(result.doc)
+  }
+}
+
+function onConfirmReplace() {
+  if (pendingDoc.value) loadDocument(pendingDoc.value)
+  pendingDoc.value = null
+  confirmReplace.value = false
+}
+
+function onCancelReplace() {
+  pendingDoc.value = null
+  confirmReplace.value = false
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
+    <GenerateToolbar
+      :has-prev="hasPrev"
+      :has-next="hasNext"
+      :can-generate="canGenerate"
+      :generating="generating"
+      :checked-count="checkedIds.size"
+      @upload="onToolbarUpload"
+      @prev="selectPrev"
+      @next="selectNext"
+      @generate="onGenerate"
+      @save-queue="onSaveQueue"
+      @open-queue="onOpenQueue"
+    />
+    <!-- open-settings is emitted by the toolbar but handled in US7 (SettingsModal);
+         intentionally unwired here so the toolbar is complete now. -->
+
     <GenerateForm
       v-model:voice-id="voiceId"
       v-model:model="model"
@@ -99,7 +184,7 @@ async function onDownloadAll() {
       @add="onAdd"
     />
 
-    <UploadDropzone :summary="uploadSummary" @uploaded="onUploaded" />
+    <UploadDropzone ref="dropzone" :summary="uploadSummary" @uploaded="onUploaded" />
 
     <UAccordion :items="metadataSections" default-value="metadata">
       <template #metadata>
@@ -131,26 +216,41 @@ async function onDownloadAll() {
       </template>
     </DashboardWorkspace>
 
-    <div class="flex gap-3">
+    <div v-if="lastBatchIds.length > 0">
       <UButton
-        data-test="generate-all"
-        :disabled="!canGenerate"
-        :loading="generating"
-        icon="i-lucide-mic"
-        @click="onGenerate"
-      >
-        {{ t('generate.actions.generate') }}
-      </UButton>
-      <UButton
-        v-if="doneIds.length > 0"
         data-test="download-all"
         color="neutral"
         variant="outline"
         icon="i-lucide-download"
-        @click="onDownloadAll"
+        @click="onDownloadBatch"
       >
         {{ t('generate.actions.downloadAll') }}
       </UButton>
     </div>
+
+    <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
+      {{ importError }}
+    </p>
+
+    <!-- display:none keeps the native input out of the tab order / a11y tree; the
+         toolbar's labelled "open queue" button is the accessible trigger. -->
+    <input
+      ref="queueFileInput"
+      data-test="queue-file-input"
+      type="file"
+      accept=".json,application/json"
+      class="hidden"
+      @change="onQueueFileChosen"
+    >
+
+    <ConfirmDialog
+      :open="confirmReplace"
+      :title="t('generate.queueFile.replaceTitle')"
+      :message="t('generate.queueFile.replaceMessage', { count: items.length })"
+      :confirm-label="t('generate.queueFile.replaceConfirm')"
+      :cancel-label="t('generate.queueFile.replaceCancel')"
+      @confirm="onConfirmReplace"
+      @cancel="onCancelReplace"
+    />
   </div>
 </template>

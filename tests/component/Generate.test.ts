@@ -160,18 +160,25 @@ describe('Generate page (two-pane workspace)', () => {
     expect(el.value).toBe('0.25')
   })
 
-  it('generates every item with one call per row, isolating a single failure', async () => {
+  it('removes a successfully generated item and keeps a failed one for retry', async () => {
     const wrapper = await mountPage()
     await addTyped(wrapper, 'alpha')
     await addTyped(wrapper, 'boom')
 
-    await wrapper.find('[data-test="generate-all"]').trigger('click')
+    // Generate now lives in the centralized toolbar (US2).
+    await wrapper.find('[data-test="toolbar-generate"]').trigger('click')
 
     await vi.waitFor(() => {
-      const statuses = wrapper.findAll('[data-test="item-status"]').map((s) => s.text())
-      expect(statuses[0]).toMatch(/done/i)
-      expect(statuses[1]).toMatch(/fail/i)
+      // The successful row leaves the queue (FR-005b); only the failed row remains.
+      const rows = wrapper.findAll('[data-test="queue-row"]')
+      expect(rows).toHaveLength(1)
+      expect(rows[0]!.text()).toContain('boom')
+      expect(wrapper.find('[data-test="item-status"]').text()).toMatch(/fail/i)
     })
+    await flushPromises()
+
+    // The run's success is still downloadable as a batch even though it left the queue (FR-022).
+    expect(wrapper.find('[data-test="download-all"]').exists()).toBe(true)
   })
 
   it('applies the form metadata to a row added before the metadata was filled', async () => {
@@ -182,7 +189,7 @@ describe('Generate page (two-pane workspace)', () => {
     await wrapper.find('[data-test="meta-title"]').setValue('Shared Title')
 
     postedBodies.length = 0
-    await wrapper.find('[data-test="generate-all"]').trigger('click')
+    await wrapper.find('[data-test="toolbar-generate"]').trigger('click')
 
     await vi.waitFor(() => {
       const sent = postedBodies.find((b) => b.text === 'metadata-after')
@@ -203,7 +210,7 @@ describe('Generate page (two-pane workspace)', () => {
     await wrapper.find('[data-test="queue-item-editor"] [data-test="meta-title"]').setValue('Per-row Title')
 
     postedBodies.length = 0
-    await wrapper.find('[data-test="generate-all"]').trigger('click')
+    await wrapper.find('[data-test="toolbar-generate"]').trigger('click')
 
     await vi.waitFor(() => {
       // The edited row keeps its own title; the untouched row gets the shared one.

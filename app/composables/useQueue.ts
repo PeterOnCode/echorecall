@@ -1,5 +1,8 @@
 import type { Format, ListItem, Metadata, Model } from '#core/client'
 import { MAX_INPUT_LENGTH, formatInfo, parseUploadText } from '#core/client'
+// Types only (imported by relative path per the repo typecheck gotcha): the saved-
+// queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
+import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
 
 export type ItemStatus = 'queued' | 'generating' | 'done' | 'failed'
 
@@ -241,6 +244,77 @@ export function useQueue() {
     }
   }
 
+  // The rows currently shown by the list pane. For US2 this is the whole queue;
+  // US3 narrows it by search/filters. `generateTarget` and the prev/next
+  // navigation derive from it so they always track what the user can see.
+  const visibleItems = computed(() => items.value)
+
+  /**
+   * What a Generate run processes (FR-005a): the checked rows if any are checked,
+   * otherwise every visible row. A fresh array so removing rows on success (US2)
+   * can't disturb the in-flight iteration.
+   */
+  const generateTarget = computed(() =>
+    checkedIds.value.size > 0
+      ? visibleItems.value.filter((i) => checkedIds.value.has(i.clientId))
+      : [...visibleItems.value],
+  )
+
+  // Active-selection navigation for the toolbar prev/next (FR-005), over the
+  // visible rows; disabled at the boundaries.
+  const activeIndex = computed(() => visibleItems.value.findIndex((i) => i.clientId === activeId.value))
+  const hasPrev = computed(() => activeIndex.value > 0)
+  const hasNext = computed(
+    () => activeIndex.value >= 0 && activeIndex.value < visibleItems.value.length - 1,
+  )
+  function selectPrev(): void {
+    if (hasPrev.value) activeId.value = visibleItems.value[activeIndex.value - 1]!.clientId
+  }
+  function selectNext(): void {
+    if (hasNext.value) activeId.value = visibleItems.value[activeIndex.value + 1]!.clientId
+  }
+
+  /** Snapshot the queue as a versioned saved-queue document (regeneratable inputs only). */
+  function serialize(): QueueFileDocument {
+    return {
+      schema: 'echorecall.queue',
+      version: 1,
+      items: items.value.map((item) => {
+        const fileItem: QueueFileItem = {
+          text: item.text,
+          voiceId: item.voiceId,
+          model: item.model,
+          format: item.format,
+          metadata: cloneMetadata(item.metadata),
+          source: item.source,
+        }
+        if (item.instructions !== undefined) fileItem.instructions = item.instructions
+        if (item.source === 'upload' && item.sourceName !== undefined) {
+          fileItem.sourceName = item.sourceName
+        }
+        return fileItem
+      }),
+    }
+  }
+
+  /** Replace the queue with the rows from an imported document (fresh ids/state). */
+  function loadDocument(doc: QueueFileDocument): void {
+    items.value = doc.items.map((fileItem) => ({
+      clientId: globalThis.crypto.randomUUID(),
+      text: fileItem.text,
+      voiceId: fileItem.voiceId,
+      model: fileItem.model,
+      format: fileItem.format,
+      metadata: cloneMetadata(fileItem.metadata),
+      status: 'queued',
+      source: fileItem.source,
+      ...(fileItem.instructions !== undefined ? { instructions: fileItem.instructions } : {}),
+      ...(fileItem.sourceName !== undefined ? { sourceName: fileItem.sourceName } : {}),
+    }))
+    checkedIds.value = new Set()
+    activeId.value = null
+  }
+
   return {
     items,
     voiceId,
@@ -250,6 +324,15 @@ export function useQueue() {
     metadata,
     activeId,
     checkedIds,
+    visibleItems,
+    generateTarget,
+    activeIndex,
+    hasPrev,
+    hasNext,
+    selectPrev,
+    selectNext,
+    serialize,
+    loadDocument,
     addItem,
     addItems,
     addFromUpload,

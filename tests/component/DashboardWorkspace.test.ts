@@ -27,6 +27,28 @@ describe('DashboardWorkspace', () => {
     expect(handle.attributes('aria-controls')).toContain('test-ws')
   })
 
+  it('sits in normal page flow, not as a fixed full-viewport overlay', async () => {
+    // Regression: @nuxt/ui's dashboard primitives are a full-screen app shell
+    // (`fixed inset-0` group, `min-h-svh` panels, `hidden` handle below lg). Embedded
+    // as a page section those must be overridden so the workspace occupies its slot
+    // instead of covering the header/toolbar/page (and the divider stays usable).
+    const wrapper = await mountSuspended(DashboardWorkspace, {
+      props: { storageKey: 'test-ws' },
+      slots: { list: () => 'LIST', detail: () => 'DETAIL' },
+    })
+
+    const group = wrapper.find('[data-test="dashboard-workspace"]').classes()
+    expect(group).not.toContain('fixed')
+    expect(group).not.toContain('inset-0')
+    expect(group).toContain('relative')
+
+    // The list pane must not force full viewport height.
+    expect(wrapper.find('[data-test="dashboard-list-pane"]').classes()).not.toContain('min-h-svh')
+
+    // The divider must be visible (not display:none) at all breakpoints.
+    expect(wrapper.find('[data-test="dashboard-resize-handle"]').classes()).not.toContain('hidden')
+  })
+
   it('shows the empty state in the detail pane when detailEmpty is set', async () => {
     const wrapper = await mountSuspended(DashboardWorkspace, {
       props: { storageKey: 'test-ws', detailEmpty: true },
