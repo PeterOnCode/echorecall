@@ -203,7 +203,12 @@
       "delete": "Could not delete that item. Please try again.",
       "bulkClean": "Could not clean the library. Please try again."
     },
-    "tags": {},
+    "tags": {
+      "region": "Audio tags",
+      "prev": "Previous recording",
+      "next": "Next recording",
+      "empty": "Select a recording to edit its tags."
+    },
     "waveform": {}
   },
   "settings": {

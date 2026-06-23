@@ -203,7 +203,12 @@
       "delete": "Nem sikerült törölni a tételt. Próbáld újra.",
       "bulkClean": "Nem sikerült a könyvtár takarítása. Próbáld újra."
     },
-    "tags": {},
+    "tags": {
+      "region": "Hangcímkék",
+      "prev": "Előző felvétel",
+      "next": "Következő felvétel",
+      "empty": "Válassz egy felvételt a címkéi szerkesztéséhez."
+    },
     "waveform": {}
   },
   "settings": {

@@ -168,16 +168,16 @@ recordings updating tags without returning to the table; divider resizes and per
 
 ### Tests for User Story 5 (red-first)
 
-- [ ] T037 [P] [US5] Rewrite `tests/component/LibraryTable.test.ts` red-first: rows selectable → emit `selected-id` (inline `#expanded` editor removed)
-- [ ] T038 [P] [US5] Create `tests/component/AudioTagsPanel.test.ts`: loads selected item's tags; `tags-prev`/`tags-next` change active item and disable at bounds; `save`/`delete` emits; `tags-empty` when none selected
+- [X] T037 [P] [US5] Rewrite `tests/component/LibraryTable.test.ts` red-first: rows selectable → emit `selected-id` (inline `#expanded` editor removed)
+- [X] T038 [P] [US5] Create `tests/component/AudioTagsPanel.test.ts`: loads selected item's tags; `tags-prev`/`tags-next` change active item and disable at bounds; `save`/`delete` emits; `tags-empty` when none selected
 
 ### Implementation for User Story 5
 
-- [ ] T039 [US5] Adapt `app/components/library/LibraryTable.vue` into the list pane (selectable rows emit `selected-id`; drop inline expansion) to pass T037
-- [ ] T040 [US5] Create `app/components/library/AudioTagsPanel.vue` embedding `LibraryItemEditor` + prev/next nav to pass T038
-- [ ] T041 [US5] Adapt `app/components/library/LibraryItemEditor.vue` to render inside the panel; relocate `app/components/library/LibrarySearchBar.vue` above the table list pane
-- [ ] T042 [US5] Rebuild `app/pages/library.vue` onto `DashboardWorkspace` (`#list`=table, `#detail`=AudioTagsPanel); manage `selectedId` + nav (reuse `useLibrary` unchanged)
-- [ ] T043 [P] [US5] Add US5 i18n keys (tags-panel nav, empty state) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T039 [US5] Adapt `app/components/library/LibraryTable.vue` into the list pane (selectable rows emit `selected-id`; drop inline expansion) to pass T037
+- [X] T040 [US5] Create `app/components/library/AudioTagsPanel.vue` embedding `LibraryItemEditor` + prev/next nav to pass T038
+- [X] T041 [US5] Adapt `app/components/library/LibraryItemEditor.vue` to render inside the panel; relocate `app/components/library/LibrarySearchBar.vue` above the table list pane
+- [X] T042 [US5] Rebuild `app/pages/library.vue` onto `DashboardWorkspace` (`#list`=table, `#detail`=AudioTagsPanel); manage `selectedId` + nav (reuse `useLibrary` unchanged)
+- [X] T043 [P] [US5] Add US5 i18n keys (tags-panel nav, empty state) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Library matches the Generate workflow for tag editing.
 
