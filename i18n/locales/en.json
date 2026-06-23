@@ -13,9 +13,14 @@
       "model": "Model",
       "format": "Format",
       "speed": "Speed",
-      "text": "Text",
-      "textPlaceholder": "Enter text to convert to speech…",
-      "add": "Add to list"
+      "text": "Text"
+    },
+    "addText": {
+      "label": "Add a text item",
+      "placeholder": "Enter text to convert to speech…",
+      "submit": "Add to list",
+      "empty": "Text can’t be empty.",
+      "tooLong": "Text is too long (max 4,096 characters)."
     },
     "upload": {
       "label": "Upload a .txt (one item per line)",

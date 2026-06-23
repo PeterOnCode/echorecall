@@ -1,31 +1,21 @@
 <script setup lang="ts">
 import { FORMATS, MODELS, type Format, type Model, type Voice } from '#core/client'
 
-// Form-level controls shared by every queued row (FR-014: speed is a single
-// form-level value), plus the text box + Add to append a row. Per-row editing
-// lands in US3.
+// Form-level defaults shared by every queued row (FR-014/FR-021: voice/model/format/
+// speed are single form-level values that newly added rows inherit). Ad-hoc text entry
+// now lives in AddTextPanel (US4); this is purely the compact defaults bar.
 defineProps<{ voices: Voice[] }>()
 const voiceId = defineModel<string>('voiceId', { required: true })
 const model = defineModel<Model>('model', { required: true })
 const format = defineModel<Format>('format', { required: true })
 const speed = defineModel<number>('speed', { required: true })
-const emit = defineEmits<{ add: [text: string] }>()
 const { t } = useI18n()
-
-const text = ref('')
 
 // USelectMenu items: formats display the uppercased extension but bind the format
 // id (matching the prior <option :value="f.id"> mapping). MODELS is readonly, so a
 // mutable copy is needed for USelectMenu's `items` type.
 const modelItems = [...MODELS]
 const formatItems = FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() }))
-
-function onAdd() {
-  const value = text.value.trim()
-  if (!value) return
-  emit('add', value)
-  text.value = ''
-}
 </script>
 
 <template>
@@ -64,23 +54,6 @@ function onAdd() {
           class="w-full"
         />
       </UFormField>
-    </div>
-
-    <UFormField :label="t('generate.form.text')">
-      <UTextarea
-        v-model="text"
-        data-test="add-text"
-        :rows="3"
-        :placeholder="t('generate.form.textPlaceholder')"
-        class="w-full"
-        @keydown.ctrl.enter="onAdd"
-      />
-    </UFormField>
-
-    <div>
-      <UButton data-test="add-item" icon="i-lucide-plus" @click="onAdd">
-        {{ t('generate.form.add') }}
-      </UButton>
     </div>
   </div>
 </template>

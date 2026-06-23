@@ -13,9 +13,14 @@
       "model": "Modell",
       "format": "Formátum",
       "speed": "Sebesség",
-      "text": "Szöveg",
-      "textPlaceholder": "Írd be a beszéddé alakítandó szöveget…",
-      "add": "Hozzáadás a listához"
+      "text": "Szöveg"
+    },
+    "addText": {
+      "label": "Szöveges tétel hozzáadása",
+      "placeholder": "Írd be a beszéddé alakítandó szöveget…",
+      "submit": "Hozzáadás a listához",
+      "empty": "A szöveg nem lehet üres.",
+      "tooLong": "A szöveg túl hosszú (legfeljebb 4 096 karakter)."
     },
     "upload": {
       "label": ".txt feltöltése (soronként egy tétel)",
