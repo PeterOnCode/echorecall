@@ -33,6 +33,17 @@ function onAdd() {
   emit('add', result.text)
   text.value = ''
 }
+
+// One keydown handler for the submit shortcut so Ctrl+Enter (Win/Linux) and Cmd+Enter
+// (macOS) both add — and holding both modifiers can't fire onAdd twice (the second
+// pass would hit the cleared input and show a spurious "empty" error). Plain Enter is
+// left alone so it still inserts a newline; the shortcut prevents that default.
+function onKeydown(event: KeyboardEvent) {
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault()
+    onAdd()
+  }
+}
 </script>
 
 <template>
@@ -46,8 +57,7 @@ function onAdd() {
           :placeholder="t('generate.addText.placeholder')"
           class="w-full"
           @input="error = null"
-          @keydown.ctrl.enter.prevent="onAdd"
-          @keydown.meta.enter.prevent="onAdd"
+          @keydown.enter="onKeydown"
         />
         <UButton data-test="add-text-submit" icon="i-lucide-plus" @click="onAdd">
           {{ t('generate.addText.submit') }}

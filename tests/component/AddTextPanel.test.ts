@@ -67,4 +67,26 @@ describe('AddTextPanel', () => {
     expect(wrapper.emitted('add')?.at(-1)?.[0]).toBe('shortcut text')
     expect((box.element as HTMLTextAreaElement).value).toBe('')
   })
+
+  it('adds exactly once when Ctrl and Cmd are held together (no double-trigger)', async () => {
+    const wrapper = await mountSuspended(AddTextPanel)
+    const box = wrapper.find('[data-test="add-text-input"]')
+    await box.setValue('once only')
+
+    // Both modifiers down at once must not run onAdd twice — the second pass would
+    // hit the just-cleared input and surface a spurious "empty" error.
+    const event = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      ctrlKey: true,
+      metaKey: true,
+      cancelable: true,
+      bubbles: true,
+    })
+    box.element.dispatchEvent(event)
+    await flushPromises()
+
+    expect(wrapper.emitted('add')).toHaveLength(1)
+    expect(wrapper.emitted('add')?.[0]?.[0]).toBe('once only')
+    expect(wrapper.find('[data-test="add-text-error"]').exists()).toBe(false)
+  })
 })
