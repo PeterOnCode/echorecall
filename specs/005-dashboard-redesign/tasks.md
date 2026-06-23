@@ -193,18 +193,18 @@ a region creates a visible loop; a missing-audio item shows an unavailable state
 
 ### Story setup
 
-- [ ] T044 [US6] Add `wavesurfer.js` `^7` (+ regions/zoom plugins) to `package.json` dependencies and install (constitution v2.5.0 — web-UI/`app/` only)
-- [ ] T045 [US6] Add a `wavesurfer.js` mock for happy-dom in `tests/component/` (factory stub exposing `load`/`zoom`/`on`/`destroy` + regions plugin), mirroring the `useColorMode` mock pattern
+- [X] T044 [US6] Add `wavesurfer.js` `^7` (+ regions/zoom plugins) to `package.json` dependencies and install (constitution v2.5.0 — web-UI/`app/` only)
+- [X] T045 [US6] Add a `wavesurfer.js` mock for happy-dom in `tests/component/` (factory stub exposing `load`/`zoom`/`on`/`destroy` + regions plugin), mirroring the `useColorMode` mock pattern
 
 ### Tests for User Story 6 (red-first)
 
-- [ ] T046 [P] [US6] Create `tests/component/WaveformPlayer.test.ts` (mocked wavesurfer): loads `src`; `waveform-zoom` calls `zoom`; `waveform-add-region` creates a loop region; `waveform-unavailable` on load error
+- [X] T046 [P] [US6] Create `tests/component/WaveformPlayer.test.ts` (mocked wavesurfer): loads `src`; `waveform-zoom` calls `zoom`; `waveform-add-region` creates a loop region; `waveform-unavailable` on load error
 
 ### Implementation for User Story 6
 
-- [ ] T047 [US6] Create `app/components/library/WaveformPlayer.vue` (wavesurfer lifecycle on `src`, regions = loop-only, zoom control, `error`→unavailable; destroy on unmount/`src` change) to pass T046
-- [ ] T048 [US6] Wire `WaveformPlayer` as the `#footer` of `DashboardWorkspace` in `app/pages/library.vue` for the selected recording
-- [ ] T049 [P] [US6] Add US6 i18n keys (play/zoom/add-region/loop/unavailable labels) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T047 [US6] Create `app/components/library/WaveformPlayer.vue` (wavesurfer lifecycle on `src`, regions = loop-only, zoom control, `error`→unavailable; destroy on unmount/`src` change) to pass T046
+- [X] T048 [US6] Wire `WaveformPlayer` as the `#footer` of `DashboardWorkspace` in `app/pages/library.vue` for the selected recording
+- [X] T049 [P] [US6] Add US6 i18n keys (play/zoom/add-region/loop/unavailable labels) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: Waveform review works in the Library workspace.
 
