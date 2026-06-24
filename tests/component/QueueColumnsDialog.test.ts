@@ -64,6 +64,28 @@ describe('QueueColumnsDialog', () => {
     wrapper.unmount()
   })
 
+  it('exposes the dialog and its toggles to assistive tech (FR-020)', async () => {
+    // FR-020: the chooser is a named modal dialog (aria-labelledby → its title) and
+    // every column toggle is keyboard/AT-operable — role="checkbox" with a reflected
+    // aria-checked state and a non-empty accessible name.
+    const wrapper = await mountSuspended(QueueColumnsDialog, {
+      props: { open: true, columns: allVisible() },
+    })
+    await flushPromises()
+
+    const dialog = document.body.querySelector('[role="dialog"]')
+    expect(dialog).not.toBeNull()
+    expect(dialog!.getAttribute('aria-labelledby')).toBeTruthy()
+
+    for (const id of COLUMN_IDS) {
+      const toggle = el(`queue-column-toggle-${id}`)!
+      expect(toggle.getAttribute('role'), id).toBe('checkbox')
+      expect(toggle.getAttribute('aria-checked'), id).not.toBeNull()
+      expect((toggle.getAttribute('aria-label') ?? '').length, id).toBeGreaterThan(0)
+    }
+    wrapper.unmount()
+  })
+
   it('closes via the apply button', async () => {
     const wrapper = await mountSuspended(QueueColumnsDialog, {
       props: { open: true, columns: allVisible() },

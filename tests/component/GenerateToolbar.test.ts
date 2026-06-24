@@ -95,4 +95,26 @@ describe('GenerateToolbar', () => {
       expect(wrapper.emitted(event), event).toBeTruthy()
     }
   })
+
+  // FR-020 / SC-009: every toolbar action must be keyboard-operable and exposed to
+  // assistive tech. Each renders as a native <button> (focusable + Enter/Space) and
+  // carries a non-empty accessible name — a visible label (upload, generate) or an
+  // aria-label for the icon-only controls (prev, next, save, open, settings).
+  it('exposes every action to keyboard and assistive tech (FR-020)', async () => {
+    const wrapper = await mountSuspended(GenerateToolbar, { props: BASE })
+    for (const id of [
+      'toolbar-upload',
+      'toolbar-prev',
+      'toolbar-next',
+      'toolbar-generate',
+      'toolbar-save-queue',
+      'toolbar-open-queue',
+      'toolbar-open-settings',
+    ]) {
+      const btn = wrapper.find(`[data-test="${id}"]`).element as HTMLElement
+      expect(btn.tagName, id).toBe('BUTTON')
+      const name = btn.getAttribute('aria-label') ?? btn.textContent?.trim() ?? ''
+      expect(name.length, `${id} accessible name`).toBeGreaterThan(0)
+    }
+  })
 })

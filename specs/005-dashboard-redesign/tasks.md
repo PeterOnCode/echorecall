@@ -237,11 +237,11 @@ close; focus returns; the Settings tab/page no longer exists (Generate, Library 
 
 **Purpose**: Cross-story gates and final validation.
 
-- [ ] T056 [P] Add automated accessibility assertions (keyboard operability, roles/labels, modal focus-trap/Escape/return) for all new controls across `tests/component/` — toolbar, resize handle, row selection, columns dialog, settings modal, tags nav, waveform controls (FR-020/SC-009)
-- [ ] T057 [P] Verify the en/hu key-parity test in `tests/unit/i18n-parity.test.ts` passes for every added namespace and remove orphaned keys in `i18n/locales/en.json` + `i18n/locales/hu.json` (FR-019)
-- [ ] T058 Run full suite green: `pnpm test`, `pnpm typecheck`, `pnpm lint` (via `mise exec node@22.22.2 --`); preserve or update every existing `data-test` consumer (SC-008 no-regression)
-- [ ] T059 [P] Update `README.md`/runtime docs for the redesign + waveform (deferred from the constitution v2.5.0 sync)
-- [ ] T060 Execute `specs/005-dashboard-redesign/quickstart.md` scenarios end-to-end (US1–US7 + cross-cutting gates)
+- [X] T056 [P] Add automated accessibility assertions (keyboard operability, roles/labels, modal focus-trap/Escape/return) for all new controls across `tests/component/` — toolbar, resize handle, row selection, columns dialog, settings modal, tags nav, waveform controls (FR-020/SC-009)
+- [X] T057 [P] Verify the en/hu key-parity test in `tests/unit/i18n-parity.test.ts` passes for every added namespace and remove orphaned keys in `i18n/locales/en.json` + `i18n/locales/hu.json` (FR-019)
+- [X] T058 Run full suite green: `pnpm test`, `pnpm typecheck`, `pnpm lint` (via `mise exec node@22.22.2 --`); preserve or update every existing `data-test` consumer (SC-008 no-regression)
+- [X] T059 [P] Update `README.md`/runtime docs for the redesign + waveform (deferred from the constitution v2.5.0 sync)
+- [X] T060 Execute `specs/005-dashboard-redesign/quickstart.md` scenarios end-to-end (US1–US7 + cross-cutting gates)
 
 ---
 

@@ -58,13 +58,8 @@
     "queue": {
       "empty": "Még nincs tétel — írj be szöveget vagy tölts fel egy .txt fájlt a lista összeállításához.",
       "remove": "Tétel eltávolítása",
-      "edit": "Tétel szerkesztése",
-      "download": "Letöltés",
-      "filenamePreview": "Mentés néven: {name}",
-      "filenameFallback": "egyedi név (.{ext})",
       "columns": {
         "text": "Tétel",
-        "status": "Állapot",
         "actions": "Műveletek"
       },
       "searchLabel": "Keresés",
@@ -104,7 +99,6 @@
       "textTooLong": "A szöveg túl hosszú (legfeljebb 4 096 karakter)."
     },
     "actions": {
-      "generate": "Létrehozás",
       "downloadAll": "Összes letöltése (.zip)"
     },
     "toolbar": {
@@ -143,7 +137,6 @@
     "title": "Könyvtár",
     "empty": "Még nincsenek mentett tételek.",
     "noResults": "Nincs a keresésnek megfelelő tétel.",
-    "unavailable": "A hang nem érhető el",
     "loadError": "Nem sikerült betölteni a könyvtárat. Próbáld újra.",
     "search": {
       "label": "Keresés",
@@ -181,14 +174,11 @@
       "cancel": "Mégse"
     },
     "item": {
-      "replay": "Lejátszás",
-      "download": "Letöltés",
-      "edit": "Szerkesztés"
+      "download": "Letöltés"
     },
     "editor": {
       "filename": "Fájlnév",
       "save": "Módosítások mentése",
-      "saving": "Mentés…",
       "delete": "Törlés",
       "cancel": "Mégse",
       "confirmTitle": "Törlöd ezt a tételt?",
@@ -219,7 +209,6 @@
     }
   },
   "settings": {
-    "title": "Beállítások",
     "appearance": {
       "title": "Megjelenés",
       "light": "Világos",

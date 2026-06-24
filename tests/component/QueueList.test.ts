@@ -134,6 +134,27 @@ describe('QueueList (curation – US3)', () => {
     expect([...(emitted!.at(-1)![0] as Set<string>)].sort()).toEqual(['a', 'b'])
   })
 
+  it('exposes the selection checkboxes to assistive tech (FR-020)', async () => {
+    // FR-020: the leading select column is keyboard/AT-operable — the header
+    // select-all and each row toggle render as role="checkbox" with a non-empty
+    // accessible name, so a screen reader announces what each checkbox controls.
+    const wrapper = await mountSuspended(QueueList, {
+      props: {
+        items: [item({ clientId: 'a' }), item({ clientId: 'b' })],
+        checkedIds: new Set<string>(),
+        visibleColumns: allColumns(),
+      },
+    })
+
+    const selectAll = wrapper.find('[data-test="queue-select-all"]').element
+    expect(selectAll.getAttribute('role')).toBe('checkbox')
+    expect((selectAll.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0)
+
+    const rowBox = wrapper.find('[data-test="queue-row-checkbox"]').element
+    expect(rowBox.getAttribute('role')).toBe('checkbox')
+    expect((rowBox.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0)
+  })
+
   it('requests the column dialog from the columns button', async () => {
     const wrapper = await mountSuspended(QueueList, {
       props: { items: [item()], visibleColumns: allColumns() },

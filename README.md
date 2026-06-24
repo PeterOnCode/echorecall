@@ -6,13 +6,13 @@ text, pick a voice and format, and generate a whole batch at once — every
 successful clip is saved so you can replay, retag, download, or delete it later
 without regenerating.
 
-- **Batch studio** — type/paste lines or upload a `.txt`, then generate the whole list in one go; per-item failures are isolated and the successes download as a `.zip`.
+- **Generation workspace** — a resizable two-pane dashboard (queue list + metadata editor): build a queue by typing a line or uploading a `.txt`, then search, filter, multi-select, and choose which columns to show. A header toolbar drives upload, previous/next, generate, and save/open of the queue as a local `.echoqueue.json` file. Generate targets the checked rows (else the whole queue), isolates per-item failures, removes the successes from the queue, and offers that run as one `.zip`.
 - **Voices, models & formats** — choose a voice and model, and render to MP3, WAV, FLAC, Opus, AAC, or PCM.
-- **Standards-based metadata** — attach title, artist, album, genre, comment, languages, and repeatable custom text/URL tags, written as ID3v2.4 / Vorbis comments where the format supports them.
+- **Standards-based metadata** — attach title, artist, album, genre, comment, languages, a recording date, and repeatable custom text/URL tags, written as ID3v2.4 / Vorbis comments where the format supports them.
 - **Persistent library** — every generation is stored (SQLite + on-disk audio under `data/`) and survives restarts; replay makes no new provider call. Files are saved with human-readable, title-slugged names under a `YYYY/MM/DD` folder.
-- **Find & manage** — server-side search, sort, filter (voice/format/date), and pagination; rename, retag, delete, or bulk-clean by filter.
+- **Library workspace** — the same two-pane layout (results table + an audio-tags panel with previous/next), plus a **waveform review player** with zoom and loop regions (playback aid only — it never modifies the audio). Server-side search, sort, filter (voice/format/date), and pagination; rename, retag, delete, or bulk-clean by filter.
 - **Personalize** — light/dark theme and language (English / Hungarian, Hungarian default), persisted per browser.
-- **In-app OpenAI key** — optionally set/replace/clear the OpenAI key from the Settings tab; it is encrypted at rest and never returned to the client.
+- **In-app OpenAI key** — optionally set/replace/clear the OpenAI key from **Settings** (a modal opened from the toolbar or header); it is encrypted at rest and never returned to the client.
 - **Versioned** — the running app version is shown in the header and bumped with one release command.
 
 There is no built-in authentication — secure network access yourself (localhost,
@@ -20,8 +20,9 @@ reverse proxy, or VPN).
 
 ## Stack
 
-TypeScript (strict) on Node.js · Nuxt 4 (Vue 3 + Nitro) · `@nuxt/ui` v4 (+ color-mode)
-· `@nuxtjs/i18n` (en/hu) · OpenAI TTS · multi-format audio with ID3/Vorbis tagging via
+TypeScript (strict) on Node.js · Nuxt 4 (Vue 3 + Nitro) · `@nuxt/ui` v4 (+ color-mode,
+dashboard primitives) · `@nuxtjs/i18n` (en/hu) · `wavesurfer.js` (Library waveform review,
+display/playback only) · OpenAI TTS · multi-format audio with ID3/Vorbis tagging via
 `taglib-wasm` (pure WASM — no system binary) · SQLite (`better-sqlite3`) + filesystem
 audio under `data/` · Vitest + `@nuxt/test-utils` · Docker Compose. A framework-agnostic
 core lives in `src/core/`; the Nuxt server (`server/`) and UI (`app/`) are adapters over it.
@@ -32,7 +33,7 @@ core lives in `src/core/`; the Nuxt server (`server/`) and UI (`app/`) are adapt
   (`mise install`) is recommended; the native `better-sqlite3` addon must be built
   against this version. (Node ≥ 22.6 is required for the WASM tagger.)
 - **pnpm 10** (`corepack enable` will provide it).
-- An **OpenAI API key** with TTS access — set it in `.env` or in the Settings tab.
+- An **OpenAI API key** with TTS access — set it in `.env` or in **Settings** (the in-app modal).
 
 ## Local development
 
@@ -46,12 +47,12 @@ Environment variables (server-only; never commit real keys):
 
 | Variable                     | Required | Default  | Purpose                                                                 |
 | ---------------------------- | -------- | -------- | ----------------------------------------------------------------------- |
-| `NUXT_OPENAI_API_KEY`        | no\*     | —        | OpenAI key for TTS. \*Required unless you set one in the Settings tab.   |
+| `NUXT_OPENAI_API_KEY`        | no\*     | —        | OpenAI key for TTS. \*Required unless you set one in Settings.           |
 | `NUXT_DATA_DIR`              | no       | `./data` | Where the SQLite DB + audio are kept.                                   |
 | `NUXT_APP_SECRET`            | no       | —        | 32+ char secret enabling the encrypted in-app OpenAI key; unset → env key only. |
 
 Default tag values (Artist, Album, Genre, Comment, Languages — Title is never defaulted)
-are configured in the **Settings tab** ("Default tag values") and persisted in the app;
+are configured in **Settings** ("Default tag values") and persisted in the app;
 they are no longer set via environment variables. Upgrading from a release that used
 `NUXT_DEFAULT_TAG_*`? Those values are not migrated — re-enter them once in Settings.
 
@@ -106,9 +107,12 @@ specs/         feature specs, plans, data models, API contracts, quickstarts
 
 ## Documentation
 
-The current feature — batch studio, formats, tagging, library, settings, defaults, and
-versioning — is specified in
-[`specs/002-studio-enhancements/`](specs/002-studio-enhancements/) (see its
-[`quickstart.md`](specs/002-studio-enhancements/quickstart.md) for end-to-end validation
-steps). The original single-generation baseline lives in
+The latest feature — the **dashboard redesign** (a shared resizable two-pane workspace for
+Generate and Library, queue search/filters/columns/multi-select, local save/open of the
+queue, the Library waveform review player, and Settings in a modal) — is specified in
+[`specs/005-dashboard-redesign/`](specs/005-dashboard-redesign/) (see its
+[`quickstart.md`](specs/005-dashboard-redesign/quickstart.md) for end-to-end validation
+steps). The batch studio, formats, tagging, library, settings, defaults, and versioning are
+specified in [`specs/002-studio-enhancements/`](specs/002-studio-enhancements/); the original
+single-generation baseline lives in
 [`specs/001-tts-generation-library/`](specs/001-tts-generation-library/).
