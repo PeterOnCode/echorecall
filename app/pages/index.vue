@@ -42,6 +42,9 @@ const {
 const { voices, generating, lastBatchIds, loadVoices, generateAll, downloadArchive } = useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
 const { queueColumns } = useViewPreferences()
+// The Settings modal is hosted in the app header (US7); the toolbar's settings action
+// just flips its shared open flag.
+const { open: settingsOpen } = useSettingsModal()
 const { t } = useI18n()
 
 // Whether the column-visibility chooser is open (US3 / FR-012).
@@ -187,9 +190,8 @@ function onDeleteSelected() {
       @generate="onGenerate"
       @save-queue="onSaveQueue"
       @open-queue="onOpenQueue"
+      @open-settings="settingsOpen = true"
     />
-    <!-- open-settings is emitted by the toolbar but handled in US7 (SettingsModal);
-         intentionally unwired here so the toolbar is complete now. -->
 
     <GenerateForm
       v-model:voice-id="voiceId"

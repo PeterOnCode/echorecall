@@ -3,16 +3,26 @@ import { mountSuspended, mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
 import { defineComponent, nextTick, reactive } from 'vue'
 import { useNuxtApp, useI18n } from '#imports'
-import SettingsPage from '~/pages/settings.vue'
+import AppearanceSettings from '~/components/settings/AppearanceSettings.vue'
+import LanguageSettings from '~/components/settings/LanguageSettings.vue'
 
 // Component coverage for US7 (FR-038/FR-039 + acceptance scenario 3): the
-// Settings page exposes an appearance selector (light/dark/system, backed by
-// @nuxtjs/color-mode, default system) and a language selector (en/hu, default
-// Hungarian). Selecting an option updates the UI immediately and persists the
-// choice (color-mode via its own storage; locale via the `locale` cookie). The
-// app's deterministic default locale is Hungarian. Domain data (generated text,
-// tag values, filenames) is never run through i18n, so it renders verbatim in
-// any language.
+// appearance selector (light/dark/system, backed by @nuxtjs/color-mode, default
+// system) and the language selector (en/hu, default Hungarian). These sections now
+// live in the Settings modal (005 redesign), so we mount them directly here rather
+// than the removed standalone page. Selecting an option updates the UI immediately
+// and persists the choice (color-mode via its own storage; locale via the `locale`
+// cookie). The app's deterministic default locale is Hungarian. Domain data
+// (generated text, tag values, filenames) is never run through i18n, so it renders
+// verbatim in any language.
+
+// The two sections as they appear together in the Settings modal — mounted as a
+// plain pair so the assertions can query their rendered markup directly (the modal's
+// own composition + chrome is covered by SettingsModal.test.ts).
+const SettingsSections = defineComponent({
+  components: { AppearanceSettings, LanguageSettings },
+  template: '<div><AppearanceSettings /><LanguageSettings /></div>',
+})
 
 // @nuxtjs/color-mode's real client plugin reaches for a browser-only helper that
 // doesn't exist in the vitest Nuxt environment, so we mock the composable with a
@@ -61,7 +71,7 @@ async function waitForText(
 
 describe('Settings — appearance & language (US7)', () => {
   it('defaults to the Hungarian locale and the system theme', async () => {
-    const wrapper = await mountSuspended(SettingsPage)
+    const wrapper = await mountSuspended(SettingsSections)
 
     // Hungarian chrome is shown by default (FR-039 default Hungarian).
     expect(wrapper.text()).toContain('Megjelenés') // settings.appearance.title (hu)
@@ -74,7 +84,7 @@ describe('Settings — appearance & language (US7)', () => {
   })
 
   it('switches the interface language to English and persists it to a cookie', async () => {
-    const wrapper = await mountSuspended(SettingsPage)
+    const wrapper = await mountSuspended(SettingsSections)
 
     await wrapper.find('[data-test="lang-en"]').trigger('click')
     await waitForText(wrapper, 'Appearance')
@@ -93,7 +103,7 @@ describe('Settings — appearance & language (US7)', () => {
   })
 
   it('switches the color theme to dark and reflects the selection', async () => {
-    const wrapper = await mountSuspended(SettingsPage)
+    const wrapper = await mountSuspended(SettingsSections)
 
     await wrapper.find('[data-test="theme-dark"]').trigger('click')
     await nextTick()
@@ -114,21 +124,21 @@ describe('Settings — appearance & language (US7)', () => {
         return { t, setLocale }
       },
       template: `<div>
-        <span data-test="chrome">{{ t('common.tabs.settings') }}</span>
+        <span data-test="chrome">{{ t('common.tabs.library') }}</span>
         <span data-test="domain">alloy · my_clip.mp3 · eng</span>
       </div>`,
     })
 
     const wrapper = await mountSuspended(Probe)
     const domainBefore = wrapper.find('[data-test="domain"]').text()
-    expect(wrapper.find('[data-test="chrome"]').text()).toBe('Beállítások') // hu chrome
+    expect(wrapper.find('[data-test="chrome"]').text()).toBe('Könyvtár') // hu chrome
 
     await (wrapper.vm as unknown as { setLocale: (l: string) => Promise<void> }).setLocale('en')
     await flushPromises()
     await nextTick()
 
     // Chrome is translated; the domain data is byte-for-byte unchanged.
-    expect(wrapper.find('[data-test="chrome"]').text()).toBe('Settings')
+    expect(wrapper.find('[data-test="chrome"]').text()).toBe('Library')
     expect(wrapper.find('[data-test="domain"]').text()).toBe(domainBefore)
     expect(wrapper.find('[data-test="domain"]').text()).toBe('alloy · my_clip.mp3 · eng')
   })
