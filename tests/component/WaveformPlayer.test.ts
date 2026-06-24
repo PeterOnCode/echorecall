@@ -101,7 +101,11 @@ describe('WaveformPlayer (US6)', () => {
       expect((ctrl.getAttribute('aria-label') ?? '').length, id).toBeGreaterThan(0)
     }
 
-    expect(wrapper.find('[data-test="waveform-loop-toggle"]').attributes('aria-pressed')).toBeDefined()
+    // The loop control advertises its state and flips it on toggle.
+    const loopToggle = wrapper.find('[data-test="waveform-loop-toggle"]')
+    expect(loopToggle.attributes('aria-pressed')).toBe('true')
+    await loopToggle.trigger('click')
+    expect(loopToggle.attributes('aria-pressed')).toBe('false')
   })
 
   it('announces the unavailable state as an alert (FR-020)', async () => {
