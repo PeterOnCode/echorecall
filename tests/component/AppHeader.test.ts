@@ -19,6 +19,11 @@ mockNuxtImport('useColorMode', () => useColorModeMock)
 const { useAppVersionMock } = vi.hoisted(() => ({ useAppVersionMock: vi.fn() }))
 mockNuxtImport('useAppVersion', () => useAppVersionMock)
 
+// The header gear is the Settings entry point only on surfaces without their own
+// toolbar (US7 / FR-017); drive the current path to assert that per-surface rule.
+const { useRouteMock } = vi.hoisted(() => ({ useRouteMock: vi.fn() }))
+mockNuxtImport('useRoute', () => useRouteMock)
+
 // Any request whose target looks like a remote version/release lookup would
 // violate FR-046 ("performs no remote version check"). Icon/font requests from
 // the UI chrome are unrelated and intentionally not matched here.
@@ -35,6 +40,8 @@ function assertNoRemoteVersionCheck(spy: ReturnType<typeof vi.spyOn>): void {
 
 beforeEach(() => {
   useColorModeMock.mockReturnValue({ preference: 'system', value: 'light' })
+  useAppVersionMock.mockReturnValue('1.0.0')
+  useRouteMock.mockReturnValue({ path: '/' })
 })
 afterEach(() => vi.restoreAllMocks())
 
@@ -66,5 +73,25 @@ describe('AppHeader — running version (US9)', () => {
     // The composable reads this value; nuxt.config wires it from package.json, so
     // a release `bumpp` updates the header with no further edit (FR-046/FR-047).
     expect(useRuntimeConfig().public.appVersion).toMatch(/^\d+\.\d+\.\d+/)
+  })
+})
+
+describe('AppHeader — Settings entry point (US7 / FR-017)', () => {
+  it('hides the header gear on Generate, where the workspace toolbar exposes Settings', async () => {
+    useRouteMock.mockReturnValue({ path: '/' })
+
+    const wrapper = await mountSuspended(AppHeader)
+
+    // No second entry point on Generate — its toolbar's open-settings is the only one.
+    expect(wrapper.find('[data-test="header-settings"]').exists()).toBe(false)
+  })
+
+  it('shows the header gear on toolbar-less surfaces (e.g. Library) so Settings stays reachable', async () => {
+    useRouteMock.mockReturnValue({ path: '/library' })
+
+    const wrapper = await mountSuspended(AppHeader)
+
+    // Library has no toolbar, so the header gear is its sole Settings entry point.
+    expect(wrapper.find('[data-test="header-settings"]').exists()).toBe(true)
   })
 })

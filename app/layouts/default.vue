@@ -2,12 +2,12 @@
 const { t } = useI18n()
 const route = useRoute()
 
-// Route-driven tab navigation across the three areas (FR-049). Panels are
-// disabled (`:content="false"`) — each tab simply navigates to its page.
+// Route-driven tab navigation across the two areas. Panels are disabled
+// (`:content="false"`) — each tab simply navigates to its page. Settings is no longer
+// a tab/route (005 · US7 / FR-017): it opens as a modal from the header gear.
 const tabs = computed(() => [
   { label: t('common.tabs.generate'), icon: 'i-lucide-mic', value: '/' },
   { label: t('common.tabs.library'), icon: 'i-lucide-library', value: '/library' },
-  { label: t('common.tabs.settings'), icon: 'i-lucide-settings', value: '/settings' },
 ])
 
 const active = computed({

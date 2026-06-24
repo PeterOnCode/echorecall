@@ -219,15 +219,15 @@ close; focus returns; the Settings tab/page no longer exists (Generate, Library 
 
 ### Tests for User Story 7 (red-first)
 
-- [ ] T050 [P] [US7] Create `tests/component/SettingsModal.test.ts`: opens via `v-model:open`, renders the four settings sections, Escape closes + focus returns (`settings-modal-*`)
-- [ ] T051 [P] [US7] Update `tests/component/AppHeader.test.ts` (or layout spec) red-first: tab list = Generate, Library only (no Settings tab)
+- [X] T050 [P] [US7] Create `tests/component/SettingsModal.test.ts`: opens via `v-model:open`, renders the four settings sections, Escape closes + focus returns (`settings-modal-*`)
+- [X] T051 [P] [US7] Update `tests/component/AppHeader.test.ts` (or layout spec) red-first: tab list = Generate, Library only (no Settings tab) — implemented as `tests/component/DefaultLayout.test.ts` (the tabs live in the layout, not the header)
 
 ### Implementation for User Story 7
 
-- [ ] T052 [US7] Create `app/components/settings/SettingsModal.vue` (`UModal` wrapping `AppearanceSettings`/`LanguageSettings`/`OpenAiKeySettings`/`DefaultTagsSettings`, unchanged) to pass T050
-- [ ] T053 [US7] Remove `app/pages/settings.vue`; update `app/layouts/default.vue` tabs to drop Settings to pass T051
-- [ ] T054 [US7] Wire `toolbar-open-settings` → `SettingsModal` `v-model:open` (shared across `index.vue`/`library.vue` via the header)
-- [ ] T055 [P] [US7] Add US7 i18n keys (settings-modal title/close; remove obsolete settings-tab key) to `i18n/locales/en.json` + `i18n/locales/hu.json`
+- [X] T052 [US7] Create `app/components/settings/SettingsModal.vue` (`UModal` wrapping `AppearanceSettings`/`LanguageSettings`/`OpenAiKeySettings`/`DefaultTagsSettings`, unchanged) to pass T050
+- [X] T053 [US7] Remove `app/pages/settings.vue`; update `app/layouts/default.vue` tabs to drop Settings to pass T051
+- [X] T054 [US7] Wire `toolbar-open-settings` → `SettingsModal` `v-model:open` (shared across `index.vue`/`library.vue` via the header) — new `useSettingsModal()` (`useState`) shared ref; the one `SettingsModal` is hosted in `AppHeader`. One settings entry **per surface** (FR-017): Generate opens it from its workspace toolbar (FR-004), so the header gear renders only on toolbar-less surfaces (e.g. Library, which has no toolbar) — Library would otherwise be unable to reach Settings. End-to-end wiring covered by `tests/component/GenerateSettingsWiring.test.ts`
+- [X] T055 [P] [US7] Add US7 i18n keys (settings-modal title/close; remove obsolete settings-tab key) to `i18n/locales/en.json` + `i18n/locales/hu.json`
 
 **Checkpoint**: All seven stories independently functional.
 

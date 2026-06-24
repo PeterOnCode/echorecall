@@ -3,8 +3,7 @@
     "loading": "Betöltés…",
     "tabs": {
       "generate": "Létrehozás",
-      "library": "Könyvtár",
-      "settings": "Beállítások"
+      "library": "Könyvtár"
     }
   },
   "generate": {
@@ -277,6 +276,10 @@
         "clear": "Nem sikerült törölni az alapértelmezett címkéket. Próbáld újra."
       }
     },
-    "modal": {}
+    "modal": {
+      "title": "Beállítások",
+      "close": "Bezárás",
+      "open": "Beállítások"
+    }
   }
 }

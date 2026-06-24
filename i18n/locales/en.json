@@ -3,8 +3,7 @@
     "loading": "Loading…",
     "tabs": {
       "generate": "Generate",
-      "library": "Library",
-      "settings": "Settings"
+      "library": "Library"
     }
   },
   "generate": {
@@ -277,6 +276,10 @@
         "clear": "Could not clear the default tags. Please try again."
       }
     },
-    "modal": {}
+    "modal": {
+      "title": "Settings",
+      "close": "Close",
+      "open": "Settings"
+    }
   }
 }
