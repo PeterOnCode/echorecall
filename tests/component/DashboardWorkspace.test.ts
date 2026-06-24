@@ -49,6 +49,20 @@ describe('DashboardWorkspace', () => {
     expect(wrapper.find('[data-test="dashboard-resize-handle"]').classes()).not.toContain('hidden')
   })
 
+  it('exposes the resize divider as a separator wired to the list pane (FR-020)', async () => {
+    // Keyboard/AT operability for the divider (FR-020): @nuxt/ui's resize handle
+    // carries role="separator" and points at the pane it resizes via aria-controls,
+    // so assistive tech announces it as an adjustable boundary rather than a bare div.
+    const wrapper = await mountSuspended(DashboardWorkspace, {
+      props: { storageKey: 'a11y-ws' },
+      slots: { list: () => 'LIST', detail: () => 'DETAIL' },
+    })
+
+    const handle = wrapper.find('[data-test="dashboard-resize-handle"]')
+    expect(handle.attributes('role')).toBe('separator')
+    expect(handle.attributes('aria-controls')).toContain('a11y-ws')
+  })
+
   it('shows the empty state in the detail pane when detailEmpty is set', async () => {
     const wrapper = await mountSuspended(DashboardWorkspace, {
       props: { storageKey: 'test-ws', detailEmpty: true },

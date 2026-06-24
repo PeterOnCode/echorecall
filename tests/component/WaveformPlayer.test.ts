@@ -87,6 +87,36 @@ describe('WaveformPlayer (US6)', () => {
     expect(region.play).not.toHaveBeenCalled()
   })
 
+  it('exposes the waveform controls to assistive tech (FR-020)', async () => {
+    // FR-020: the player and its controls are keyboard/AT-operable — the region is a
+    // labelled section, play/region/loop/zoom each carry a non-empty accessible name,
+    // and the loop control advertises its on/off state via aria-pressed.
+    const wrapper = await mountReady()
+
+    const player = wrapper.find('[data-test="waveform-player"]').element
+    expect((player.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0)
+
+    for (const id of ['waveform-play', 'waveform-add-region', 'waveform-loop-toggle', 'waveform-zoom']) {
+      const ctrl = wrapper.find(`[data-test="${id}"]`).element as HTMLElement
+      expect((ctrl.getAttribute('aria-label') ?? '').length, id).toBeGreaterThan(0)
+    }
+
+    // The loop control advertises its state and flips it on toggle.
+    const loopToggle = wrapper.find('[data-test="waveform-loop-toggle"]')
+    expect(loopToggle.attributes('aria-pressed')).toBe('true')
+    await loopToggle.trigger('click')
+    expect(loopToggle.attributes('aria-pressed')).toBe('false')
+  })
+
+  it('announces the unavailable state as an alert (FR-020)', async () => {
+    const wrapper = await mountSuspended(WaveformPlayer, { props: { src: '/missing.mp3' } })
+    wavesurferState.instance!.emit('error', new Error('decode failed'))
+    await flushPromises()
+
+    // The fallback notice is a live region so a screen reader announces the failure.
+    expect(wrapper.find('[data-test="waveform-unavailable"]').attributes('role')).toBe('alert')
+  })
+
   it('shows the unavailable state and emits error when the audio fails to load', async () => {
     const wrapper = await mountSuspended(WaveformPlayer, { props: { src: '/missing.mp3' } })
 

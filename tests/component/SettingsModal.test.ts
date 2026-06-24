@@ -70,6 +70,18 @@ describe('SettingsModal (US7)', () => {
     wrapper.unmount()
   })
 
+  it('exposes the modal as a named dialog to assistive tech (FR-020)', async () => {
+    // FR-020: beyond the focus trap / Escape / focus-return covered below, the panel
+    // is announced as a dialog named by its title (aria-labelledby) when it opens.
+    const wrapper = await mountSuspended(SettingsModal, { props: { open: true } })
+    await flushPromises()
+
+    const dialog = document.body.querySelector('[role="dialog"]')
+    expect(dialog).not.toBeNull()
+    expect(dialog!.getAttribute('aria-labelledby')).toBeTruthy()
+    wrapper.unmount()
+  })
+
   it('closes on Escape and returns focus to the opener', async () => {
     const Host = defineComponent({
       components: { SettingsModal },

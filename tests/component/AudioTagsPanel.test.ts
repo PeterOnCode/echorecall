@@ -71,6 +71,22 @@ describe('AudioTagsPanel', () => {
     expect(wrapper.emitted('prev')).toBeTruthy()
   })
 
+  it('exposes the panel and prev/next nav to assistive tech (FR-020)', async () => {
+    // FR-020: the detail pane is a labelled region and its prev/next controls are
+    // keyboard-operable native buttons with non-empty accessible names, so AT users
+    // can move through recordings without returning to the table (FR-015).
+    const wrapper = await mountPanel({ hasPrev: true, hasNext: true })
+
+    const panel = wrapper.find('[data-test="audio-tags-panel"]').element
+    expect((panel.getAttribute('aria-label') ?? '').length).toBeGreaterThan(0)
+
+    for (const id of ['tags-prev', 'tags-next']) {
+      const btn = wrapper.find(`[data-test="${id}"]`).element as HTMLElement
+      expect(btn.tagName, id).toBe('BUTTON')
+      expect((btn.getAttribute('aria-label') ?? '').length, id).toBeGreaterThan(0)
+    }
+  })
+
   it('re-emits the embedded editor save with the edited filename + metadata', async () => {
     const wrapper = await mountPanel()
     await wrapper.find('[data-test="edit-filename"]').setValue('Renamed')

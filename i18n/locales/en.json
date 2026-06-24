@@ -58,13 +58,8 @@
     "queue": {
       "empty": "No items yet — type text or upload a .txt to build your list.",
       "remove": "Remove item",
-      "edit": "Edit item",
-      "download": "Download",
-      "filenamePreview": "Will be saved as {name}",
-      "filenameFallback": "a unique name (.{ext})",
       "columns": {
         "text": "Item",
-        "status": "Status",
         "actions": "Actions"
       },
       "searchLabel": "Search",
@@ -104,7 +99,6 @@
       "textTooLong": "Text is too long (max 4,096 characters)."
     },
     "actions": {
-      "generate": "Generate",
       "downloadAll": "Download all (.zip)"
     },
     "toolbar": {
@@ -143,7 +137,6 @@
     "title": "Library",
     "empty": "No saved items yet.",
     "noResults": "No items match your search.",
-    "unavailable": "Audio unavailable",
     "loadError": "Could not load your library. Please try again.",
     "search": {
       "label": "Search",
@@ -181,14 +174,11 @@
       "cancel": "Cancel"
     },
     "item": {
-      "replay": "Replay",
-      "download": "Download",
-      "edit": "Edit"
+      "download": "Download"
     },
     "editor": {
       "filename": "File name",
       "save": "Save changes",
-      "saving": "Saving…",
       "delete": "Delete",
       "cancel": "Cancel",
       "confirmTitle": "Delete this item?",
@@ -219,7 +209,6 @@
     }
   },
   "settings": {
-    "title": "Settings",
     "appearance": {
       "title": "Appearance",
       "light": "Light",
