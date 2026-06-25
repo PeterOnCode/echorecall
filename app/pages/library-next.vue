@@ -82,6 +82,16 @@ watch(
 )
 const activeDirty = computed(() => (activeId.value ? drafts.isDirty(activeId.value) : false))
 
+// US6 — the read-only status-bar projection (data-model §4). Save state reflects ANY
+// unsaved draft (drafts may be dirty for several recordings at once); the selection,
+// files-loaded count, and audio properties read from the active item + useLibrary.total.
+const saveState = computed<'saved' | 'unsaved'>(() =>
+  drafts.dirtyCount.value > 0 ? 'unsaved' : 'saved',
+)
+const dirtyCount = computed(() => drafts.dirtyCount.value)
+const activeFilename = computed(() => activeItem.value?.filename ?? null)
+const activeAudio = computed(() => activeItem.value?.audioProperties)
+
 // Filter-bar select options. Derived from the loaded page (a reasonable default —
 // the chosen value still narrows the WHOLE library via the server-side query).
 const genreOptions = computed(() => [
@@ -189,6 +199,16 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
         />
       </template>
     </DashboardWorkspace>
+
+    <!-- US6 / FR-023 — read-only status bar: save state, files loaded, selection,
+         UTF-8 charset, and the active recording's real audio properties. -->
+    <LibraryStatusBar
+      :save-state="saveState"
+      :dirty-count="dirtyCount"
+      :files-loaded="total"
+      :selection="activeFilename"
+      :audio="activeAudio"
+    />
 
     <!-- US4 — Configure Columns + bulk tag edit modals + bulk-delete confirmation. -->
     <LibraryColumnsDialog

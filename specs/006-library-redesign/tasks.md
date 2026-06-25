@@ -152,10 +152,10 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: Shows loaded count, selection, save state (flips on edit/after Save), UTF-8, and codec/bitrate/sample-rate (blank where unreadable).
 
-- [ ] T051 [P] [US6] Component test (RED) `tests/component/library-status-bar.test.ts`: save state, files-loaded, selection, UTF-8, audio properties from `audioProperties`; reacts to dirty/save (FR-023, R-AUDIOPROPS).
-- [ ] T052 [US6] Create `app/components/library/LibraryStatusBar.vue` (`role="status"`; projection per data-model §4).
-- [ ] T053 [US6] Wire `LibraryStatusBar` into `app/pages/library-next.vue` (`useLibrary.total` + `useTagDrafts` + active item's `audioProperties`).
-- [ ] T054 [P] [US6] i18n keys (en/hu) `status.{saved,unsaved,files,selection}` (codec/encoding values are data, not translated).
+- [X] T051 [P] [US6] Component test (RED) `tests/component/library-status-bar.test.ts`: save state, files-loaded, selection, UTF-8, audio properties from `audioProperties`; reacts to dirty/save (FR-023, R-AUDIOPROPS).
+- [X] T052 [US6] Create `app/components/library/LibraryStatusBar.vue` (`role="status"`; projection per data-model §4).
+- [X] T053 [US6] Wire `LibraryStatusBar` into `app/pages/library-next.vue` (`useLibrary.total` + `useTagDrafts` + active item's `audioProperties`).
+- [X] T054 [P] [US6] i18n keys (en/hu) `status.{saved,unsaved,files,selection}` (codec/encoding values are data, not translated).
 
 **Checkpoint**: All six stories independently functional.
 

@@ -284,6 +284,13 @@
       "addRegion": "Add loop section",
       "loop": "Repeat section",
       "unavailable": "Audio unavailable for this recording."
+    },
+    "status": {
+      "saved": "All changes saved",
+      "unsaved": "Unsaved changes ({count})",
+      "files": "{count} files loaded",
+      "selection": "Selected: {name}",
+      "noSelection": "No selection"
     }
   },
   "settings": {

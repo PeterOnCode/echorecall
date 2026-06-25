@@ -284,6 +284,13 @@
       "addRegion": "Ciklusszakasz hozzáadása",
       "loop": "Szakasz ismétlése",
       "unavailable": "A felvételhez nem érhető el hang."
+    },
+    "status": {
+      "saved": "Minden módosítás mentve",
+      "unsaved": "Nem mentett módosítások ({count})",
+      "files": "{count} fájl betöltve",
+      "selection": "Kijelölve: {name}",
+      "noSelection": "Nincs kijelölés"
     }
   },
   "settings": {
