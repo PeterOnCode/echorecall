@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Metadata } from '#core/client'
 import type { LibraryItem } from '../composables/useLibrary'
+import type { TagDraft } from '../composables/useTagDrafts'
 
 // 006 · US1 (FR-001/FR-005/FR-006/FR-021) — the redesigned Library surface at the
 // PARALLEL route /library-next (canonical /library untouched until cutover, FR-002).
@@ -10,15 +11,36 @@ import type { LibraryItem } from '../composables/useLibrary'
 // traverse the filtered set ACROSS pages (R-NAV); a show/hide control collapses the
 // inspector. The filter bar (US3), waveform footer (US2), bulk + Configure Columns
 // (US4), inspector editing (US5), and status bar (US6) layer on next.
-const { items, total, loading, error, query, load, hasPrev, hasNext, gotoPrev, gotoNext, removeMany, bulkRetag } =
-  useLibrary()
-const { libraryColumns, setLibraryColumns } = useViewPreferences()
+const {
+  items,
+  total,
+  loading,
+  error,
+  query,
+  load,
+  hasPrev,
+  hasNext,
+  gotoPrev,
+  gotoNext,
+  removeMany,
+  bulkRetag,
+  update,
+} = useLibrary()
+const { libraryColumns, setLibraryColumns, inspectorFields, setInspectorFields } = useViewPreferences()
 const { t } = useI18n()
+
+// US5 — staged tag edits (dirty buffer). Commit reuses useLibrary.update; the buffer
+// auto-preserves per-recording edits across selection changes (Q4 / FR-019).
+const drafts = useTagDrafts({ update })
 
 // The active recording shown in the inspector; null → the inspector's empty state.
 const activeId = ref<string | null>(null)
 // FR-021 — show/hide the inspector pane (the control lives in the always-visible table).
 const showInspector = ref(true)
+// US5 — the Configure Visible Fields modal + the waveform handle the inspector's Play
+// control drives (FR-022).
+const fieldsOpen = ref(false)
+const waveformRef = ref<{ play: () => void } | null>(null)
 
 // US4 — multi-select + bulk ops + Configure Columns state.
 const selectedIds = ref<Set<string>>(new Set())
@@ -46,6 +68,20 @@ const activeItem = computed<LibraryItem | null>(
   () => items.value.find((i) => i.id === activeId.value) ?? null,
 )
 
+// US5 — the staged editable view the inspector binds to. Seeded on selection (the
+// SAME buffer is returned for an id already in flight, so edits survive a switch);
+// `null` resets the inspector to its empty state. Seeded in a watcher (not a computed)
+// so seeding never mutates reactive state mid-render.
+const activeDraft = ref<TagDraft | null>(null)
+watch(
+  [activeId, activeItem],
+  ([id, item]) => {
+    activeDraft.value = id && item ? drafts.draftFor(id, item) : null
+  },
+  { immediate: true },
+)
+const activeDirty = computed(() => (activeId.value ? drafts.isDirty(activeId.value) : false))
+
 // Filter-bar select options. Derived from the loaded page (a reasonable default —
 // the chosen value still narrows the WHOLE library via the server-side query).
 const genreOptions = computed(() => [
@@ -64,6 +100,16 @@ async function onPrev() {
 }
 async function onNext() {
   activeId.value = await gotoNext(activeId.value)
+}
+
+// US5 — explicit Save commits the active recording's staged edits via useLibrary.update
+// (FR-019); a successful commit clears the dirty buffer and the patched item reseeds the
+// draft from the saved values. Play drives the footer waveform (FR-022).
+async function onSave() {
+  if (activeId.value) await drafts.commit(activeId.value)
+}
+function onPlay() {
+  waveformRef.value?.play()
 }
 
 // --- US4 bulk actions + Configure Columns -------------------------------------
@@ -119,11 +165,17 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
       <template #detail>
         <TagInspector
           v-if="showInspector"
+          v-model:draft="activeDraft"
           :item="activeItem"
+          :dirty="activeDirty"
           :has-prev="canPrev"
           :has-next="canNext"
+          :fields="inspectorFields"
           @prev="onPrev"
           @next="onNext"
+          @play="onPlay"
+          @save="onSave"
+          @open-fields-dialog="fieldsOpen = true"
         />
       </template>
       <template #footer>
@@ -131,6 +183,7 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
              + zoom) for the active recording; absent until a row is selected. -->
         <WaveformPlayer
           v-if="activeItem"
+          ref="waveformRef"
           :src="activeItem.audioUrl"
           :label="activeItem.filename"
         />
@@ -142,6 +195,12 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
       v-model:open="columnsOpen"
       :columns="libraryColumns"
       @apply="setLibraryColumns"
+    />
+    <!-- US5 — Configure Visible Fields modal (toggle + reorder the inspector fields). -->
+    <InspectorFieldsDialog
+      v-model:open="fieldsOpen"
+      :fields="inspectorFields"
+      @apply="setInspectorFields"
     />
     <BulkTagEditDialog
       :open="bulkOpen"

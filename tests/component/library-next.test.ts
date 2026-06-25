@@ -72,7 +72,8 @@ describe('library-next page (US1)', () => {
     await wrapper.findAll('[data-test="library-row"]')[0]!.trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-test="tags-empty"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="field-title"]').text()).toContain('Alpha')
+    // US5 — the inspector fields are now editable inputs bound to the staged draft.
+    expect((wrapper.find('[data-test="field-title"]').element as HTMLInputElement).value).toContain('Alpha')
   })
 
   it('collapses and restores the inspector via the show/hide control (FR-021)', async () => {

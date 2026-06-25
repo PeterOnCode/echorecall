@@ -134,13 +134,13 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: Edit any field (incl. Encoded-By/Text/Album Artist/Composer/BPM/Rating) → dirty → Save commits → reload round-trips (via `tags_extra`, no migration); edit→switch→return restores staged edits; Configure Visible Fields toggles + reorders (Name locked) and persists; show/hide collapses.
 
-- [ ] T044 [P] [US5] Component test (RED) `tests/component/tag-inspector-edit.test.ts`: all 15 fields editable; Save (toolbar) calls `useLibrary.update`; dirty indicator; Play emits (FR-018/FR-019/FR-022/FR-032).
-- [ ] T045 [P] [US5] Component test (RED) `tests/component/inspector-fields-dialog.test.ts`: toggle + reorder, Name always-on, not-all-hidden, Reset/Cancel/Apply, persistence (FR-020/FR-031).
-- [ ] T046 [P] [US5] Integration test (RED) `tests/integration/inspector-drafts.test.ts`: explicit Save + auto-preserve across selection (Q4); an extra field (e.g. Album Artist) round-trips via `tags_extra` (SC-010).
-- [ ] T047 [US5] Extend `app/components/library/TagInspector.vue`: settings gear, toolbar Play + Save, all 15 editable fields (Name + `MetadataFields` incl. the 6 extras) bound to `useTagDrafts`, dirty indicator, fields-dialog trigger; render order/visibility from prefs.
-- [ ] T048 [US5] Create `app/components/library/InspectorFieldsDialog.vue` (`UModal`): toggle + reorder + Reset/Cancel/Apply; consumes `useViewPreferences.inspectorFields`.
-- [ ] T049 [US5] Wire `app/pages/library-next.vue`: `useTagDrafts`, inspector field prefs, Play, show/hide inspector.
-- [ ] T050 [P] [US5] i18n keys (en/hu) the 15 field labels (incl. albumArtist/composer/bpm/rating) + `inspectorFields.*` (incl. reset/cancel/apply).
+- [X] T044 [P] [US5] Component test (RED) `tests/component/tag-inspector-edit.test.ts`: all 15 fields editable; Save (toolbar) calls `useLibrary.update`; dirty indicator; Play emits (FR-018/FR-019/FR-022/FR-032).
+- [X] T045 [P] [US5] Component test (RED) `tests/component/inspector-fields-dialog.test.ts`: toggle + reorder, Name always-on, not-all-hidden, Reset/Cancel/Apply, persistence (FR-020/FR-031).
+- [X] T046 [P] [US5] Integration test (RED) `tests/integration/inspector-drafts.test.ts`: explicit Save + auto-preserve across selection (Q4); an extra field (e.g. Album Artist) round-trips via `tags_extra` (SC-010).
+- [X] T047 [US5] Extend `app/components/library/TagInspector.vue`: settings gear, toolbar Play + Save, all 15 editable fields (Name + `MetadataFields` incl. the 6 extras) bound to `useTagDrafts`, dirty indicator, fields-dialog trigger; render order/visibility from prefs.
+- [X] T048 [US5] Create `app/components/library/InspectorFieldsDialog.vue` (`UModal`): toggle + reorder + Reset/Cancel/Apply; consumes `useViewPreferences.inspectorFields`.
+- [X] T049 [US5] Wire `app/pages/library-next.vue`: `useTagDrafts`, inspector field prefs, Play, show/hide inspector.
+- [X] T050 [P] [US5] i18n keys (en/hu) the 15 field labels (incl. albumArtist/composer/bpm/rating) + `inspectorFields.*` (incl. reset/cancel/apply).
 
 **Checkpoint**: US5 testable — full tag editor with the extra fields.
 

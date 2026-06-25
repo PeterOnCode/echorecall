@@ -244,6 +244,10 @@
     "inspector": {
       "prev": "Previous",
       "next": "Next",
+      "play": "Play Audio",
+      "save": "Save",
+      "configureFields": "Configure visible fields",
+      "dirty": "Unsaved changes",
       "empty": "Select a recording to edit its tags.",
       "fields": {
         "name": "Name",
@@ -258,8 +262,19 @@
         "albumArtist": "Album Artist",
         "composer": "Composer",
         "encodedBy": "Encoded By",
-        "notes": "Text"
+        "notes": "Text",
+        "bpm": "BPM",
+        "rating": "Rating"
       }
+    },
+    "inspectorFields": {
+      "title": "Configure visible fields",
+      "open": "Configure visible fields",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset to defaults",
+      "cancel": "Cancel",
+      "apply": "Apply"
     },
     "waveform": {
       "region": "Waveform player",

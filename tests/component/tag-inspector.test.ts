@@ -2,12 +2,31 @@ import { describe, it, expect } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import TagInspector from '~/components/library/TagInspector.vue'
 import type { LibraryItem } from '~/composables/useLibrary'
+import type { TagDraft } from '~/composables/useTagDrafts'
+import type { InspectorFieldPref } from '~/composables/useViewPreferences'
 
-// 006 · US1 (FR-005/FR-006/FR-032) — the tag-editor inspector skeleton (forks
-// AudioTagsPanel). US1 scope: a FIXED "Tag Editor (ID3v2.4)" title, a Prev/Next
-// toolbar (disabled at the global bounds, emits to the page), a read-only display of
-// the recording's field values, and an empty state when nothing is selected. Editing
-// + Save + Play + the fields dialog arrive in US5.
+// 006 · US1 (FR-005/FR-006/FR-032) — the tag-editor inspector. US1 scope: a FIXED
+// "Tag Editor (ID3v2.4)" title, a Prev/Next toolbar (disabled at the global bounds,
+// emits to the page), the recording's field values loaded from the staged draft, and
+// an empty state when nothing is selected. Editing + Save + Play + the fields dialog
+// behaviour is exercised in tag-inspector-edit.test.ts (US5).
+
+const ALL_FIELD_IDS: InspectorFieldPref['id'][] = [
+  'text',
+  'title',
+  'artist',
+  'album',
+  'comment',
+  'date',
+  'track',
+  'genre',
+  'encodedBy',
+  'language',
+  'albumArtist',
+  'composer',
+  'bpm',
+  'rating',
+]
 
 function item(over: Partial<LibraryItem> = {}): LibraryItem {
   return {
@@ -25,9 +44,26 @@ function item(over: Partial<LibraryItem> = {}): LibraryItem {
   }
 }
 
+function draftFrom(it: LibraryItem): TagDraft {
+  const dot = it.filename.lastIndexOf('.')
+  return {
+    filenameBase: dot > 0 ? it.filename.slice(0, dot) : it.filename,
+    metadata: JSON.parse(JSON.stringify(it.metadata ?? {})),
+  }
+}
+
 function mountInspector(props: Record<string, unknown> = {}) {
+  const it = 'item' in props ? (props.item as LibraryItem | null) : item()
   return mountSuspended(TagInspector, {
-    props: { item: item(), hasPrev: false, hasNext: false, ...props },
+    props: {
+      item: it,
+      draft: it ? draftFrom(it) : null,
+      dirty: false,
+      hasPrev: false,
+      hasNext: false,
+      fields: ALL_FIELD_IDS.map((id) => ({ id, visible: true })),
+      ...props,
+    },
   })
 }
 
@@ -39,11 +75,11 @@ describe('TagInspector (US1)', () => {
 
   it('loads the selected recording field values', async () => {
     const wrapper = await mountInspector()
-    expect(wrapper.find('[data-test="field-name"]').text()).toContain('hello')
-    expect(wrapper.find('[data-test="field-title"]').text()).toContain('Hello')
-    expect(wrapper.find('[data-test="field-artist"]').text()).toContain('Me')
-    expect(wrapper.find('[data-test="field-album"]').text()).toContain('Demo')
-    expect(wrapper.find('[data-test="field-genre"]').text()).toContain('Speech')
+    expect((wrapper.find('[data-test="field-name"]').element as HTMLInputElement).value).toContain('hello')
+    expect((wrapper.find('[data-test="field-title"]').element as HTMLInputElement).value).toContain('Hello')
+    expect((wrapper.find('[data-test="field-artist"]').element as HTMLInputElement).value).toContain('Me')
+    expect((wrapper.find('[data-test="field-album"]').element as HTMLInputElement).value).toContain('Demo')
+    expect((wrapper.find('[data-test="field-genre"]').element as HTMLInputElement).value).toContain('Speech')
   })
 
   it('shows the empty state when nothing is selected (FR-005)', async () => {

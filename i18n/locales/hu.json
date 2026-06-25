@@ -244,6 +244,10 @@
     "inspector": {
       "prev": "Előző",
       "next": "Következő",
+      "play": "Hang lejátszása",
+      "save": "Mentés",
+      "configureFields": "Látható mezők beállítása",
+      "dirty": "Nem mentett változások",
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez.",
       "fields": {
         "name": "Név",
@@ -258,8 +262,19 @@
         "albumArtist": "Album előadó",
         "composer": "Zeneszerző",
         "encodedBy": "Kódoló",
-        "notes": "Szöveg"
+        "notes": "Szöveg",
+        "bpm": "BPM",
+        "rating": "Értékelés"
       }
+    },
+    "inspectorFields": {
+      "title": "Látható mezők beállítása",
+      "open": "Látható mezők beállítása",
+      "moveUp": "Mozgatás felfelé",
+      "moveDown": "Mozgatás lefelé",
+      "reset": "Alapértelmezés visszaállítása",
+      "cancel": "Mégse",
+      "apply": "Alkalmaz"
     },
     "waveform": {
       "region": "Hullámforma lejátszó",

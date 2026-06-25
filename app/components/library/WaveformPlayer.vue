@@ -118,6 +118,15 @@ function togglePlay() {
   void ws?.playPause()
 }
 
+// 006 · US5 (FR-022) — an imperative play handle so the TagInspector's "Play Audio"
+// toolbar control can start playback of the active recording. Additive only: props,
+// emits, and the in-panel controls are unchanged (contract J). No-op until ready.
+defineExpose({
+  play() {
+    void ws?.play()
+  },
+})
+
 function onZoom(event: Event) {
   const px = Number((event.target as HTMLInputElement).value)
   zoomLevel.value = px
