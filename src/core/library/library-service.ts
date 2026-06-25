@@ -1,6 +1,7 @@
 import type { Readable } from 'node:stream'
 import { ZipArchive } from 'archiver'
-import type { Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
+import type { AudioProperties, Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
+import type { AudioPropertiesReader } from './audio-properties'
 import { newId } from '../shared/ids'
 import { DomainError, InvalidFilenameError, NotFoundError } from '../shared/errors'
 import { formatInfo } from '../tts/provider'
@@ -49,7 +50,29 @@ export class LibraryService {
      * absent (e.g. plain unit tests), audio is stored untagged.
      */
     private readonly tagger?: AudioTagger,
+    /**
+     * Optional read-only audio-properties reader (006 · R-AUDIOPROPS). When
+     * present, {@link audioPropertiesFor} decodes codec/bitrate/sampleRate/duration
+     * from the stored file on demand; absent (plain tests) → empty properties.
+     */
+    private readonly audioProps?: AudioPropertiesReader,
   ) {}
+
+  /**
+   * 006 · R-AUDIOPROPS — read-only audio properties for a row, computed on read
+   * from its stored file. Returns an empty object when no reader is configured or
+   * the file is missing/unreadable (never throws — a single bad file must not break
+   * listing). Nothing is persisted.
+   */
+  async audioPropertiesFor(generation: Generation): Promise<AudioProperties> {
+    if (!this.audioProps) return {}
+    try {
+      if (!(await this.audio.existsAt(generation.path))) return {}
+      return await this.audioProps(await this.audio.readAt(generation.path))
+    } catch {
+      return {}
+    }
+  }
 
   /**
    * Persist a successful generation. The (already-tagged in US2) audio is written

@@ -55,6 +55,134 @@ function persist(value: Record<QueueColumnId, boolean>): void {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 006 · R-COLUMNS / R-FIELDS — Library view preferences (data-model §3.1).
+//
+// Two ORDERED, toggleable sets persisted per-device. Unlike the (unordered) queue
+// columns above, the design's Configure dialogs reorder rows as well as toggle them,
+// so each set is an ordered `{ id, visible }[]` (array order == display order). The
+// always-on Filename column / Name field are NOT in their sets. Reads merge stored
+// over defaults (a newly-added id defaults visible), and a not-all-hidden guard keeps
+// at least one entry visible (FR-017/FR-020).
+// ---------------------------------------------------------------------------
+
+/** Toggleable file-table columns (Filename is always-on and not in this set). */
+export type LibraryColumnId =
+  | 'title'
+  | 'artist'
+  | 'album'
+  | 'year'
+  | 'track'
+  | 'genre'
+  | 'comment'
+  | 'date'
+  | 'composer'
+  | 'duration'
+  | 'bitrate'
+
+export interface LibraryColumnPref {
+  id: LibraryColumnId
+  visible: boolean
+}
+
+/** Toggleable inspector fields (Name is always-on and not in this set). */
+export type InspectorFieldId =
+  | 'text'
+  | 'title'
+  | 'artist'
+  | 'album'
+  | 'comment'
+  | 'date'
+  | 'track'
+  | 'genre'
+  | 'encodedBy'
+  | 'language'
+  | 'albumArtist'
+  | 'composer'
+  | 'bpm'
+  | 'rating'
+
+export interface InspectorFieldPref {
+  id: InspectorFieldId
+  visible: boolean
+}
+
+const LIBRARY_COLUMN_IDS: LibraryColumnId[] = [
+  'title',
+  'artist',
+  'album',
+  'year',
+  'track',
+  'genre',
+  'comment',
+  'date',
+  'composer',
+  'duration',
+  'bitrate',
+]
+const INSPECTOR_FIELD_IDS: InspectorFieldId[] = [
+  'text',
+  'title',
+  'artist',
+  'album',
+  'comment',
+  'date',
+  'track',
+  'genre',
+  'encodedBy',
+  'language',
+  'albumArtist',
+  'composer',
+  'bpm',
+  'rating',
+]
+const LIBRARY_COLUMNS_KEY = 'echorecall:viewprefs:libraryColumns'
+const INSPECTOR_FIELDS_KEY = 'echorecall:viewprefs:inspectorFields'
+
+/**
+ * Coerce arbitrary stored/incoming input into a clean ordered visibility list:
+ * keep known ids in the given order (deduped, an explicit `false` honoured, anything
+ * else visible), then append any canonical ids that are missing (default visible) so
+ * a newly-added id always appears. Unknown ids are dropped.
+ */
+function sanitizeOrdered<T extends string>(input: unknown, ids: readonly T[]): { id: T; visible: boolean }[] {
+  const known = new Set<string>(ids)
+  const seen = new Set<T>()
+  const result: { id: T; visible: boolean }[] = []
+  if (Array.isArray(input)) {
+    for (const entry of input) {
+      if (entry && typeof entry === 'object') {
+        const id = (entry as { id?: unknown }).id
+        if (typeof id === 'string' && known.has(id) && !seen.has(id as T)) {
+          seen.add(id as T)
+          result.push({ id: id as T, visible: (entry as { visible?: unknown }).visible !== false })
+        }
+      }
+    }
+  }
+  for (const id of ids) {
+    if (!seen.has(id)) result.push({ id, visible: true })
+  }
+  return result
+}
+
+function readOrdered<T extends string>(key: string, ids: readonly T[]): { id: T; visible: boolean }[] {
+  try {
+    const raw = storage()?.getItem(key)
+    return sanitizeOrdered(raw ? JSON.parse(raw) : undefined, ids)
+  } catch {
+    return sanitizeOrdered(undefined, ids)
+  }
+}
+
+function persistRaw(key: string, value: unknown): void {
+  try {
+    storage()?.setItem(key, JSON.stringify(value))
+  } catch {
+    // Best-effort; preferences degrade gracefully when storage is unavailable.
+  }
+}
+
 export function useViewPreferences() {
   // Stored value merged over the defaults so a newly-added column defaults to visible.
   const queueColumns = ref<Record<QueueColumnId, boolean>>({ ...DEFAULT_COLUMNS, ...readStored() })
@@ -74,5 +202,40 @@ export function useViewPreferences() {
     queueColumns.value = { ...queueColumns.value, [id]: visible }
   }
 
-  return { queueColumns, setColumn }
+  // 006 — ordered, toggleable Library column + inspector field sets.
+  const libraryColumns = ref<LibraryColumnPref[]>(readOrdered(LIBRARY_COLUMNS_KEY, LIBRARY_COLUMN_IDS))
+  const inspectorFields = ref<InspectorFieldPref[]>(readOrdered(INSPECTOR_FIELDS_KEY, INSPECTOR_FIELD_IDS))
+  watch(libraryColumns, (v) => persistRaw(LIBRARY_COLUMNS_KEY, v), { deep: true, flush: 'sync' })
+  watch(inspectorFields, (v) => persistRaw(INSPECTOR_FIELDS_KEY, v), { deep: true, flush: 'sync' })
+
+  /** Commit a (possibly reordered + retoggled) column set; refuses to hide all. */
+  function setLibraryColumns(next: LibraryColumnPref[]): void {
+    const clean = sanitizeOrdered(next, LIBRARY_COLUMN_IDS)
+    if (!clean.some((c) => c.visible)) return
+    libraryColumns.value = clean
+  }
+  function resetLibraryColumns(): void {
+    libraryColumns.value = sanitizeOrdered(undefined, LIBRARY_COLUMN_IDS)
+  }
+
+  /** Commit a (possibly reordered + retoggled) inspector field set; refuses to hide all. */
+  function setInspectorFields(next: InspectorFieldPref[]): void {
+    const clean = sanitizeOrdered(next, INSPECTOR_FIELD_IDS)
+    if (!clean.some((f) => f.visible)) return
+    inspectorFields.value = clean
+  }
+  function resetInspectorFields(): void {
+    inspectorFields.value = sanitizeOrdered(undefined, INSPECTOR_FIELD_IDS)
+  }
+
+  return {
+    queueColumns,
+    setColumn,
+    libraryColumns,
+    setLibraryColumns,
+    resetLibraryColumns,
+    inspectorFields,
+    setInspectorFields,
+    resetInspectorFields,
+  }
 }

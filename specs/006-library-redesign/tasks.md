@@ -24,8 +24,8 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Create the parallel-route stub `app/pages/library-next.vue` rendering an empty `DashboardWorkspace` (`#list`/`#detail`/`#footer`) so `/library-next` resolves while `/library` stays untouched (FR-001); confirm `wavesurfer.js ^7.12.8` present (no new dep).
-- [ ] T002 [P] Confirm `tests/component/wavesurfer-mock.ts` is reusable by new specs.
+- [X] T001 Create the parallel-route stub `app/pages/library-next.vue` rendering an empty `DashboardWorkspace` (`#list`/`#detail`/`#footer`) so `/library-next` resolves while `/library` stays untouched (FR-001); confirm `wavesurfer.js ^7.12.8` present (no new dep).
+- [X] T002 [P] Confirm `tests/component/wavesurfer-mock.ts` is reusable by new specs.
 
 ---
 
@@ -35,24 +35,24 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 ### Core: query, tags, audio properties (red-first)
 
-- [ ] T003 [P] Core unit test (RED) in `tests/unit/library-query-extension.test.ts`: R-FILTER `genre`/`language`/`recordedFrom`/`recordedTo` filters + sort keys `filename|artist|album|recordedAt|track|genre|comment` (Year+Date→recordedAt; Filename→stored name), plus back-compat.
-- [ ] T004 [P] Core unit test (RED) in `tests/unit/metadata-extra-tags.test.ts`: R-TAGS — `notes`/`encodedBy`/`albumArtist`/`composer`/`bpm`/`rating` write→read round-trip via the native ID3 frames (TENC/TPE2/TCOM/TBPM/POPM; notes→customText) mirrored in `tags_extra`; **Rating 0–5 ↔ POPM 0–255** mapping; existing rows without the keys read back empty.
-- [ ] T005 [P] Core unit test (RED) in `tests/unit/audio-properties.test.ts`: R-AUDIOPROPS — reader returns codec/bitrate/sampleRate/duration for a real file; an unreadable/missing file yields an empty object (no throw).
-- [ ] T006 Extend `src/core/shared/types.ts`: (R-FILTER) `LibraryQuery` optional `genre`/`language`/`recordedFrom`/`recordedTo` + sort union additions `filename|artist|album|recordedAt|track|genre|comment`; (R-TAGS) `Metadata` optional `notes`/`encodedBy`/`albumArtist`/`composer`/`bpm` (int)/`rating` (0–5); (R-AUDIOPROPS) new `AudioProperties` type.
-- [ ] T007 Extend `src/core/library/sqlite-repository.ts`: (R-FILTER) additive `WHERE` (genre/language/recordedAt) + `ORDER BY` for the new sort keys (filename→stored name, comment→`tag_comment`, year/date→`tag_recorded_at`) over existing columns; (R-TAGS) serialize/hydrate the 6 extra fields inside the existing `tags_extra` JSON — **no new SQL column/migration**.
-- [ ] T008 Create `src/core/library/audio-properties.ts` (R-AUDIOPROPS): read codec/bitrate/sampleRate/duration via taglib `audioProperties`, computed on read.
-- [ ] T009 Update `src/core/library/library-service.ts` + `repository.ts`: forward the new query params; attach read-only `audioProperties` on returned items.
-- [ ] T010 Update `server/api/generations.get.ts`: accept/validate/forward the R-FILTER params; include read-only `audioProperties` per item.
-- [ ] T011 Update `server/api/generations/[id].patch.ts`: accept the extra editable tag fields (R-TAGS) in the retag patch (validated, optional).
+- [X] T003 [P] Core unit test (RED) in `tests/unit/library-query-extension.test.ts`: R-FILTER `genre`/`language`/`recordedFrom`/`recordedTo` filters + sort keys `filename|artist|album|recordedAt|track|genre|comment` (Year+Date→recordedAt; Filename→stored name), plus back-compat.
+- [X] T004 [P] Core unit test (RED) in `tests/unit/metadata-extra-tags.test.ts`: R-TAGS — `notes`/`encodedBy`/`albumArtist`/`composer`/`bpm`/`rating` write→read round-trip via the native ID3 frames (TENC/TPE2/TCOM/TBPM/POPM; notes→customText) mirrored in `tags_extra`; **Rating 0–5 ↔ POPM 0–255** mapping; existing rows without the keys read back empty.
+- [X] T005 [P] Core unit test (RED) in `tests/unit/audio-properties.test.ts`: R-AUDIOPROPS — reader returns codec/bitrate/sampleRate/duration for a real file; an unreadable/missing file yields an empty object (no throw).
+- [X] T006 Extend `src/core/shared/types.ts`: (R-FILTER) `LibraryQuery` optional `genre`/`language`/`recordedFrom`/`recordedTo` + sort union additions `filename|artist|album|recordedAt|track|genre|comment`; (R-TAGS) `Metadata` optional `notes`/`encodedBy`/`albumArtist`/`composer`/`bpm` (int)/`rating` (0–5); (R-AUDIOPROPS) new `AudioProperties` type.
+- [X] T007 Extend `src/core/library/sqlite-repository.ts`: (R-FILTER) additive `WHERE` (genre/language/recordedAt) + `ORDER BY` for the new sort keys (filename→stored name, comment→`tag_comment`, year/date→`tag_recorded_at`) over existing columns; (R-TAGS) serialize/hydrate the 6 extra fields inside the existing `tags_extra` JSON — **no new SQL column/migration**.
+- [X] T008 Create `src/core/library/audio-properties.ts` (R-AUDIOPROPS): read codec/bitrate/sampleRate/duration via taglib `audioProperties`, computed on read.
+- [X] T009 Update `src/core/library/library-service.ts` + `repository.ts`: forward the new query params; attach read-only `audioProperties` on returned items.
+- [X] T010 Update `server/api/generations.get.ts`: accept/validate/forward the R-FILTER params; include read-only `audioProperties` per item.
+- [X] T011 Update `server/api/generations/[id].patch.ts`: accept the extra editable tag fields (R-TAGS) in the retag patch (validated, optional).
 
 ### Composables (red-first)
 
-- [ ] T012 [P] Unit test (RED) in `tests/unit/use-library-bulk-nav.test.ts`: `removeMany`, `bulkRetag` (any editable field incl. extras; `{succeeded,failed}`), cross-page `hasPrev`/`hasNext` + adjacent-page selection.
-- [ ] T013 Extend `app/composables/useLibrary.ts`: carry new query params + `audioProperties`; add `removeMany`/`bulkRetag`; cross-page Prev/Next helpers (R-NAV).
-- [ ] T014 [P] Unit test (RED) in `tests/unit/use-view-preferences-library.test.ts`: `libraryColumns` (ordered, Filename always-on, reorder, not-all-hidden) + `inspectorFields` (14 ordered, Name always-on, not-all-hidden); SSR-safe.
-- [ ] T015 Extend `app/composables/useViewPreferences.ts`: ordered `libraryColumns` + `inspectorFields` with guards + the two `localStorage` keys.
-- [ ] T016 [P] Unit test (RED) in `tests/unit/use-tag-drafts.test.ts`: stage per id, `isDirty`, `dirtyCount`, auto-preserve across switches, `commit` clears on success, `discard`.
-- [ ] T017 Create `app/composables/useTagDrafts.ts`: in-memory per-recording dirty buffer; `commit` reuses `useLibrary.update`.
+- [X] T012 [P] Unit test (RED) in `tests/unit/use-library-bulk-nav.test.ts`: `removeMany`, `bulkRetag` (any editable field incl. extras; `{succeeded,failed}`), cross-page `hasPrev`/`hasNext` + adjacent-page selection.
+- [X] T013 Extend `app/composables/useLibrary.ts`: carry new query params + `audioProperties`; add `removeMany`/`bulkRetag`; cross-page Prev/Next helpers (R-NAV).
+- [X] T014 [P] Unit test (RED) in `tests/unit/use-view-preferences-library.test.ts`: `libraryColumns` (ordered, Filename always-on, reorder, not-all-hidden) + `inspectorFields` (14 ordered, Name always-on, not-all-hidden); SSR-safe.
+- [X] T015 Extend `app/composables/useViewPreferences.ts`: ordered `libraryColumns` + `inspectorFields` with guards + the two `localStorage` keys.
+- [X] T016 [P] Unit test (RED) in `tests/unit/use-tag-drafts.test.ts`: stage per id, `isDirty`, `dirtyCount`, auto-preserve across switches, `commit` clears on success, `discard`.
+- [X] T017 Create `app/composables/useTagDrafts.ts`: in-memory per-recording dirty buffer; `commit` reuses `useLibrary.update`.
 
 **Checkpoint**: Core + composables unit-green — stories can begin.
 

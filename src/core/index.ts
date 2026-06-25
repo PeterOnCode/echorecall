@@ -22,6 +22,9 @@ export type {
 export { DEFAULT_PAGE_SIZE } from './library/repository'
 export { SqliteGenerationRepository } from './library/sqlite-repository'
 export { FileAudioStore } from './library/audio-store'
+// 006 · R-AUDIOPROPS — read-only audio-properties reader (taglib `audioProperties`).
+export { readAudioProperties } from './library/audio-properties'
+export type { AudioPropertiesReader, TagLibLike, AudioFileLike } from './library/audio-properties'
 export { LibraryService } from './library/library-service'
 export type { SaveInput, SaveResult } from './library/library-service'
 

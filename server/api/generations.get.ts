@@ -11,7 +11,20 @@ import { toGenerationDto } from '../utils/serialize'
 // effective `page`/`pageSize` so the client can render pagination. The stored
 // file is served by GET /api/generations/[id]/audio with no provider call.
 
-const SORTS = ['createdAt', 'title', 'voice', 'format'] as const
+const SORTS = [
+  'createdAt',
+  'title',
+  'voice',
+  'format',
+  // 006 · R-FILTER — additive sort keys over already-existing columns.
+  'filename',
+  'artist',
+  'album',
+  'recordedAt',
+  'track',
+  'genre',
+  'comment',
+] as const
 const ORDERS = ['asc', 'desc'] as const
 
 /** First non-empty string value of a query param, else undefined. */
@@ -49,6 +62,11 @@ export default defineEventHandler(async (event) => {
       order: order && (ORDERS as readonly string[]).includes(order) ? (order as LibraryQuery['order']) : undefined,
       page: posInt(raw.page),
       pageSize: posInt(raw.pageSize),
+      // 006 · R-FILTER — additive, read-only filters over already-existing columns.
+      genre: str(raw.genre),
+      language: str(raw.language),
+      recordedFrom: str(raw.recordedFrom),
+      recordedTo: str(raw.recordedTo),
     }
 
     // Echo the effective paging back so the client doesn't re-derive the defaults.
@@ -57,7 +75,12 @@ export default defineEventHandler(async (event) => {
 
     const service = await getLibraryService()
     const { rows, total } = service.list({ ...query, page, pageSize })
-    return { generations: rows.map((entry) => toGenerationDto(entry)), total, page, pageSize }
+    // 006 · R-AUDIOPROPS — attach read-only audio properties per row (decoded on
+    // read; failures yield empty props and never break listing).
+    const generations = await Promise.all(
+      rows.map(async (entry) => toGenerationDto(entry, undefined, await service.audioPropertiesFor(entry))),
+    )
+    return { generations, total, page, pageSize }
   } catch (err) {
     return respondError(event, err)
   }

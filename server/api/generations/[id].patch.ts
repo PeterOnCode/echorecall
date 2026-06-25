@@ -6,6 +6,9 @@ import { toGenerationDto } from '../../utils/serialize'
 
 interface PatchBody {
   filename?: string
+  // `Metadata` now carries the 006 · R-TAGS extra editable fields (notes/encodedBy/
+  // albumArtist/composer/bpm/rating); they flow through updateMetadata → the taglib
+  // mapping + the SQLite `tags_extra` mirror unchanged (no new column/migration).
   metadata?: Metadata
 }
 

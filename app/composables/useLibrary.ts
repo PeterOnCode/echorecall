@@ -1,15 +1,17 @@
-import type { BulkCleanFilter, Generation, LibraryQuery, Metadata } from '#core/client'
+import type { AudioProperties, BulkCleanFilter, Generation, LibraryQuery, Metadata } from '#core/client'
 
 /**
  * A library entry as served by the REST API: the authoritative `path` stays
  * server-side and is surfaced as `filename` (basename) plus a replay/download
  * `audioUrl`. `skippedTags` is present after a retag when the format dropped
- * fields (FR-021).
+ * fields (FR-021). `audioProperties` (006 · R-AUDIOPROPS) is read-only, computed
+ * server-side on read for the status bar + Duration/Bitrate columns.
  */
 export interface LibraryItem extends Omit<Generation, 'path'> {
   filename: string
   audioUrl: string
   skippedTags?: string[]
+  audioProperties?: AudioProperties
 }
 
 /** Pull the stable domain error code out of an `$fetch` failure, if any. */
@@ -30,6 +32,11 @@ function toParams(query: LibraryQuery): Record<string, string | number> {
   if (query.order) params.order = query.order
   if (query.page) params.page = query.page
   if (query.pageSize) params.pageSize = query.pageSize
+  // 006 · R-FILTER — additive, read-only filters.
+  if (query.genre) params.genre = query.genre
+  if (query.language) params.language = query.language
+  if (query.recordedFrom) params.recordedFrom = query.recordedFrom
+  if (query.recordedTo) params.recordedTo = query.recordedTo
   return params
 }
 
@@ -151,5 +158,114 @@ export function useLibrary() {
     }
   }
 
-  return { items, total, loading, error, query, load, update, remove, bulkClean }
+  /**
+   * 006 · R-BULK — delete every id then reload ONCE (not per item) so `total` and
+   * pagination stay correct. The caller confirms first; the page resolves a surviving
+   * neighbour for the active selection after the reload.
+   */
+  async function removeMany(ids: string[]): Promise<void> {
+    error.value = null
+    try {
+      for (const id of ids) {
+        await $fetch(`/api/generations/${id}`, { method: 'DELETE' })
+      }
+    } catch {
+      error.value = t('library.errors.delete')
+    }
+    await load()
+  }
+
+  /**
+   * 006 · R-BULK — overwrite one editable tag field across the selection, reusing the
+   * existing per-item retag (`update`). Runs SEQUENTIALLY (keeps the single-writer
+   * behaviour + deterministic reporting), merging the field over each row's current
+   * metadata so other tags are preserved. Returns succeeded count + the ids that
+   * failed (surface them, leave the rest applied).
+   */
+  async function bulkRetag(
+    ids: string[],
+    field: keyof Metadata,
+    value: unknown,
+  ): Promise<{ succeeded: number; failed: string[] }> {
+    let succeeded = 0
+    const failed: string[] = []
+    const clearing = value === '' || value === null || value === undefined
+    for (const id of ids) {
+      const current = items.value.find((i) => i.id === id)?.metadata ?? {}
+      // Clearing omits the key; otherwise overwrite it (other tags preserved).
+      const metadata: Metadata = clearing
+        ? (Object.fromEntries(Object.entries(current).filter(([k]) => k !== field)) as Metadata)
+        : { ...current, [field]: value }
+      const result = await update(id, { metadata })
+      if (result) succeeded++
+      else failed.push(id)
+    }
+    return { succeeded, failed }
+  }
+
+  // --- 006 · R-NAV — cross-page Previous/Next over the filtered result set. Within
+  // the loaded page they move by index; at a page boundary they load the adjacent
+  // page and select its first (Next) / last (Prev) row. Disabled only at the GLOBAL
+  // first/last, derived from total + page + pageSize. ---
+  function effectivePage(): number {
+    return query.value.page && query.value.page > 0 ? query.value.page : 1
+  }
+  function effectivePageSize(): number {
+    return query.value.pageSize && query.value.pageSize > 0 ? query.value.pageSize : 20
+  }
+  function globalIndex(id: string | null): number {
+    if (!id) return -1
+    const within = items.value.findIndex((i) => i.id === id)
+    return within < 0 ? -1 : (effectivePage() - 1) * effectivePageSize() + within
+  }
+
+  /** Whether a globally-previous recording exists (false at the very first row). */
+  function hasPrev(id: string | null): boolean {
+    return globalIndex(id) > 0
+  }
+  /** Whether a globally-next recording exists (false at the very last row). */
+  function hasNext(id: string | null): boolean {
+    const g = globalIndex(id)
+    return g >= 0 && g < total.value - 1
+  }
+
+  /** Resolve the next active id, loading the next page at a boundary. */
+  async function gotoNext(id: string | null): Promise<string | null> {
+    const within = items.value.findIndex((i) => i.id === id)
+    if (within < 0) return id
+    if (within < items.value.length - 1) return items.value[within + 1]!.id
+    if (!hasNext(id)) return id
+    query.value = { ...query.value, page: effectivePage() + 1 }
+    await load()
+    return items.value[0]?.id ?? id
+  }
+
+  /** Resolve the previous active id, loading the previous page at a boundary. */
+  async function gotoPrev(id: string | null): Promise<string | null> {
+    const within = items.value.findIndex((i) => i.id === id)
+    if (within < 0) return id
+    if (within > 0) return items.value[within - 1]!.id
+    if (!hasPrev(id)) return id
+    query.value = { ...query.value, page: effectivePage() - 1 }
+    await load()
+    return items.value[items.value.length - 1]?.id ?? id
+  }
+
+  return {
+    items,
+    total,
+    loading,
+    error,
+    query,
+    load,
+    update,
+    remove,
+    bulkClean,
+    removeMany,
+    bulkRetag,
+    hasPrev,
+    hasNext,
+    gotoNext,
+    gotoPrev,
+  }
 }
