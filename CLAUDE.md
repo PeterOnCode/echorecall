@@ -1,40 +1,43 @@
 <!-- SPECKIT START -->
-Active feature: **005-dashboard-redesign** (branch `005-dashboard-redesign`).
+Active feature: **006-library-redesign** (branch `006-library-redesign`).
 
 For technologies, project structure, shell commands, and other context, read the
 current plan and its design artifacts:
 
-- Plan: `specs/005-dashboard-redesign/plan.md`
-- Spec: `specs/005-dashboard-redesign/spec.md`
-- Research: `specs/005-dashboard-redesign/research.md`
-- Data model (client entities + queue-file schema): `specs/005-dashboard-redesign/data-model.md`
-- UI contract (component APIs + `data-test` ledger): `specs/005-dashboard-redesign/contracts/ui-contracts.md`
-- Quickstart: `specs/005-dashboard-redesign/quickstart.md`
+- Plan: `specs/006-library-redesign/plan.md`
+- Spec: `specs/006-library-redesign/spec.md`
+- Research: `specs/006-library-redesign/research.md`
+- Data model (client entities + `LibraryQuery` extension + view-prefs/dirty-buffer): `specs/006-library-redesign/data-model.md`
+- UI + query contracts (component APIs + `data-test` ledger): `specs/006-library-redesign/contracts/ui-contracts.md`
+- Quickstart: `specs/006-library-redesign/quickstart.md`
 
-Prior features (running baseline): `specs/004-nuxt-ui-migration/` (presentation-only
-`@nuxt/ui` migration, released v0.3.0), `specs/003-settings-default-tags/` (in-app default
-tag values, merged #35), `specs/002-studio-enhancements/` (released v0.2.0),
-`specs/001-tts-generation-library/`.
+Prior features (running baseline): `specs/005-dashboard-redesign/` (shared resizable two-pane
+dashboard for Generate + Library, Settings modal, waveform player; released **v0.5.0**),
+`specs/004-nuxt-ui-migration/` (released v0.3.0), `specs/003-settings-default-tags/` (merged #35),
+`specs/002-studio-enhancements/` (released v0.2.0), `specs/001-tts-generation-library/`.
 
 Stack: TypeScript (strict) on Node.js (pinned 22.22.2 via mise); Nuxt 4 (Vue 3 + Nitro)
-web adapter over a framework-agnostic `src/core/`. 002 added: `@nuxt/ui` v4 (+color-mode),
-`@nuxtjs/i18n` (en/hu, Hungarian default), batch generation + multi-format audio, taglib-wasm
-tagging, server-side library search/sort/filter/pagination, an encrypted in-app OpenAI key,
-and a Bumpp version in the header. 003 moved default tag values into Settings. 004 migrated
-remaining raw HTML controls to `@nuxt/ui` v4 (+ `@internationalized/date`). **005** is a
-**presentation-layer-only** redesign: rework the **Generate** and **Library** surfaces onto a
-shared **resizable two-pane dashboard** (`UDashboardGroup`/`UDashboardPanel`/`UDashboardResizeHandle`,
-all already in `@nuxt/ui` v4.8.2) driven by a header `UDashboardToolbar`; Generate gains queue
-search/filters, a multi-select checkbox + source column, a column-visibility `UModal`, a
-recording-date `UPopover`+`UCalendar` picker (default tomorrow), and local-file **save/open queue**
-(versioned JSON, no server storage); **Generate** targets checked-else-all and **removes
-successfully generated items**; Library gets the same two-pane layout (table + audio-tags panel
-with prev/next) plus a **waveform player** (`wavesurfer.js` — the one NEW dep, zoom + loop
-regions). **Settings** moves into a `UModal` and the standalone Settings tab/page is removed.
-All new client state (queue `source`, `useQueueFile`, `useViewPreferences`) lives in `app/` —
-**no `src/core/`/`server`/schema/route changes** (FR-018). New strings localized en/hu; new
-controls keyboard/AT-accessible, all test-gated (red-first; `wavesurfer.js` mocked in tests).
-**Governance**: `wavesurfer.js` was outside the prior Technology Stack list; the constitution was
-**amended to v2.5.0** (2026-06-22) to permit a web-UI audio-visualization library (scoped to `app/`,
-display/playback only), so **US6 is unblocked**. Constitution: `.specify/memory/constitution.md` (v2.5.0).
+web adapter over a framework-agnostic `src/core/`. `@nuxt/ui` v4.8.2, `@nuxtjs/i18n` (en/hu,
+Hungarian default), taglib-wasm tagging, server-side library search/sort/filter/pagination,
+`wavesurfer.js` `^7.12.8` (constitution v2.5.0, scoped to `app/`). **006** rebuilds the **Library**
+tab as a desktop-style **waveform tag-editor**, a re-skin/extension of the 005 Library, built at a
+**parallel route** `/library-next` and swapped to the canonical `/library` once proven (old
+page/components then deleted). Reuses 005's `DashboardWorkspace` + `WaveformPlayer` (single A–B loop +
+zoom). Adds: a **filter bar** (search-all, format, recording-date, genre, language); **file-table**
+multi-select (select-all + per-row), sortable Filename/Title/Artist/Album/Year/Track/Genre,
+selected-row highlight, a **Configure Columns** `UModal` (toggle **+ reorder**, Filename always-on);
+**bulk delete + bulk tag edit** over existing `remove`/`update` (no server change); a **TagInspector**
+(header title + gear, toolbar Prev/Next/Play, fields mapped to existing storage, read-only Text/notes
++ Encoded-By, **explicit Save** with an **auto-preserved per-recording dirty buffer**), a **Configure
+Visible Fields** `UModal`, a show/hide-inspector toggle; and a **status bar** (save state, files
+loaded, selection, encoding). **Cross-page Prev/Next** (Q2). Accent = the app's existing **indigo**
+primary (NOT the Figma kit green, FR-024). New client state (`useViewPreferences` extended for
+Library columns+fields, new `useTagDrafts`) lives in `app/`. **One justified core/server touch**
+(decision **R-FILTER**, user-approved at plan time): an **additive, read-only, migration-free**
+extension of `LibraryQuery` + the SQLite repo + list route — new optional `genre`/`language`/
+`recordedAt`-range filters and sort keys over **already-existing columns** (no schema/migration), to
+power whole-library filter/sort (SC-003) and cross-page Prev/Next. No audio-tag schema/storage/
+generation change otherwise (FR-027/FR-018). New strings localized en/hu; new controls keyboard/
+AT-accessible, all test-gated (red-first; `wavesurfer.js` mocked). Constitution v2.5.0 — all five
+principles PASS, **no** new technology and **no** governance gate engaged.
 <!-- SPECKIT END -->
