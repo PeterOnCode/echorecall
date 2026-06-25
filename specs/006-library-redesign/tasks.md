@@ -98,11 +98,11 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: Each filter narrows via the extended query; clearing restores; no-match → empty state.
 
-- [ ] T030 [P] [US3] Component test (RED) `tests/component/library-filter-bar.test.ts`: search/format/genre/language emit `query` patches (reset page 1); the **single recording-date** sets `recordedFrom`/`recordedTo` to the chosen day's bounds and clears back; `__all__` sentinel clears selects.
-- [ ] T031 [P] [US3] Integration test (RED) `tests/integration/library-filter.test.ts`: each filter narrows via `LibraryQuery`; no-match → empty-result state.
-- [ ] T032 [US3] Create `app/components/library/LibraryFilterBar.vue` (supersedes `LibrarySearchBar`): search-all, format, a single recording-date (`UPopover`+`UCalendar`, one day → `recordedFrom`/`recordedTo` bounds), genre, language.
-- [ ] T033 [US3] Wire `LibraryFilterBar` into `app/pages/library-next.vue` `#list` via `v-model:query`.
-- [ ] T034 [P] [US3] i18n keys (en/hu) `filters.genre/language/allGenres/allLanguages/recordedRange`.
+- [X] T030 [P] [US3] Component test (RED) `tests/component/library-filter-bar.test.ts`: search/format/genre/language emit `query` patches (reset page 1); the **single recording-date** sets `recordedFrom`/`recordedTo` to the chosen day's bounds and clears back; `__all__` sentinel clears selects.
+- [X] T031 [P] [US3] Integration test (RED) `tests/integration/library-filter.test.ts`: each filter narrows via `LibraryQuery`; no-match → empty-result state.
+- [X] T032 [US3] Create `app/components/library/LibraryFilterBar.vue` (supersedes `LibrarySearchBar`): search-all, format, a single recording-date (`UPopover`+`UCalendar`, one day → `recordedFrom`/`recordedTo` bounds), genre, language.
+- [X] T033 [US3] Wire `LibraryFilterBar` into `app/pages/library-next.vue` `#list` via `v-model:query`.
+- [X] T034 [P] [US3] i18n keys (en/hu) `filters.genre/language/allGenres/allLanguages/recordedRange`.
 
 **Checkpoint**: US3 testable — whole-library filtering.
 

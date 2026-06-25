@@ -145,9 +145,14 @@
     "filters": {
       "voice": "Hang",
       "format": "Formátum",
+      "genre": "Műfaj",
+      "language": "Nyelv",
       "allVoices": "Minden hang",
       "allFormats": "Minden formátum",
+      "allGenres": "Minden műfaj",
+      "allLanguages": "Minden nyelv",
       "dateRange": "Dátumtartomány",
+      "recordedRange": "Felvétel dátuma",
       "anyDate": "Bármely dátum",
       "clearDates": "Törlés"
     },

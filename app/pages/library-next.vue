@@ -35,6 +35,15 @@ const activeItem = computed<LibraryItem | null>(
   () => items.value.find((i) => i.id === activeId.value) ?? null,
 )
 
+// Filter-bar select options. Derived from the loaded page (a reasonable default —
+// the chosen value still narrows the WHOLE library via the server-side query).
+const genreOptions = computed(() => [
+  ...new Set(items.value.map((i) => i.metadata?.genre).filter((g): g is string => !!g)),
+].sort())
+const languageOptions = computed(() => [
+  ...new Set(items.value.flatMap((i) => i.metadata?.languages ?? [])),
+].sort())
+
 // Global cross-page bounds (derived from total + page + pageSize by useLibrary).
 const canPrev = computed(() => hasPrev(activeId.value))
 const canNext = computed(() => hasNext(activeId.value))
@@ -56,14 +65,21 @@ async function onNext() {
 
     <DashboardWorkspace storage-key="library-next-workspace">
       <template #list>
-        <LibraryFileTable
-          v-model:query="query"
-          v-model:active-id="activeId"
-          :items="items"
-          :total="total"
-          :loading="loading"
-          @toggle-inspector="showInspector = !showInspector"
-        />
+        <div class="flex flex-col gap-4">
+          <LibraryFilterBar
+            v-model:query="query"
+            :genres="genreOptions"
+            :languages="languageOptions"
+          />
+          <LibraryFileTable
+            v-model:query="query"
+            v-model:active-id="activeId"
+            :items="items"
+            :total="total"
+            :loading="loading"
+            @toggle-inspector="showInspector = !showInspector"
+          />
+        </div>
       </template>
       <template #detail>
         <TagInspector

@@ -145,9 +145,14 @@
     "filters": {
       "voice": "Voice",
       "format": "Format",
+      "genre": "Genre",
+      "language": "Language",
       "allVoices": "All voices",
       "allFormats": "All formats",
+      "allGenres": "All genres",
+      "allLanguages": "All languages",
       "dateRange": "Date range",
+      "recordedRange": "Recording date",
       "anyDate": "Any date",
       "clearDates": "Clear"
     },
