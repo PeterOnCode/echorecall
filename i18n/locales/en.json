@@ -153,6 +153,12 @@
     },
     "columns": {
       "name": "File name",
+      "title": "Title",
+      "artist": "Artist",
+      "album": "Album",
+      "year": "Year",
+      "track": "Track",
+      "genre": "Genre",
       "voice": "Voice",
       "format": "Format",
       "created": "Created",
@@ -197,6 +203,23 @@
       "prev": "Previous recording",
       "next": "Next recording",
       "empty": "Select a recording to edit its tags."
+    },
+    "toggleInspector": "Toggle inspector",
+    "inspector": {
+      "prev": "Previous",
+      "next": "Next",
+      "empty": "Select a recording to edit its tags.",
+      "fields": {
+        "name": "Name",
+        "title": "Title",
+        "artist": "Artist",
+        "album": "Album",
+        "genre": "Genre",
+        "comment": "Comment",
+        "date": "Date",
+        "track": "Track Number",
+        "language": "Language"
+      }
     },
     "waveform": {
       "region": "Waveform player",

@@ -153,6 +153,12 @@
     },
     "columns": {
       "name": "Fájlnév",
+      "title": "Cím",
+      "artist": "Előadó",
+      "album": "Album",
+      "year": "Év",
+      "track": "Sorszám",
+      "genre": "Műfaj",
       "voice": "Hang",
       "format": "Formátum",
       "created": "Létrehozva",
@@ -197,6 +203,23 @@
       "prev": "Előző felvétel",
       "next": "Következő felvétel",
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez."
+    },
+    "toggleInspector": "Szerkesztő ki/be",
+    "inspector": {
+      "prev": "Előző",
+      "next": "Következő",
+      "empty": "Válassz egy felvételt a címkéi szerkesztéséhez.",
+      "fields": {
+        "name": "Név",
+        "title": "Cím",
+        "artist": "Előadó",
+        "album": "Album",
+        "genre": "Műfaj",
+        "comment": "Megjegyzés",
+        "date": "Dátum",
+        "track": "Sorszám",
+        "language": "Nyelv"
+      }
     },
     "waveform": {
       "region": "Hullámforma lejátszó",

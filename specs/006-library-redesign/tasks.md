@@ -64,14 +64,14 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: Row click loads tags + highlights; divider resizes (persists); Prev/Next reach every recording across pages; inspector header reads "Tag Editor (ID3v2.4)".
 
-- [ ] T018 [P] [US1] Component test (RED) `tests/component/library-next.test.ts`: renders `DashboardWorkspace` (table/inspector/footer); inspector empty state when nothing selected (FR-005); the show/hide-inspector control **collapses and restores** the inspector pane (FR-021).
-- [ ] T019 [P] [US1] Component test (RED) `tests/component/library-file-table.test.ts`: row click sets `activeId` + highlights (`aria-pressed`); Filename always shown.
-- [ ] T020 [P] [US1] Component test (RED) `tests/component/tag-inspector.test.ts`: fixed title "Tag Editor (ID3v2.4)" (FR-032), loads field values, Prev/Next emits + bounds, empty state.
-- [ ] T021 [P] [US1] Integration test (RED) `tests/integration/library-cross-page-nav.test.ts`: Next/Prev cross page boundaries; disabled at global first/last (SC-002).
-- [ ] T022 [US1] Create `app/components/library/LibraryFileTable.vue` (forks `LibraryTable`): rows, Filename + base columns, row click → `v-model:active-id`, highlight, `v-model:query`.
-- [ ] T023 [US1] Create `app/components/library/TagInspector.vue` skeleton (forks `AudioTagsPanel`): fixed title, toolbar Prev/Next, field display, empty state (editing in US5).
-- [ ] T024 [US1] Wire `app/pages/library-next.vue`: workspace `#list`/`#detail`, `activeId`, cross-page Prev/Next via `useLibrary`, split `storage-key="library-next-workspace"`.
-- [ ] T025 [P] [US1] i18n keys (en/hu) inspector title/nav/empty + base column labels in `i18n/locales/en.json` + `hu.json`.
+- [X] T018 [P] [US1] Component test (RED) `tests/component/library-next.test.ts`: renders `DashboardWorkspace` (table/inspector/footer); inspector empty state when nothing selected (FR-005); the show/hide-inspector control **collapses and restores** the inspector pane (FR-021).
+- [X] T019 [P] [US1] Component test (RED) `tests/component/library-file-table.test.ts`: row click sets `activeId` + highlights (`aria-pressed`); Filename always shown.
+- [X] T020 [P] [US1] Component test (RED) `tests/component/tag-inspector.test.ts`: fixed title "Tag Editor (ID3v2.4)" (FR-032), loads field values, Prev/Next emits + bounds, empty state.
+- [X] T021 [P] [US1] Integration test (RED) `tests/integration/library-cross-page-nav.test.ts`: Next/Prev cross page boundaries; disabled at global first/last (SC-002).
+- [X] T022 [US1] Create `app/components/library/LibraryFileTable.vue` (forks `LibraryTable`): rows, Filename + base columns, row click → `v-model:active-id`, highlight, `v-model:query`.
+- [X] T023 [US1] Create `app/components/library/TagInspector.vue` skeleton (forks `AudioTagsPanel`): fixed title, toolbar Prev/Next, field display, empty state (editing in US5).
+- [X] T024 [US1] Wire `app/pages/library-next.vue`: workspace `#list`/`#detail`, `activeId`, cross-page Prev/Next via `useLibrary`, split `storage-key="library-next-workspace"`.
+- [X] T025 [P] [US1] i18n keys (en/hu) inspector title/nav/empty + base column labels in `i18n/locales/en.json` + `hu.json`.
 
 **Checkpoint**: US1 testable — the two-pane workspace (MVP).
 
