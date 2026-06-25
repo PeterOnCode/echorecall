@@ -38,14 +38,22 @@ const rows = [
   },
 ]
 
+// Count list loads so a test can assert the page reloads after a successful save.
+let listCalls = 0
 registerEndpoint(
   '/api/generations',
   defineEventHandler((event) => {
+    listCalls++
     const q = getQuery(event)
     const page = Number(q.page ?? 1)
     const pageSize = Number(q.pageSize ?? 20)
     return { generations: rows, total: rows.length, page, pageSize }
   }),
+)
+// PATCH target for the first row's inspector Save — returns the updated item.
+registerEndpoint(
+  '/api/generations/a',
+  defineEventHandler(() => ({ ...rows[0], metadata: { ...rows[0]!.metadata } })),
 )
 
 async function mountPage() {
@@ -86,5 +94,18 @@ describe('library page (US1)', () => {
     // The control lives in the always-visible table, so it can restore the pane.
     await wrapper.find('[data-test="toggle-inspector"]').trigger('click')
     expect(wrapper.find('[data-test="tag-inspector"]').exists()).toBe(true)
+  })
+
+  it('reloads the query after a successful inspector save so filter/sort stay consistent', async () => {
+    // A committed edit can change what the active filter/sort matches; without a reload
+    // the row stays visible/misordered and total/page go stale until a later refresh.
+    const wrapper = await mountPage()
+    await wrapper.findAll('[data-test="library-row"]')[0]!.trigger('click')
+    await flushPromises()
+    listCalls = 0 // ignore the initial load
+    await wrapper.find('[data-test="field-title"]').setValue('Changed Title')
+    await wrapper.find('[data-test="inspector-save"]').trigger('click')
+    await flushPromises()
+    expect(listCalls).toBeGreaterThan(0)
   })
 })

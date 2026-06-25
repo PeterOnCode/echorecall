@@ -114,9 +114,15 @@ async function onNext() {
 
 // US5 — explicit Save commits the active recording's staged edits via useLibrary.update
 // (FR-019); a successful commit clears the dirty buffer and the patched item reseeds the
-// draft from the saved values. Play drives the footer waveform (FR-022).
+// draft from the saved values. A committed edit can change what the active filter/sort
+// matches, so reload the query afterwards — the items watcher then drops or re-resolves
+// the active selection against the refreshed page (keeping total/page accurate). Play
+// drives the footer waveform (FR-022).
 async function onSave() {
-  if (activeId.value) await drafts.commit(activeId.value)
+  if (!activeId.value) return
+  const wasDirty = drafts.isDirty(activeId.value)
+  const { ok } = await drafts.commit(activeId.value)
+  if (ok && wasDirty) await load()
 }
 function onPlay() {
   waveformRef.value?.play()

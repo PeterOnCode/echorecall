@@ -271,6 +271,23 @@ export class LibraryService {
     return this.get(id)
   }
 
+  /**
+   * Atomic combined edit (the PATCH composition): rename and/or retag in one call
+   * without a partial-success window. The filename is validated up front (an
+   * un-sluggable name rejects before any mutation), then metadata is retagged BEFORE
+   * the rename — {@link updateMetadata} tags in memory and throws before writing, so a
+   * tagging failure leaves the file, its name, and the persisted tags all untouched
+   * (vs. rename-first, which would commit the rename and then fail the retag). Returns
+   * the entry with its final filename + tag set.
+   */
+  async update(id: string, patch: { filename?: string; metadata?: Metadata }): Promise<Generation> {
+    let updated = this.get(id) // 404 if missing
+    if (patch.filename !== undefined && !slugify(patch.filename)) throw new InvalidFilenameError()
+    if (patch.metadata !== undefined) updated = await this.updateMetadata(id, patch.metadata)
+    if (patch.filename !== undefined) updated = await this.rename(id, patch.filename)
+    return updated
+  }
+
   /** Permanently delete an entry and its audio. */
   async delete(id: string): Promise<void> {
     // Resolve the path before deleting the row so we know which file to remove.

@@ -173,6 +173,49 @@ describe('PATCH /api/generations/:id — retag (FR-030)', () => {
     expect(failing.get(entry.id).metadata).toEqual({})
   })
 
+  it('a combined rename+retag whose tagging fails leaves BOTH the name and tags untouched (atomic)', async () => {
+    // The route composes rename + retag in one PATCH. If it renamed first, a tagging
+    // failure would leave the file renamed while the request errored — the partial
+    // success the explicit-save editor is meant to avoid. service.update must retag
+    // before renaming, so a tagging failure rolls back to a fully unchanged state.
+    const failing = new LibraryService(repo, audio, () => FIXED, undefined, new ThrowingTagger())
+    const entry = await failing.save(
+      { text: 'x', voiceId: 'alloy', format: 'mp3', metadata: {} },
+      Buffer.from('original'),
+    )
+    const originalPath = entry.path
+
+    const err = await failing
+      .update(entry.id, { filename: 'A Brand New Name', metadata: { title: 'Boom' } })
+      .catch((e) => e)
+    expect(mapError(err)).toEqual({ status: 502, code: 'TAGGING_FAILED' })
+
+    // Nothing moved, nothing retagged, nothing persisted.
+    expect(failing.get(entry.id).path).toBe(originalPath)
+    expect(await audio.existsAt(originalPath)).toBe(true)
+    expect((await failing.readAudio(entry.id)).toString()).toBe('original')
+    expect(failing.get(entry.id).metadata).toEqual({})
+  })
+
+  it('a combined rename+retag applies both on success', async () => {
+    const entry = await save({ title: 'Hello' }, 'hhh')
+    const updated = await service.update(entry.id, {
+      filename: 'New Name',
+      metadata: { title: 'New', artist: 'A' },
+    })
+    expect(updated.path).toBe(`audio/${DAY}/new-name.mp3`)
+    expect(updated.metadata).toMatchObject({ title: 'New', artist: 'A' })
+  })
+
+  it('a combined rename+retag with an invalid name rejects up front (nothing retagged)', async () => {
+    const entry = await save({ title: 'Keep' }, 'kkk')
+    const err = await service.update(entry.id, { filename: '   ', metadata: { title: 'Nope' } }).catch((e) => e)
+    expect(mapError(err)).toEqual({ status: 400, code: 'INVALID_FILENAME' })
+    // The invalid name is caught before any tag rewrite — metadata is unchanged.
+    expect(service.get(entry.id).metadata.title).toBe('Keep')
+    expect(service.get(entry.id).path).toBe(`audio/${DAY}/keep.mp3`)
+  })
+
   it('AAC keeps the filename editable and skips tagging (untaggable container)', async () => {
     const entry = await save({ title: 'Clip' }, 'aac-bytes', 'aac')
     tagger.calls = []
