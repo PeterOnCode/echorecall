@@ -163,12 +163,12 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T055 [P] i18n parity test `tests/unit/i18n-library-parity.test.ts`: every new `library.*` key in both `en.json` + `hu.json` (SC-008).
-- [ ] T056 [P] Accessibility/keyboard sweep across new specs: every new control keyboard-operable + ARIA-labelled (FR-026/SC-008).
-- [ ] T057 Verify the accent is the app's `indigo` primary (no `app/app.config.ts` change; never green) (FR-024).
-- [ ] T058 Run `npm run typecheck` + `npm run lint`; fix strict-TS/typecheck gotchas (auto-import components; relative-path composable types).
+- [X] T055 [P] i18n parity test `tests/unit/i18n-library-parity.test.ts`: every new `library.*` key in both `en.json` + `hu.json` (SC-008).
+- [X] T056 [P] Accessibility/keyboard sweep across new specs: every new control keyboard-operable + ARIA-labelled (FR-026/SC-008).
+- [X] T057 Verify the accent is the app's `indigo` primary (no `app/app.config.ts` change; never green) (FR-024).
+- [X] T058 Run `npm run typecheck` + `npm run lint`; fix strict-TS/typecheck gotchas (auto-import components; relative-path composable types).
 - [ ] T059 Run `npm test` + `npm run test:component` green; execute `quickstart.md` scenarios 1–12, confirming no regression vs the old `/library` (SC-007), extra-tag fields round-trip with **no SQL migration** (SC-010), and — seeding **≥200 recordings** — that search/any filter narrows in **<5s** (SC-003).
-- [ ] T060 **Cutover (FR-002)** — final, separable: repoint the Library nav in `app/layouts/default.vue`, rename `app/pages/library-next.vue` → `app/pages/library.vue` (delete the old), delete the 005-only `app/components/library/{LibraryTable,AudioTagsPanel,LibrarySearchBar}.vue` + their specs, update consuming tests, verify `/library` resolves (SC-009).
+- [X] T060 **Cutover (FR-002)** — final, separable: repoint the Library nav in `app/layouts/default.vue` (already `/library` — no-op), rename `app/pages/library-next.vue` → `app/pages/library.vue` (deleted the old), delete the 005-only `app/components/library/{LibraryTable,AudioTagsPanel,LibrarySearchBar}.vue` + their specs (incl. `LibraryItemActions.test.ts`, which mounted `LibraryTable`), update consuming tests (renamed page specs → `library{,-waveform}.test.ts`; `data-test="library"`, `storage-key="library-workspace"`), verify `/library` resolves (SC-009). Orphaned dead code left for a separate cleanup: `LibraryItemEditor.vue`, `BulkCleanDialog.vue` (+ specs), `useLibrary.bulkClean`.
 
 ---
 

@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { defineEventHandler, getQuery } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import LibraryNext from '~/pages/library-next.vue'
+import LibraryPage from '~/pages/library.vue'
 import { wavesurferState, resetWavesurferMock } from './wavesurfer-mock'
 
 // 006 · US2 (FR-007/FR-010) — the reused 005 WaveformPlayer mounted in the
-// /library-next footer for the ACTIVE recording: absent when nothing is selected,
+// /library footer for the ACTIVE recording: absent when nothing is selected,
 // loads the active item's audioUrl when a row is clicked, and passes through the
 // player's own "unavailable" state on a load error (no crash). wavesurfer.js is
 // mocked (happy-dom has no canvas/WebAudio); we assert the page WIRING, not
@@ -45,12 +45,12 @@ registerEndpoint(
 beforeEach(() => resetWavesurferMock())
 
 async function mountPage() {
-  const wrapper = await mountSuspended(LibraryNext)
+  const wrapper = await mountSuspended(LibraryPage)
   await flushPromises()
   return wrapper
 }
 
-describe('library-next waveform footer (US2)', () => {
+describe('library waveform footer (US2)', () => {
   it('shows no waveform when nothing is selected', async () => {
     const wrapper = await mountPage()
     expect(wrapper.find('[data-test="waveform-player"]').exists()).toBe(false)

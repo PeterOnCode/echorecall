@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { defineEventHandler, getQuery } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import LibraryNext from '~/pages/library-next.vue'
+import LibraryPage from '~/pages/library.vue'
 
-// 006 · US1 (FR-001/FR-005/FR-021) — the redesigned Library surface at /library-next:
+// 006 · US1 (FR-001/FR-005/FR-021) — the redesigned Library surface at the canonical /library route:
 // a resizable two-pane DashboardWorkspace (file table left, tag-editor inspector
 // right). Selecting a row loads its tags into the inspector; with nothing selected
 // the inspector shows its empty state; the show/hide-inspector control collapses and
@@ -49,12 +49,12 @@ registerEndpoint(
 )
 
 async function mountPage() {
-  const wrapper = await mountSuspended(LibraryNext)
+  const wrapper = await mountSuspended(LibraryPage)
   await flushPromises() // resolve onMounted load()
   return wrapper
 }
 
-describe('library-next page (US1)', () => {
+describe('library page (US1)', () => {
   it('renders the two-pane workspace with the file table and inspector', async () => {
     const wrapper = await mountPage()
     expect(wrapper.find('[data-test="dashboard-workspace"]').exists()).toBe(true)

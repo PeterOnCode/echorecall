@@ -57,7 +57,7 @@ export function useLibrary() {
   const error = ref<string | null>(null)
 
   // The single source of truth for search/filter/sort/page; the page binds it to
-  // LibraryTable (v-model:query) and reloads whenever it changes. The default
+  // LibraryFileTable (v-model:query) and reloads whenever it changes. The default
   // pageSize matches the server's so the first load needs no write-back.
   const query = ref<LibraryQuery>({ sort: 'createdAt', order: 'desc', page: 1, pageSize: 20 })
 
