@@ -114,15 +114,15 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: select-all/per-row; bulk delete (confirmed) clears selection; bulk tag edit (any editable field incl. extras) reports succeeded/failed; sort reorders; Configure Columns toggles/reorders the full set with Filename locked and persists.
 
-- [ ] T035 [P] [US4] Component test (RED) `tests/component/library-file-table-management.test.ts`: select-all + per-row; sort headers drive `query.sort`/`order` (Filename/Title/Artist/Album/Year/Track/Genre/Comment/Date — Composer/Duration/Bitrate unsortable); emits `toggle-inspector` from the show/hide control (FR-021).
-- [ ] T036 [P] [US4] Component test (RED) `tests/component/library-columns-dialog.test.ts`: full inventory (Title/Artist/Album/Year/Track/Genre/Comment/Date/Composer/Duration/Bitrate) toggle + reorder, Filename always-on, not-all-hidden, Reset/Cancel/Apply, persistence (FR-017/FR-031).
-- [ ] T037 [P] [US4] Component test (RED) `tests/component/bulk-tag-edit-dialog.test.ts`: field select (any editable tag field incl. extras; filename excluded) + value → `apply`; result summary (FR-016).
-- [ ] T038 [P] [US4] Integration test (RED) `tests/integration/library-bulk.test.ts`: bulk delete → `removeMany` → reload + clear; bulk tag edit → `bulkRetag` succeeded/failed.
-- [ ] T039 [US4] Extend `app/components/library/LibraryFileTable.vue`: checkbox column (header select-all + per-row, `v-model:selected-ids`), sortable headers, Configure-Columns gear + show/hide-inspector control, bulk emits, render the extra columns (Comment/Date/Composer + display-only Duration/Bitrate from `audioProperties`).
-- [ ] T040 [US4] Create `app/components/library/LibraryColumnsDialog.vue` (`UModal`): full inventory toggle + drag-reorder + Reset/Cancel/Apply; consumes `useViewPreferences.libraryColumns`.
-- [ ] T041 [US4] Create `app/components/library/BulkTagEditDialog.vue` (`UModal`): one editable tag field (incl. extras; filename excluded) + value → `apply`.
-- [ ] T042 [US4] Wire in `app/pages/library-next.vue`: bulk delete (`removeMany` + `ConfirmDialog`), bulk tag edit (`bulkRetag`), columns dialog, show/hide inspector.
-- [ ] T043 [P] [US4] i18n keys (en/hu) `columns.{year,track,artist,album,genre,comment,date,composer,duration,bitrate}`, `columnsDialog.*` (incl. reset/cancel/apply), `bulkTagEdit.*`, `toggleInspector`.
+- [X] T035 [P] [US4] Component test (RED) `tests/component/library-file-table-management.test.ts`: select-all + per-row; sort headers drive `query.sort`/`order` (Filename/Title/Artist/Album/Year/Track/Genre/Comment/Date — Composer/Duration/Bitrate unsortable); emits `toggle-inspector` from the show/hide control (FR-021).
+- [X] T036 [P] [US4] Component test (RED) `tests/component/library-columns-dialog.test.ts`: full inventory (Title/Artist/Album/Year/Track/Genre/Comment/Date/Composer/Duration/Bitrate) toggle + reorder, Filename always-on, not-all-hidden, Reset/Cancel/Apply, persistence (FR-017/FR-031).
+- [X] T037 [P] [US4] Component test (RED) `tests/component/bulk-tag-edit-dialog.test.ts`: field select (any editable tag field incl. extras; filename excluded) + value → `apply`; result summary (FR-016).
+- [X] T038 [P] [US4] Integration test (RED) `tests/integration/library-bulk.test.ts`: bulk delete → `removeMany` → reload + clear; bulk tag edit → `bulkRetag` succeeded/failed.
+- [X] T039 [US4] Extend `app/components/library/LibraryFileTable.vue`: checkbox column (header select-all + per-row, `v-model:selected-ids`), sortable headers, Configure-Columns gear + show/hide-inspector control, bulk emits, render the extra columns (Comment/Date/Composer + display-only Duration/Bitrate from `audioProperties`).
+- [X] T040 [US4] Create `app/components/library/LibraryColumnsDialog.vue` (`UModal`): full inventory toggle + drag-reorder + Reset/Cancel/Apply; consumes `useViewPreferences.libraryColumns`.
+- [X] T041 [US4] Create `app/components/library/BulkTagEditDialog.vue` (`UModal`): one editable tag field (incl. extras; filename excluded) + value → `apply`.
+- [X] T042 [US4] Wire in `app/pages/library-next.vue`: bulk delete (`removeMany` + `ConfirmDialog`), bulk tag edit (`bulkRetag`), columns dialog, show/hide inspector.
+- [X] T043 [P] [US4] i18n keys (en/hu) `columns.{year,track,artist,album,genre,comment,date,composer,duration,bitrate}`, `columnsDialog.*` (incl. reset/cancel/apply), `bulkTagEdit.*`, `toggleInspector`.
 
 **Checkpoint**: US4 testable — full table management + bulk ops.
 

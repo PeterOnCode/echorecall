@@ -164,6 +164,11 @@
       "year": "Year",
       "track": "Track",
       "genre": "Genre",
+      "comment": "Comment",
+      "date": "Date",
+      "composer": "Composer",
+      "duration": "Duration",
+      "bitrate": "Bitrate",
       "voice": "Voice",
       "format": "Format",
       "created": "Created",
@@ -210,6 +215,32 @@
       "empty": "Select a recording to edit its tags."
     },
     "toggleInspector": "Toggle inspector",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "columnsDialog": {
+      "title": "Configure columns",
+      "open": "Configure columns",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset to defaults",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
+    "bulkActions": {
+      "delete": "Delete",
+      "edit": "Edit tags…",
+      "confirmTitle": "Delete selected recordings?",
+      "confirmMessage": "This permanently removes {count} recording(s) and their audio. This can’t be undone."
+    },
+    "bulkTagEdit": {
+      "title": "Bulk tag edit",
+      "count": "Apply to {count} selected recording(s).",
+      "field": "Field",
+      "value": "Value",
+      "result": "{succeeded} updated, {failed} failed.",
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
     "inspector": {
       "prev": "Previous",
       "next": "Next",
@@ -223,7 +254,11 @@
         "comment": "Comment",
         "date": "Date",
         "track": "Track Number",
-        "language": "Language"
+        "language": "Language",
+        "albumArtist": "Album Artist",
+        "composer": "Composer",
+        "encodedBy": "Encoded By",
+        "notes": "Text"
       }
     },
     "waveform": {

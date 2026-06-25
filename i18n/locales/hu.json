@@ -164,6 +164,11 @@
       "year": "Év",
       "track": "Sorszám",
       "genre": "Műfaj",
+      "comment": "Megjegyzés",
+      "date": "Dátum",
+      "composer": "Zeneszerző",
+      "duration": "Hossz",
+      "bitrate": "Bitráta",
       "voice": "Hang",
       "format": "Formátum",
       "created": "Létrehozva",
@@ -210,6 +215,32 @@
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez."
     },
     "toggleInspector": "Szerkesztő ki/be",
+    "selectAll": "Összes kijelölése",
+    "selectRow": "Sor kijelölése",
+    "columnsDialog": {
+      "title": "Oszlopok beállítása",
+      "open": "Oszlopok beállítása",
+      "moveUp": "Mozgatás felfelé",
+      "moveDown": "Mozgatás lefelé",
+      "reset": "Alapértelmezés visszaállítása",
+      "cancel": "Mégse",
+      "apply": "Alkalmaz"
+    },
+    "bulkActions": {
+      "delete": "Törlés",
+      "edit": "Címkék szerkesztése…",
+      "confirmTitle": "Törlöd a kijelölt felvételeket?",
+      "confirmMessage": "Ez véglegesen eltávolít {count} felvételt és a hangjukat. Ez nem vonható vissza."
+    },
+    "bulkTagEdit": {
+      "title": "Tömeges címkeszerkesztés",
+      "count": "Alkalmazás {count} kijelölt felvételre.",
+      "field": "Mező",
+      "value": "Érték",
+      "result": "{succeeded} frissítve, {failed} sikertelen.",
+      "apply": "Alkalmaz",
+      "cancel": "Mégse"
+    },
     "inspector": {
       "prev": "Előző",
       "next": "Következő",
@@ -223,7 +254,11 @@
         "comment": "Megjegyzés",
         "date": "Dátum",
         "track": "Sorszám",
-        "language": "Nyelv"
+        "language": "Nyelv",
+        "albumArtist": "Album előadó",
+        "composer": "Zeneszerző",
+        "encodedBy": "Kódoló",
+        "notes": "Szöveg"
       }
     },
     "waveform": {

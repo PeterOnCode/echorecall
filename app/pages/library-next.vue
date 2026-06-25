@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { Metadata } from '#core/client'
 import type { LibraryItem } from '../composables/useLibrary'
 
 // 006 · US1 (FR-001/FR-005/FR-006/FR-021) — the redesigned Library surface at the
@@ -9,13 +10,23 @@ import type { LibraryItem } from '../composables/useLibrary'
 // traverse the filtered set ACROSS pages (R-NAV); a show/hide control collapses the
 // inspector. The filter bar (US3), waveform footer (US2), bulk + Configure Columns
 // (US4), inspector editing (US5), and status bar (US6) layer on next.
-const { items, total, loading, error, query, load, hasPrev, hasNext, gotoPrev, gotoNext } = useLibrary()
+const { items, total, loading, error, query, load, hasPrev, hasNext, gotoPrev, gotoNext, removeMany, bulkRetag } =
+  useLibrary()
+const { libraryColumns, setLibraryColumns } = useViewPreferences()
 const { t } = useI18n()
 
 // The active recording shown in the inspector; null → the inspector's empty state.
 const activeId = ref<string | null>(null)
 // FR-021 — show/hide the inspector pane (the control lives in the always-visible table).
 const showInspector = ref(true)
+
+// US4 — multi-select + bulk ops + Configure Columns state.
+const selectedIds = ref<Set<string>>(new Set())
+const columnsOpen = ref(false)
+const bulkOpen = ref(false)
+const confirmDeleteOpen = ref(false)
+const bulkResult = ref<{ succeeded: number; failed: string[] } | null>(null)
+const bulkApplying = ref(false)
 
 onMounted(load)
 // Any filter / sort / page change replaces the query object → reload. Cross-page
@@ -54,6 +65,25 @@ async function onPrev() {
 async function onNext() {
   activeId.value = await gotoNext(activeId.value)
 }
+
+// --- US4 bulk actions + Configure Columns -------------------------------------
+function onBulkDelete() {
+  confirmDeleteOpen.value = true
+}
+async function confirmBulkDelete() {
+  confirmDeleteOpen.value = false
+  await removeMany([...selectedIds.value])
+  selectedIds.value = new Set()
+}
+function onOpenBulkTagEdit() {
+  bulkResult.value = null
+  bulkOpen.value = true
+}
+async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
+  bulkApplying.value = true
+  bulkResult.value = await bulkRetag([...selectedIds.value], payload.field, payload.value)
+  bulkApplying.value = false
+}
 </script>
 
 <template>
@@ -74,10 +104,15 @@ async function onNext() {
           <LibraryFileTable
             v-model:query="query"
             v-model:active-id="activeId"
+            v-model:selected-ids="selectedIds"
             :items="items"
             :total="total"
             :loading="loading"
+            :columns="libraryColumns"
             @toggle-inspector="showInspector = !showInspector"
+            @open-columns-dialog="columnsOpen = true"
+            @bulk-delete="onBulkDelete"
+            @open-bulk-tag-edit="onOpenBulkTagEdit"
           />
         </div>
       </template>
@@ -101,5 +136,29 @@ async function onNext() {
         />
       </template>
     </DashboardWorkspace>
+
+    <!-- US4 — Configure Columns + bulk tag edit modals + bulk-delete confirmation. -->
+    <LibraryColumnsDialog
+      v-model:open="columnsOpen"
+      :columns="libraryColumns"
+      @apply="setLibraryColumns"
+    />
+    <BulkTagEditDialog
+      :open="bulkOpen"
+      :count="selectedIds.size"
+      :result="bulkResult"
+      :applying="bulkApplying"
+      @apply="onBulkApply"
+      @close="bulkOpen = false"
+    />
+    <ConfirmDialog
+      :open="confirmDeleteOpen"
+      :title="t('library.bulkActions.confirmTitle')"
+      :message="t('library.bulkActions.confirmMessage', { count: selectedIds.size })"
+      :confirm-label="t('library.bulkActions.delete')"
+      :cancel-label="t('library.editor.cancel')"
+      @confirm="confirmBulkDelete"
+      @cancel="confirmDeleteOpen = false"
+    />
   </section>
 </template>
