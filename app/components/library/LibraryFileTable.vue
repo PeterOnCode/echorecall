@@ -97,8 +97,11 @@ function year(item: LibraryItem): string {
 }
 function fmtDuration(seconds?: number): string {
   if (!seconds || seconds <= 0) return ''
-  const m = Math.floor(seconds / 60)
-  const s = Math.round(seconds % 60)
+  // Round the TOTAL seconds first, then split — rounding the remainder independently
+  // can roll the seconds to 60 (e.g. 59.6 → 0:60 instead of 1:00).
+  const total = Math.round(seconds)
+  const m = Math.floor(total / 60)
+  const s = total % 60
   return `${m}:${String(s).padStart(2, '0')}`
 }
 function fmtBitrate(bitrate?: number): string {

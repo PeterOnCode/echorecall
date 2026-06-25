@@ -110,4 +110,13 @@ describe('LibraryFileTable management (US4)', () => {
     await some.find('[data-test="open-bulk-tag-edit"]').trigger('click')
     expect(some.emitted('open-bulk-tag-edit')).toBeTruthy()
   })
+
+  it('formats a duration that rounds up to a whole minute as M:SS, not 0:60', async () => {
+    // 59.6s must render 1:00 — round the TOTAL seconds before splitting minutes/seconds.
+    const wrapper = await mountTable({
+      items: [item({ id: 'a', audioProperties: { duration: 59.6 } })],
+    })
+    expect(wrapper.text()).toContain('1:00')
+    expect(wrapper.text()).not.toContain('0:60')
+  })
 })

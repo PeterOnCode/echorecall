@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -44,6 +44,22 @@ describe('LibraryService', () => {
     const texts = service.list().rows.map((g) => g.text)
     expect(texts[0]).toBe('two')
     expect(texts).toContain('one')
+  })
+
+  it('caches audio properties per id so the file is decoded only once (R-AUDIOPROPS)', async () => {
+    // The list route calls audioPropertiesFor for every row on every request; decoding
+    // the file via WASM each time is heavy. Audio content is immutable per id, so the
+    // result is memoized and the decoder runs once.
+    const decode = vi.fn(async () => ({ codec: 'MP3', bitrate: 320, sampleRate: 44100, duration: 5 }))
+    const svc = new LibraryService(repo, audio, undefined, undefined, undefined, decode)
+    const entry = await svc.save({ text: 'x', voiceId: 'alloy' }, Buffer.from('fake-mp3'))
+
+    const first = await svc.audioPropertiesFor(entry)
+    const second = await svc.audioPropertiesFor(entry)
+
+    expect(first).toMatchObject({ codec: 'MP3', bitrate: 320, sampleRate: 44100 })
+    expect(second).toEqual(first)
+    expect(decode).toHaveBeenCalledTimes(1)
   })
 
   it('readAudio throws NotFound for unknown id', async () => {

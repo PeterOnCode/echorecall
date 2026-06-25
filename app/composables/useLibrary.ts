@@ -181,6 +181,12 @@ export function useLibrary() {
    * behaviour + deterministic reporting), merging the field over each row's current
    * metadata so other tags are preserved. Returns succeeded count + the ids that
    * failed (surface them, leave the rest applied).
+   *
+   * The retag is a WHOLESALE metadata replace, so it must carry the row's CURRENT
+   * tags. `selectedIds` persists across pages, so a selected row may not be on the
+   * loaded page — its current tags are then fetched by id. If they can't be read, the
+   * row is reported failed and skipped rather than overwritten with a partial set
+   * (which would silently wipe its other tags — a real data-loss bug).
    */
   async function bulkRetag(
     ids: string[],
@@ -191,7 +197,18 @@ export function useLibrary() {
     const failed: string[] = []
     const clearing = value === '' || value === null || value === undefined
     for (const id of ids) {
-      const current = items.value.find((i) => i.id === id)?.metadata ?? {}
+      const loaded = items.value.find((i) => i.id === id)
+      let current: Metadata
+      if (loaded) {
+        current = loaded.metadata ?? {}
+      } else {
+        try {
+          current = (await $fetch<LibraryItem>(`/api/generations/${id}`)).metadata ?? {}
+        } catch {
+          failed.push(id)
+          continue
+        }
+      }
       // Clearing omits the key; otherwise overwrite it (other tags preserved).
       const metadata: Metadata = clearing
         ? (Object.fromEntries(Object.entries(current).filter(([k]) => k !== field)) as Metadata)

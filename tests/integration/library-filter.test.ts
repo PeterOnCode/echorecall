@@ -49,10 +49,13 @@ describe('library filter pipeline (US3)', () => {
     expect(service.list({ language: 'eng' }).rows.map((r) => r.id).sort()).toEqual(['a', 'b'])
   })
 
-  it('narrows by a recording-date day range (the bounds the filter bar emits)', () => {
-    const from = new Date(2025, 5, 20, 0, 0, 0, 0).toISOString()
-    const to = new Date(2025, 5, 20, 23, 59, 59, 999).toISOString()
-    expect(service.list({ recordedFrom: from, recordedTo: to }).rows.map((r) => r.id)).toEqual(['b'])
+  it('narrows by a single recording-date day (the date-only bounds the filter bar emits)', () => {
+    // Row 'b' is tagged exactly '2025-06-20'. The filter bar emits timezone-naive
+    // date-only bounds, so selecting that day matches the day's own rows regardless of
+    // the runner's timezone — a UTC `…T00:00:00.000Z` lower bound would sort after the
+    // plain '2025-06-20' string and drop it.
+    const r = service.list({ recordedFrom: '2025-06-20', recordedTo: '2025-06-20' })
+    expect(r.rows.map((x) => x.id)).toEqual(['b'])
   })
 
   it('narrows by free-text search', () => {

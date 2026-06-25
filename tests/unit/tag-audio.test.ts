@@ -84,6 +84,33 @@ describe('tagAudio', () => {
     expect(res.skipped).toEqual([])
   })
 
+  it('opens the tagger when the only metadata is a new R-TAGS extra field', async () => {
+    // The 006 extras (encodedBy/albumArtist/composer/bpm/notes) map to native frames;
+    // if one of them is a recording's ONLY metadata the gate must still write the file,
+    // otherwise the field is reported saved (SQLite) yet never embedded in the audio.
+    for (const metadata of [
+      { encodedBy: 'kid3' },
+      { albumArtist: 'The Band' },
+      { composer: 'J.S. Bach' },
+      { bpm: 120 },
+      { notes: 'session note' },
+    ] as Metadata[]) {
+      const tagger = new FakeTagger()
+      const res = await tagAudio(tagger, 'mp3', Buffer.from('audio'), metadata)
+      expect(tagger.calls, JSON.stringify(metadata)).toHaveLength(1)
+      expect(res.bytes.toString()).toBe('TAGGED:audio')
+    }
+  })
+
+  it('rating alone stays SQLite-only (POPM) and does not open the tagger', async () => {
+    // rating is deliberately persisted only in the tags_extra mirror — never written to
+    // the audio file — so it is NOT an embeddable field.
+    const tagger = new FakeTagger()
+    const res = await tagAudio(tagger, 'mp3', Buffer.from('audio'), { rating: 5 } as Metadata)
+    expect(tagger.calls).toHaveLength(0)
+    expect(res.bytes.toString()).toBe('audio')
+  })
+
   it('a taggable format whose only present field is unsupported skips the tagger but still notices it', async () => {
     // customUrl can't be embedded on Vorbis, so there is nothing to write — the
     // tagger stays closed, yet the skip notice is still reported.

@@ -32,6 +32,7 @@ function mk(id: string, over: Partial<LibraryItem> = {}): LibraryItem {
 
 let store: LibraryItem[] = []
 let failPatchFor: string | null = null
+let failGetFor: string | null = null
 
 /** A paged in-memory backend for $fetch (GET list / PATCH retag / DELETE). */
 function installFetch() {
@@ -55,12 +56,20 @@ function installFetch() {
       store[idx] = updated
       return updated
     }
+    // GET /api/generations/:id — a single recording (used by bulkRetag to read the
+    // current tags of an off-page selection so a wholesale retag preserves them).
+    if (method === 'GET') {
+      if (failGetFor === id) throw new Error('not found')
+      const item = store.find((x) => x.id === id)
+      return item ? { ...item, metadata: { ...item.metadata } } : {}
+    }
     return {}
   })
 }
 
 beforeEach(() => {
   failPatchFor = null
+  failGetFor = null
   installFetch()
 })
 afterEach(() => {
@@ -108,6 +117,42 @@ describe('useLibrary.bulkRetag (R-BULK)', () => {
     expect(res.succeeded).toBe(1)
     expect(res.failed).toEqual(['b'])
     expect(store.find((x) => x.id === 'a')!.metadata.genre).toBe('Speech')
+  })
+
+  // Regression: selectedIds persists across pages, so a bulk edit can include rows
+  // that are NOT on the loaded page. `items.value.find` misses those, and a wholesale
+  // retag with only the edited field would wipe their other tags (data loss).
+  it('preserves the other tags of rows that are not on the loaded page', async () => {
+    store = [
+      mk('a', { metadata: { title: 'A', artist: 'X' } }),
+      mk('b', { metadata: { title: 'B', artist: 'Y' } }),
+      mk('c', { metadata: { title: 'C', artist: 'Z' } }),
+    ]
+    const lib = useLibrary()
+    lib.query.value = { ...lib.query.value, page: 1, pageSize: 2 }
+    await lib.load() // loads 'a','b' — 'c' lives on page 2
+    const res = await lib.bulkRetag(['a', 'c'], 'genre', 'Speech')
+    expect(res).toEqual({ succeeded: 2, failed: [] })
+    // Off-page 'c' keeps title/artist and gains genre (NOT collapsed to { genre }).
+    expect(store.find((x) => x.id === 'c')!.metadata).toEqual({ title: 'C', artist: 'Z', genre: 'Speech' })
+    expect(store.find((x) => x.id === 'a')!.metadata).toEqual({ title: 'A', artist: 'X', genre: 'Speech' })
+  })
+
+  it('reports an off-page id as failed (never wipes) when its current tags cannot be read', async () => {
+    store = [
+      mk('a', { metadata: { title: 'A' } }),
+      mk('b'),
+      mk('c', { metadata: { title: 'C', artist: 'Z' } }),
+    ]
+    failGetFor = 'c'
+    const lib = useLibrary()
+    lib.query.value = { ...lib.query.value, page: 1, pageSize: 2 }
+    await lib.load()
+    const res = await lib.bulkRetag(['a', 'c'], 'genre', 'Speech')
+    expect(res.succeeded).toBe(1)
+    expect(res.failed).toEqual(['c'])
+    // 'c' is left untouched — a fetch failure must not overwrite its tags.
+    expect(store.find((x) => x.id === 'c')!.metadata).toEqual({ title: 'C', artist: 'Z' })
   })
 })
 

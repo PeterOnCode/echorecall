@@ -55,28 +55,29 @@ const language = computed<string>({
   set: (value) => patch({ language: value === ALL ? undefined : value }),
 })
 
-// Single recording-date → that day's inclusive local-day bounds (start at midnight,
-// end at 23:59:59.999), emitted as UTC instants so filtering lines up with the
-// calendar day the user sees. Targets recordedAt (the tag), not createdAt.
-function isoToCalendarDate(iso?: string): CalendarDate | undefined {
-  if (!iso) return undefined
-  const d = new Date(iso)
-  return new CalendarDate(d.getFullYear(), d.getMonth() + 1, d.getDate())
+// Recording-date filtering is timezone-NAIVE end to end: the tag stores a plain
+// `YYYY-MM-DD` (no zone), the repository compares it as a string, and selecting a day
+// must match that day's own rows in EVERY timezone. So the single-day filter parses
+// and emits date-only `YYYY-MM-DD` bounds — a `new Date(iso)` round-trip through UTC
+// would shift the day for negative-offset users and make a `…T00:00:00.000Z` lower
+// bound sort AFTER the plain date string, dropping the day entirely. Targets
+// recordedAt (the tag the user sets), not createdAt.
+function calendarToDateOnly(d: CalendarDate): string {
+  return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
 }
-function startIso(d: CalendarDate): string {
-  return new Date(d.year, d.month - 1, d.day, 0, 0, 0, 0).toISOString()
-}
-function endIso(d: CalendarDate): string {
-  return new Date(d.year, d.month - 1, d.day, 23, 59, 59, 999).toISOString()
+function dateOnlyToCalendar(value?: string): CalendarDate | undefined {
+  if (!value) return undefined
+  const [y, m, d] = value.slice(0, 10).split('-').map(Number)
+  if (y && m && d) return new CalendarDate(y, m, d)
+  return undefined
 }
 
 const recordedDate = computed<CalendarDate | undefined>({
-  get: () => isoToCalendarDate(query.value.recordedFrom),
-  set: (value) =>
-    patch({
-      recordedFrom: value ? startIso(value) : undefined,
-      recordedTo: value ? endIso(value) : undefined,
-    }),
+  get: () => dateOnlyToCalendar(query.value.recordedFrom),
+  set: (value) => {
+    const day = value ? calendarToDateOnly(value) : undefined
+    patch({ recordedFrom: day, recordedTo: day })
+  },
 })
 
 function clearRecordedDate() {
@@ -84,9 +85,10 @@ function clearRecordedDate() {
 }
 
 const recordedLabel = computed(() => {
-  const iso = query.value.recordedFrom
-  if (!iso) return t('library.filters.recordedRange')
-  return new Date(iso).toLocaleDateString(locale.value)
+  const cd = dateOnlyToCalendar(query.value.recordedFrom)
+  if (!cd) return t('library.filters.recordedRange')
+  // Format from the naive Y/M/D via a LOCAL Date (no UTC parse → no day shift).
+  return new Date(cd.year, cd.month - 1, cd.day).toLocaleDateString(locale.value)
 })
 </script>
 

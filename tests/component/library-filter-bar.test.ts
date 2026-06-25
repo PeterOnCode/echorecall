@@ -70,22 +70,22 @@ describe('LibraryFilterBar (US3)', () => {
     expect(lastQuery(w)).toMatchObject({ language: 'eng', page: 1 })
   })
 
-  it('the single recording-date maps to that day’s recordedFrom/recordedTo bounds', async () => {
+  it('the single recording-date maps to that day’s date-only recordedFrom/recordedTo bounds', async () => {
     const w = await mountBar({ page: 3 })
     const cal = await openDate(w)
     cal.vm.$emit('update:modelValue', new CalendarDate(2026, 6, 1))
     await flushPromises()
     const q = lastQuery(w)
-    expect(new Date(q.recordedFrom!).getTime()).toBe(new Date(2026, 5, 1, 0, 0, 0, 0).getTime())
-    expect(new Date(q.recordedTo!).getTime()).toBe(new Date(2026, 5, 1, 23, 59, 59, 999).getTime())
+    // Timezone-naive YYYY-MM-DD bounds (NOT UTC instants) so the day's own tag dates
+    // are matched in every timezone — a `…T00:00:00.000Z` lower bound sorts after the
+    // plain `2026-06-01` string and would drop that day's rows (negative offsets).
+    expect(q.recordedFrom).toBe('2026-06-01')
+    expect(q.recordedTo).toBe('2026-06-01')
     expect(q.page).toBe(1)
   })
 
   it('clearing the recording-date resets both bounds', async () => {
-    const w = await mountBar({
-      recordedFrom: new Date(2026, 5, 1, 0, 0, 0, 0).toISOString(),
-      recordedTo: new Date(2026, 5, 1, 23, 59, 59, 999).toISOString(),
-    })
+    const w = await mountBar({ recordedFrom: '2026-06-01', recordedTo: '2026-06-01' })
     await openDate(w)
     const clearBtn = w
       .findAllComponents({ name: 'UButton' })

@@ -59,6 +59,15 @@ export class LibraryService {
   ) {}
 
   /**
+   * Memoized audio properties keyed by generation id. A recording's audio STREAM is
+   * immutable (retagging rewrites only metadata frames), so a decoded result stays
+   * valid for the life of the process — sparing a disk read + WASM decode for every
+   * row of every list request (R-AUDIOPROPS). Only successful reads are cached, so a
+   * temporarily missing/unreadable file is retried on a later request.
+   */
+  private readonly audioPropsCache = new Map<string, AudioProperties>()
+
+  /**
    * 006 · R-AUDIOPROPS — read-only audio properties for a row, computed on read
    * from its stored file. Returns an empty object when no reader is configured or
    * the file is missing/unreadable (never throws — a single bad file must not break
@@ -66,9 +75,13 @@ export class LibraryService {
    */
   async audioPropertiesFor(generation: Generation): Promise<AudioProperties> {
     if (!this.audioProps) return {}
+    const cached = this.audioPropsCache.get(generation.id)
+    if (cached) return cached
     try {
       if (!(await this.audio.existsAt(generation.path))) return {}
-      return await this.audioProps(await this.audio.readAt(generation.path))
+      const props = await this.audioProps(await this.audio.readAt(generation.path))
+      this.audioPropsCache.set(generation.id, props)
+      return props
     } catch {
       return {}
     }
