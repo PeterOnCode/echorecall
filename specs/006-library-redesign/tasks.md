@@ -83,10 +83,10 @@ description: "Task list for Library Tab Redesign (Waveform Tag-Editor)"
 
 **Independent Test**: Waveform renders/plays; zoom scales; Add loop section marks one A–B region; repeat loops only that range; broken audio → unavailable.
 
-- [ ] T026 [P] [US2] Component test (RED) `tests/component/library-next-waveform.test.ts` (wavesurfer mocked): footer renders `WaveformPlayer` for the active item, absent when none, unavailable passthrough (FR-007/FR-010).
-- [ ] T027 [US2] Wire the reused `WaveformPlayer` into `app/pages/library-next.vue` `#footer` (`:src`/`:label`).
-- [ ] T028 [US2] Surface waveform i18n labels (Play/Add loop section/Repeat section/Zoom) in `app/components/library/WaveformPlayer.vue`, behavior unchanged.
-- [ ] T029 [P] [US2] i18n waveform keys (en/hu).
+- [X] T026 [P] [US2] Component test (RED) `tests/component/library-next-waveform.test.ts` (wavesurfer mocked): footer renders `WaveformPlayer` for the active item, absent when none, unavailable passthrough (FR-007/FR-010).
+- [X] T027 [US2] Wire the reused `WaveformPlayer` into `app/pages/library-next.vue` `#footer` (`:src`/`:label`).
+- [X] T028 [US2] Surface waveform i18n labels (Play/Add loop section/Repeat section/Zoom) in `app/components/library/WaveformPlayer.vue`, behavior unchanged.
+- [X] T029 [P] [US2] i18n waveform keys (en/hu).
 
 **Checkpoint**: US1 + US2 — review a recording on the waveform.
 

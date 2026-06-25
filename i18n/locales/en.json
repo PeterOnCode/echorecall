@@ -226,8 +226,8 @@
       "play": "Play",
       "pause": "Pause",
       "zoom": "Zoom",
-      "addRegion": "Add loop region",
-      "loop": "Loop region",
+      "addRegion": "Add loop section",
+      "loop": "Repeat section",
       "unavailable": "Audio unavailable for this recording."
     }
   },

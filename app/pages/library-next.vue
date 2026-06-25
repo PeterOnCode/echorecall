@@ -75,6 +75,15 @@ async function onNext() {
           @next="onNext"
         />
       </template>
+      <template #footer>
+        <!-- US2 / FR-007–010: the reused 005 waveform review player (single A–B loop
+             + zoom) for the active recording; absent until a row is selected. -->
+        <WaveformPlayer
+          v-if="activeItem"
+          :src="activeItem.audioUrl"
+          :label="activeItem.filename"
+        />
+      </template>
     </DashboardWorkspace>
   </section>
 </template>
