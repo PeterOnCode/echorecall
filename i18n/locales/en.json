@@ -145,14 +145,30 @@
     "filters": {
       "voice": "Voice",
       "format": "Format",
+      "genre": "Genre",
+      "language": "Language",
       "allVoices": "All voices",
       "allFormats": "All formats",
+      "allGenres": "All genres",
+      "allLanguages": "All languages",
       "dateRange": "Date range",
+      "recordedRange": "Recording date",
       "anyDate": "Any date",
       "clearDates": "Clear"
     },
     "columns": {
       "name": "File name",
+      "title": "Title",
+      "artist": "Artist",
+      "album": "Album",
+      "year": "Year",
+      "track": "Track",
+      "genre": "Genre",
+      "comment": "Comment",
+      "date": "Date",
+      "composer": "Composer",
+      "duration": "Duration",
+      "bitrate": "Bitrate",
       "voice": "Voice",
       "format": "Format",
       "created": "Created",
@@ -198,14 +214,83 @@
       "next": "Next recording",
       "empty": "Select a recording to edit its tags."
     },
+    "toggleInspector": "Toggle inspector",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "columnsDialog": {
+      "title": "Configure columns",
+      "open": "Configure columns",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset to defaults",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
+    "bulkActions": {
+      "delete": "Delete",
+      "edit": "Edit tags…",
+      "confirmTitle": "Delete selected recordings?",
+      "confirmMessage": "This permanently removes {count} recording(s) and their audio. This can’t be undone."
+    },
+    "bulkTagEdit": {
+      "title": "Bulk tag edit",
+      "count": "Apply to {count} selected recording(s).",
+      "field": "Field",
+      "value": "Value",
+      "result": "{succeeded} updated, {failed} failed.",
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
+    "inspector": {
+      "prev": "Previous",
+      "next": "Next",
+      "play": "Play Audio",
+      "save": "Save",
+      "configureFields": "Configure visible fields",
+      "dirty": "Unsaved changes",
+      "empty": "Select a recording to edit its tags.",
+      "fields": {
+        "name": "Name",
+        "title": "Title",
+        "artist": "Artist",
+        "album": "Album",
+        "genre": "Genre",
+        "comment": "Comment",
+        "date": "Date",
+        "track": "Track Number",
+        "language": "Language",
+        "albumArtist": "Album Artist",
+        "composer": "Composer",
+        "encodedBy": "Encoded By",
+        "notes": "Text",
+        "bpm": "BPM",
+        "rating": "Rating"
+      }
+    },
+    "inspectorFields": {
+      "title": "Configure visible fields",
+      "open": "Configure visible fields",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset to defaults",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
     "waveform": {
       "region": "Waveform player",
       "play": "Play",
       "pause": "Pause",
       "zoom": "Zoom",
-      "addRegion": "Add loop region",
-      "loop": "Loop region",
+      "addRegion": "Add loop section",
+      "loop": "Repeat section",
       "unavailable": "Audio unavailable for this recording."
+    },
+    "status": {
+      "saved": "All changes saved",
+      "unsaved": "Unsaved changes ({count})",
+      "files": "{count} files loaded",
+      "selection": "Selected: {name}",
+      "noSelection": "No selection"
     }
   },
   "settings": {

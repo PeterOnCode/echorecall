@@ -14,9 +14,95 @@
 
 ---
 
-## Next implementation — Feature 005: Dashboard workspace redesign
+## Next implementation — Feature 006: Library tab redesign (waveform tag-editor)
 
-*(suggested branch `005-dashboard-redesign`; supersedes the presentation-only 004 migration)*
+*(suggested branch `006-library-redesign`; a presentation-layer re-skin of the 005 Library
+surface, built at a **parallel route** and swapped in once proven)*
+
+### Intent
+
+Rebuild the **Library** tab to match the Figma **"Library Tab 2"** design — a desktop-style
+**waveform tag-editor** — as a full re-skin of the 005 Library surface. Same data and stack as
+005 (`@nuxt/ui` v4 + `wavesurfer.js` + `taglib-wasm`); this is a **UX/interaction redesign**,
+not new domain behavior. Build it at a **parallel route** (e.g. `/library-next`) so the existing
+`/library` keeps working untouched; once verified, point the Library nav tab at the new page and
+**delete the old Library page/components** (a final, separate step).
+
+### User journeys (priority hints for `/speckit-specify`)
+
+**P1 — Two-pane file table + tag-editor inspector.**
+Resizable `DashboardPanel`: **left** = the file-list table, **right** = the tag-editor
+inspector. Selecting a row loads its tags on the right; **Previous/Next** in the inspector
+toolbar change the selection without leaving the panel.
+
+**P1 — Waveform player with loop + zoom.**
+Light-theme `wavesurfer.js` player along the bottom: **Play** (Lejátszás), **Add loop section**
+(Ciklusszakasz hozzáadása), **Repeat-section / loop toggle** (Szakasz ismétlése), and a **zoom**
+slider (Nagyítás). Loop **regions** + **zoom** per constitution v2.5.0 / US6.
+
+**P2 — Filter bar.**
+Above the table: search-all-fields input, audio-format select, recording-date input, genre
+select, language select.
+
+**P2 — File table management.**
+Multi-select **checkboxes** (header select-all + per-row), sortable columns (Filename, Title,
+Artist, Album, Year, Track, Genre), selected-row highlight, and a **"Configure Columns"** modal
+(gear in the file-panel header) to toggle/reorder visible columns (**Filename always-on**).
+
+**P2 — Tag-editor inspector controls.**
+Header title + settings gear; toolbar Previous / Next / Play Audio; editable fields (Name,
+Text/notes, Title, Artist, Album, Comment, Date, Track Number, Genre, Encoded-By, Language); a
+**"Configure Visible Fields"** modal (gear) to toggle which fields show; and a **show/hide
+inspector** toggle in the file-panel header.
+
+**P3 — Status bar.**
+Save state, files-loaded count, current selection, and encoding info (UTF-8, codec/bitrate).
+
+### In scope
+
+- Parallel `/library-next` route; swap the Library nav target and delete the old Library
+  page/components once proven.
+- Two-pane resizable layout (reuse 005's `UDashboard` pattern), filter bar, file table
+  (multi-select + Configure Columns), tag-editor inspector (+ Configure Visible Fields +
+  show/hide toggle), waveform player (loop + zoom), status bar.
+- All new strings localized **en/hu** (Hungarian default); controls keyboard/AT-accessible;
+  test-gated **red-first**; `wavesurfer.js` **mocked** in tests.
+- Accent color = the app's **violet primary** (NOT the Figma kit's green).
+
+### Out of scope (do **not** spec here)
+
+- Changes to `src/core/`, the TTS engine, storage layout, or audio-tag schema — reuse existing
+  `taglib-wasm` read/write and app composables (`useViewPreferences`, `useQueueFile`, …); no
+  server/schema changes unless explicitly justified (FR-018 spirit).
+- **Generate**-tab changes (this feature is Library-only).
+- Anything in the **Later / backlog** section below.
+
+### References (visual only — 005 `spec.md`/`data-model.md` remain the source of truth)
+
+Figma file `LSx4m0qJpJRqvp8wCCHKTl`, page **"Library Tab 2"** — screen node `66:3`,
+"Configure Visible Fields" modal `80:2088`, "Configure Columns" modal `81:300`.
+
+### Open questions
+
+- **[NEEDS CLARIFICATION]** Configure Columns / Configure Visible Fields persistence — reuse
+  005's `useViewPreferences`, and persist across sessions?
+- **[NEEDS CLARIFICATION]** Loop **regions** — a single A–B repeat region, or multiple named
+  regions?
+- **[NEEDS CLARIFICATION]** Filter bar — are format/genre/language/date all present on library
+  rows, or derived from tags at read time?
+- **[NEEDS CLARIFICATION]** Multi-select in Library — what bulk action(s) beyond selection
+  (delete, batch tag edit)?
+- **[NEEDS CLARIFICATION]** Status-bar "save state" — does the inspector autosave tag edits, or
+  is there an explicit Save?
+- **[NEEDS CLARIFICATION]** On old-tab deletion, does the route revert to `/library` (rename
+  `/library-next`) so existing links/tests keep working?
+
+---
+
+## Shipped — Feature 005: Dashboard workspace redesign
+
+*(branch `005-dashboard-redesign`; released **v0.5.0** — kept for reference; superseded as
+next-up by Feature 006 above)*
 
 ### Intent
 

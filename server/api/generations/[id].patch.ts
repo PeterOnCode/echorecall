@@ -1,11 +1,14 @@
 import { skippedFields } from '#core'
-import type { Generation, Metadata } from '#core'
+import type { Metadata } from '#core'
 import { getLibraryService } from '../../utils/container'
 import { respondError } from '../../utils/errors'
 import { toGenerationDto } from '../../utils/serialize'
 
 interface PatchBody {
   filename?: string
+  // `Metadata` now carries the 006 · R-TAGS extra editable fields (notes/encodedBy/
+  // albumArtist/composer/bpm/rating); they flow through updateMetadata → the taglib
+  // mapping + the SQLite `tags_extra` mirror unchanged (no new column/migration).
   metadata?: Metadata
 }
 
@@ -22,18 +25,12 @@ export default defineEventHandler(async (event) => {
     const body = (await readBody<PatchBody>(event)) ?? {}
     const service = await getLibraryService()
 
-    // Rename before retag: the filename is validated (INVALID_FILENAME) before any
-    // file/db mutation, so a bad name rejects the whole request without having
-    // already rewritten the tags. The title is never used to rename — only the
-    // explicit `filename` field is. `get`/`rename`/`updateMetadata` each 404 on an
-    // unknown id.
-    let updated: Generation = service.get(id)
-    if (body.filename !== undefined) {
-      updated = await service.rename(id, body.filename)
-    }
-    if (body.metadata !== undefined) {
-      updated = await service.updateMetadata(id, body.metadata)
-    }
+    // Atomic combined edit: the filename is validated (INVALID_FILENAME) up front, then
+    // the retag runs BEFORE the rename so a tagging failure leaves the file, its name,
+    // and the tags all untouched — never a partial success where the file was renamed
+    // but the request errored. The title is never used to rename (only the explicit
+    // `filename` field). Unknown id → 404.
+    const updated = await service.update(id, { filename: body.filename, metadata: body.metadata })
 
     // The skipped-tags notice is a pure function of the final format + tag set, so
     // it is reported only when metadata was edited in this request.

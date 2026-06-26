@@ -108,6 +108,32 @@ describe('TagLibAudioTagger (real taglib-wasm)', () => {
     expect(findValue(props, 'https://example.com/clip')).toBe(true) // custom URL (WXXX or TXXX fallback)
   })
 
+  it('round-trips the 006 · R-TAGS extra editable fields into ID3 frames', async () => {
+    // encodedBy→TENC, albumArtist→TPE2, composer→TCOM, bpm→TBPM, notes→TXXX.
+    // (rating/POPM is intentionally tags_extra-only; see taglib-tagger.ts.)
+    const { bytes } = await tagger.tag('wav', minimalWav(), {
+      encodedBy: 'kid3',
+      albumArtist: 'The Album Artist',
+      composer: 'A Composer',
+      bpm: 128,
+      notes: 'a free-form note',
+    })
+    const props = await readback(bytes)
+    expect(findValue(props, 'kid3')).toBe(true)
+    expect(findValue(props, 'The Album Artist')).toBe(true)
+    expect(findValue(props, 'A Composer')).toBe(true)
+    expect(findValue(props, '128')).toBe(true)
+    expect(findValue(props, 'a free-form note')).toBe(true)
+  })
+
+  it('reads real audio properties (codec/sampleRate/bitrate) from a WAV', async () => {
+    const props = await tagger.readAudioProperties(minimalWav())
+    // The minimal WAV is 8 kHz PCM — codec + sample rate are always present.
+    expect(props.sampleRate).toBe(8000)
+    expect(typeof props.codec).toBe('string')
+    expect(props.codec!.length).toBeGreaterThan(0)
+  })
+
   it('accepts a full timestamp for recordedAt', async () => {
     const { bytes } = await tagger.tag('wav', minimalWav(), {
       recordedAt: '2026-06-17T10:00:00Z',

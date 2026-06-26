@@ -1,10 +1,11 @@
 import { TagLib } from 'taglib-wasm'
 import type { AudioFile, PropertyMap } from 'taglib-wasm'
-import type { Format, Metadata } from '../shared/types'
+import type { AudioProperties, Format, Metadata } from '../shared/types'
 import { formatInfo } from '../tts/provider'
 import { TaggingFailedError } from '../shared/errors'
 import type { AudioTagger, TagResult } from './tagger'
 import { skippedFields } from './tagger'
+import { readAudioProperties } from '../library/audio-properties'
 
 /**
  * {@link AudioTagger} backed by **taglib-wasm** (TagLib compiled to WebAssembly —
@@ -52,6 +53,15 @@ export class TagLibAudioTagger implements AudioTagger {
       file?.dispose()
     }
   }
+
+  /**
+   * 006 · R-AUDIOPROPS — read-only codec/bitrate/sampleRate/duration computed from
+   * the file via TagLib's `audioProperties()`. Reuses this tagger's single WASM
+   * instance; an unreadable file yields an empty object (never throws).
+   */
+  async readAudioProperties(audio: Buffer): Promise<AudioProperties> {
+    return readAudioProperties(this.taglib, audio)
+  }
 }
 
 /**
@@ -78,6 +88,20 @@ function buildPropertyMap(format: Format, metadata: Metadata): PropertyMap {
   set('COMMENT', metadata.comment)
   set('DATE', metadata.recordedAt)
   set('TRACKNUMBER', metadata.track)
+
+  // 006 · R-TAGS — extra editable fields → their native ID3 frames (TagLib maps the
+  // canonical property keys to TENC/TPE2/TCOM/TBPM). `notes` becomes a TXXX entry;
+  // `rating` (POPM) is not represented in TagLib's PropertyMap, so it persists only
+  // in the SQLite `tags_extra` mirror (the UI source of truth) — no fidelity loss.
+  set('ENCODEDBY', metadata.encodedBy)
+  set('ALBUMARTIST', metadata.albumArtist)
+  set('COMPOSER', metadata.composer)
+  if (typeof metadata.bpm === 'number' && Number.isFinite(metadata.bpm)) {
+    props.BPM = [String(Math.round(metadata.bpm))]
+  }
+  if (typeof metadata.notes === 'string' && metadata.notes !== '') {
+    addCustom(props, 'notes', metadata.notes)
+  }
 
   if (Array.isArray(metadata.languages)) {
     const languages = (metadata.languages as unknown[]).filter(

@@ -50,6 +50,37 @@ export interface Metadata {
   languages?: string[]
   customText?: CustomTextEntry[]
   customUrl?: CustomUrlEntry[]
+  // --- 006 · R-TAGS: extra editable fields persisted in the existing `tags_extra`
+  // JSON column (NO new SQL column, no migration). The taglib mapping writes each as
+  // its native ID3 frame (TENC/TPE2/TCOM/TBPM/POPM; `notes` via a custom TXXX). ---
+  /** Free-form text/notes (ID3 TXXX). */
+  notes?: string
+  /** Encoder/encoded-by (ID3 TENC). */
+  encodedBy?: string
+  /** Album artist / band (ID3 TPE2). */
+  albumArtist?: string
+  /** Composer (ID3 TCOM). */
+  composer?: string
+  /** Beats per minute, integer (ID3 TBPM). */
+  bpm?: number
+  /** Star rating 0–5 (ID3 POPM, mapped 0–255). */
+  rating?: number
+}
+
+/**
+ * 006 · R-AUDIOPROPS — read-only audio properties computed on read from the stored
+ * file (taglib `audioProperties`). Never persisted, never edited; missing/unreadable
+ * values are simply absent. Surfaced for the status bar + Duration/Bitrate columns.
+ */
+export interface AudioProperties {
+  /** Audio codec, e.g. `MP3`, `FLAC`, `PCM`. */
+  codec?: string
+  /** Bitrate in kb/s. */
+  bitrate?: number
+  /** Sample rate in Hz. */
+  sampleRate?: number
+  /** Duration in seconds. */
+  duration?: number
 }
 
 /**
@@ -112,8 +143,33 @@ export interface LibraryQuery {
   /** Inclusive `createdAt` range bounds (ISO 8601). */
   from?: string
   to?: string
-  sort?: 'createdAt' | 'title' | 'voice' | 'format'
+  sort?:
+    | 'createdAt'
+    | 'title'
+    | 'voice'
+    | 'format'
+    // --- 006 · R-FILTER: additive sort keys over already-existing columns.
+    // "Year" + "Date" both map to `recordedAt`; "Filename" to the stored name.
+    // Composer/Duration/Bitrate are display-only (NOT sortable).
+    | 'filename'
+    | 'artist'
+    | 'album'
+    | 'recordedAt'
+    | 'track'
+    | 'genre'
+    | 'comment'
   order?: 'asc' | 'desc'
   page?: number
   pageSize?: number
+
+  // --- 006 · R-FILTER: additive, read-only filters over already-existing columns
+  // (no schema/migration). All optional → existing callers/CLI unaffected. ---
+  /** Exact match over `tag_genre`. */
+  genre?: string
+  /** A single ISO 639-2 code matched within the multi-value `tags_extra.languages`. */
+  language?: string
+  /** Inclusive lower bound over `tag_recorded_at` (recording date, distinct from `createdAt`). */
+  recordedFrom?: string
+  /** Inclusive upper bound over `tag_recorded_at`. */
+  recordedTo?: string
 }

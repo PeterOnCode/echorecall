@@ -62,7 +62,11 @@ export function getLibraryService(): Promise<LibraryService> {
         // (`audio/YYYY/MM/DD/<slug>.<ext>` for new files, `audio/<id>.mp3` legacy).
         const audio = new FileAudioStore(dir)
         const tagger = await TagLibAudioTagger.create()
-        return new LibraryService(repo, audio, undefined, undefined, tagger)
+        // 006 · R-AUDIOPROPS — reuse the tagger's single WASM instance to decode
+        // read-only audio properties on demand (no persistence/migration).
+        return new LibraryService(repo, audio, undefined, undefined, tagger, (bytes) =>
+          tagger.readAudioProperties(bytes),
+        )
       } catch (err) {
         // Don't cache a rejected promise: clear it so a transient failure (WASM
         // load, fs lock, SQLite init) can self-recover on the next request

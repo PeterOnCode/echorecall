@@ -10,7 +10,7 @@ withDefaults(defineProps<{ src: string; label?: string }>(), {
 // explicitly on teardown so audio stops at once, rather than relying on the
 // removed element being garbage-collected (T107). Missing-file tolerance is
 // handled by the consumer: the native `error` event falls through to the
-// listener on <AudioPlayer> (e.g. LibraryTable's `@error="markUnavailable(id)"`).
+// listener on <AudioPlayer> (e.g. LibraryFileTable's `@error="markUnavailable(id)"`).
 const audio = ref<HTMLAudioElement | null>(null)
 onBeforeUnmount(() => audio.value?.pause())
 </script>

@@ -56,7 +56,13 @@ function isPresent(field: string, metadata: Metadata): boolean {
   return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
 }
 
-/** Every Metadata field a tagger can embed on at least one tagging path. */
+/**
+ * Every Metadata field a tagger can embed on at least one tagging path. Includes the
+ * 006 · R-TAGS extras that map to native frames (encodedBy/albumArtist/composer/bpm
+ * → TENC/TPE2/TCOM/TBPM, notes → a TXXX entry) so a recording whose ONLY metadata is
+ * one of them still gets written to the audio file. `rating` (POPM) is intentionally
+ * absent — it persists only in the SQLite `tags_extra` mirror, never in the file.
+ */
 const EMBEDDABLE_FIELDS = [
   'title',
   'artist',
@@ -68,6 +74,11 @@ const EMBEDDABLE_FIELDS = [
   'languages',
   'customText',
   'customUrl',
+  'encodedBy',
+  'albumArtist',
+  'composer',
+  'bpm',
+  'notes',
 ] as const
 
 /**
