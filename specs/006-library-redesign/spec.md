@@ -65,7 +65,7 @@ A user reviewing a recording wants a richer player than a plain play button. A l
 
 ### User Story 3 - Library filter bar (Priority: P2)
 
-A user with many recordings needs to narrow the table quickly. A filter bar above the table provides: a search-all-fields input, an audio-format selector, a recording-date input, a genre selector, and a language selector. Applying any filter narrows the table to matching recordings; clearing it restores the full list.
+A user with many recordings needs to narrow the table quickly. A filter bar above the table provides: a search-all-fields input, an audio-format selector, a recording-date range, a genre selector, and a language selector. Applying any filter narrows the table to matching recordings; clearing it restores the full list.
 
 **Why this priority**: Filtering makes a large library manageable, but the two-pane layout (US1) is usable without it for small libraries, so it ranks below the foundational stories.
 
@@ -74,7 +74,7 @@ A user with many recordings needs to narrow the table quickly. A filter bar abov
 **Acceptance Scenarios**:
 
 1. **Given** the library, **When** the user types in the search-all input, **Then** only recordings matching the text across searchable fields remain visible.
-2. **Given** the library, **When** the user selects an audio format, genre, language, or recording date, **Then** only recordings matching that value remain visible.
+2. **Given** the library, **When** the user selects an audio format, genre, language, or a recording-date range, **Then** only recordings matching that value (for the date range, those whose recording date falls within the selected bounds) remain visible.
 3. **Given** one or more filters are applied, **When** the user clears a filter, **Then** the table restores the recordings that filter had hidden.
 4. **Given** a filter combination that matches nothing, **When** it is applied, **Then** the table shows an empty-result state rather than an error.
 
@@ -173,7 +173,7 @@ A user wants at-a-glance context about the library and the current edit. A statu
 
 **Filter bar**
 
-- **FR-011**: The Library surface MUST provide a filter bar above the table with: a search-all-fields input, an audio-format selector, a single **recording-date** input (narrows to recordings whose recording date falls on the chosen calendar day), a genre selector, and a language selector.
+- **FR-011**: The Library surface MUST provide a filter bar above the table with: a search-all-fields input, an audio-format selector, a **recording-date range** (start/end calendar days narrowing to recordings whose recording date falls within the inclusive bounds; either bound alone forms an open-ended range), a genre selector, and a language selector.
 - **FR-012**: Applying any filter MUST narrow the table to matching recordings, and clearing a filter MUST restore the recordings it had hidden; a filter combination matching nothing MUST show an empty-result state rather than an error.
 
 **File table management**

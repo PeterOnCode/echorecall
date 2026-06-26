@@ -8,9 +8,10 @@ import type { LibraryQuery } from '#core/client'
 
 // 006 · US3 (FR-011/FR-012) — the Library filter bar (supersedes LibrarySearchBar).
 // Controlled via v-model:query — every change emits a fresh query and snaps to page
-// 1. Controls: search-all (q), audio-format, a SINGLE recording-date (one day →
-// recordedFrom/recordedTo day-bounds over the tag date), genre, and language. The
-// "__all__" sentinel clears a select (reka-ui forbids an empty-string item value).
+// 1. Controls: search-all (q), audio-format, a recording-date RANGE (start/end days →
+// recordedFrom/recordedTo date-only bounds over the tag date; either bound alone is a
+// valid open-ended range), genre, and language. The "__all__" sentinel clears a select
+// (reka-ui forbids an empty-string item value).
 
 function mountBar(query: LibraryQuery = {}, options: Record<string, unknown> = {}) {
   return mountSuspended(LibraryFilterBar, {
@@ -70,22 +71,37 @@ describe('LibraryFilterBar (US3)', () => {
     expect(lastQuery(w)).toMatchObject({ language: 'eng', page: 1 })
   })
 
-  it('the single recording-date maps to that day’s date-only recordedFrom/recordedTo bounds', async () => {
+  it('the recording-date range maps start/end to date-only recordedFrom/recordedTo bounds', async () => {
     const w = await mountBar({ page: 3 })
     const cal = await openDate(w)
-    cal.vm.$emit('update:modelValue', new CalendarDate(2026, 6, 1))
+    cal.vm.$emit('update:modelValue', {
+      start: new CalendarDate(2026, 6, 1),
+      end: new CalendarDate(2026, 6, 5),
+    })
     await flushPromises()
     const q = lastQuery(w)
-    // Timezone-naive YYYY-MM-DD bounds (NOT UTC instants) so the day's own tag dates
+    // Timezone-naive YYYY-MM-DD bounds (NOT UTC instants) so each day's own tag dates
     // are matched in every timezone — a `…T00:00:00.000Z` lower bound sorts after the
     // plain `2026-06-01` string and would drop that day's rows (negative offsets).
     expect(q.recordedFrom).toBe('2026-06-01')
-    expect(q.recordedTo).toBe('2026-06-01')
+    expect(q.recordedTo).toBe('2026-06-05')
+    expect(q.page).toBe(1)
+  })
+
+  it('a start-only selection is an open-ended range (recordedFrom set, recordedTo cleared)', async () => {
+    const w = await mountBar({ page: 3 })
+    const cal = await openDate(w)
+    // reka-ui's RangeCalendar emits the first click as { start, end: undefined }.
+    cal.vm.$emit('update:modelValue', { start: new CalendarDate(2026, 6, 1), end: undefined })
+    await flushPromises()
+    const q = lastQuery(w)
+    expect(q.recordedFrom).toBe('2026-06-01')
+    expect(q.recordedTo).toBeUndefined()
     expect(q.page).toBe(1)
   })
 
   it('clearing the recording-date resets both bounds', async () => {
-    const w = await mountBar({ recordedFrom: '2026-06-01', recordedTo: '2026-06-01' })
+    const w = await mountBar({ recordedFrom: '2026-06-01', recordedTo: '2026-06-05' })
     await openDate(w)
     const clearBtn = w
       .findAllComponents({ name: 'UButton' })

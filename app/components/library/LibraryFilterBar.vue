@@ -6,10 +6,11 @@ import { CalendarDate } from '@internationalized/date'
 // Controlled via v-model:query: every change emits a fresh query object (the page
 // stays the single source of truth) and snaps to page 1 so a narrowed set is never
 // hidden behind an out-of-range page. Controls: search-all (q), audio-format, a
-// SINGLE recording-date (one calendar day → recordedFrom/recordedTo day-bounds over
-// the tag date, distinct from generation time), genre, and language. Genre/language
-// options are supplied by the page; the "__all__" sentinel clears a select (reka-ui's
-// Combobox reserves the empty string for its own cleared state).
+// recording-date RANGE (start/end calendar days → recordedFrom/recordedTo inclusive
+// bounds over the tag date, distinct from generation time; either bound alone makes
+// the range open-ended), genre, and language. Genre/language options are supplied by
+// the page; the "__all__" sentinel clears a select (reka-ui's Combobox reserves the
+// empty string for its own cleared state).
 const props = withDefaults(
   defineProps<{ genres?: string[]; languages?: string[] }>(),
   { genres: () => [], languages: () => [] },
@@ -56,12 +57,17 @@ const language = computed<string>({
 })
 
 // Recording-date filtering is timezone-NAIVE end to end: the tag stores a plain
-// `YYYY-MM-DD` (no zone), the repository compares it as a string, and selecting a day
-// must match that day's own rows in EVERY timezone. So the single-day filter parses
-// and emits date-only `YYYY-MM-DD` bounds — a `new Date(iso)` round-trip through UTC
-// would shift the day for negative-offset users and make a `…T00:00:00.000Z` lower
-// bound sort AFTER the plain date string, dropping the day entirely. Targets
-// recordedAt (the tag the user sets), not createdAt.
+// `YYYY-MM-DD` (no zone), the repository compares it as a string, and the chosen range
+// must match each day's own rows in EVERY timezone. So the range picker parses and
+// emits date-only `YYYY-MM-DD` bounds — a `new Date(iso)` round-trip through UTC would
+// shift the day for negative-offset users and make a `…T00:00:00.000Z` lower bound sort
+// AFTER the plain date string, dropping that day entirely. Both bounds are inclusive
+// (repo compares `>= recordedFrom` / `<= recordedTo` on date-only strings) and either
+// alone is a valid open-ended range. Targets recordedAt (the tag the user sets), not
+// createdAt. reka-ui's RangeCalendar models bounds as `DateValue | undefined` (not
+// null), so the computed view does the same.
+type DateRange = { start: CalendarDate | undefined; end: CalendarDate | undefined }
+
 function calendarToDateOnly(d: CalendarDate): string {
   return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
 }
@@ -72,23 +78,34 @@ function dateOnlyToCalendar(value?: string): CalendarDate | undefined {
   return undefined
 }
 
-const recordedDate = computed<CalendarDate | undefined>({
-  get: () => dateOnlyToCalendar(query.value.recordedFrom),
+const recordedRange = computed<DateRange | undefined>({
+  get: () => {
+    const start = dateOnlyToCalendar(query.value.recordedFrom)
+    const end = dateOnlyToCalendar(query.value.recordedTo)
+    return start || end ? { start, end } : undefined
+  },
   set: (value) => {
-    const day = value ? calendarToDateOnly(value) : undefined
-    patch({ recordedFrom: day, recordedTo: day })
+    patch({
+      recordedFrom: value?.start ? calendarToDateOnly(value.start) : undefined,
+      recordedTo: value?.end ? calendarToDateOnly(value.end) : undefined,
+    })
   },
 })
 
 function clearRecordedDate() {
-  recordedDate.value = undefined
+  recordedRange.value = undefined
 }
 
+// Format each bound from its naive Y/M/D via a LOCAL Date (no UTC parse → no day shift);
+// an unset bound renders as an ellipsis so an open-ended range still reads clearly.
 const recordedLabel = computed(() => {
-  const cd = dateOnlyToCalendar(query.value.recordedFrom)
-  if (!cd) return t('library.filters.recordedRange')
-  // Format from the naive Y/M/D via a LOCAL Date (no UTC parse → no day shift).
-  return new Date(cd.year, cd.month - 1, cd.day).toLocaleDateString(locale.value)
+  const { recordedFrom, recordedTo } = query.value
+  if (!recordedFrom && !recordedTo) return t('library.filters.recordedRange')
+  const fmt = (value?: string) => {
+    const cd = dateOnlyToCalendar(value)
+    return cd ? new Date(cd.year, cd.month - 1, cd.day).toLocaleDateString(locale.value) : '…'
+  }
+  return `${fmt(recordedFrom)} – ${fmt(recordedTo)}`
 })
 </script>
 
@@ -146,7 +163,7 @@ const recordedLabel = computed(() => {
         </UButton>
         <template #content>
           <div class="flex flex-col gap-2 p-2">
-            <UCalendar v-model="recordedDate" />
+            <UCalendar v-model="recordedRange" range />
             <div class="flex justify-end">
               <UButton
                 data-test="filter-recorded-date-clear"

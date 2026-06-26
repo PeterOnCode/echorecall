@@ -80,8 +80,9 @@ export interface LibraryQuery {
 - Empty/absent params → no constraint (current behavior preserved).
 - `genre`: matches `tag_genre`. `language`: matches one code inside the JSON `tags_extra.languages`.
 - `recordedFrom`/`recordedTo`: inclusive bounds over `tag_recorded_at`; rows with null `recordedAt`
-  are excluded when either bound is set. The filter bar's **single recording-date input** sets both
-  to the chosen day's start/end (UI = one date; query = that day's range — no extra query field).
+  are excluded when either bound is set. The filter bar's **recording-date range picker** maps its
+  start day → `recordedFrom` and end day → `recordedTo` as timezone-naive `YYYY-MM-DD` strings
+  (compared as `>=`/`<=` against the date-only tag); either bound alone is a valid open-ended range.
 - New sort keys map to existing columns: `filename`→the stored name/path, `tag_artist`, `tag_album`,
   `tag_recorded_at` (both **Year** and **Date**), `tag_track`, `tag_genre`, `tag_comment`.
   Composer / Duration / Bitrate are **display-only (not sortable)**. Stable secondary sort on
