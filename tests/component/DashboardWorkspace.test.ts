@@ -63,6 +63,26 @@ describe('DashboardWorkspace', () => {
     expect(handle.attributes('aria-controls')).toContain('a11y-ws')
   })
 
+  it('collapses the detail pane and gives the list pane full width when detailCollapsed (FR-021)', async () => {
+    // The Library show/hide-inspector control sets detailCollapsed: the detail pane and
+    // resize handle are removed and the list pane fills the width. The panel theme's size
+    // variant carries `lg:w-(--width)`, so the list pane MUST override `lg:w-full` (a plain
+    // `w-full` loses to the `lg:`-prefixed rule at the breakpoint this surface renders at).
+    const wrapper = await mountSuspended(DashboardWorkspace, {
+      props: { storageKey: 'test-ws', detailCollapsed: true },
+      slots: { list: () => 'LIST CONTENT', detail: () => 'SHOULD NOT SHOW' },
+    })
+
+    expect(wrapper.find('[data-test="dashboard-list-pane"]').text()).toContain('LIST CONTENT')
+    expect(wrapper.find('[data-test="dashboard-detail-pane"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="dashboard-resize-handle"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('SHOULD NOT SHOW')
+
+    const listClasses = wrapper.find('[data-test="dashboard-list-pane"]').classes()
+    expect(listClasses).toContain('lg:w-full')
+    expect(listClasses).not.toContain('lg:w-(--width)')
+  })
+
   it('shows the empty state in the detail pane when detailEmpty is set', async () => {
     const wrapper = await mountSuspended(DashboardWorkspace, {
       props: { storageKey: 'test-ws', detailEmpty: true },

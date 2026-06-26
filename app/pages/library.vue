@@ -36,6 +36,8 @@ const drafts = useTagDrafts({ update })
 // The active recording shown in the inspector; null → the inspector's empty state.
 const activeId = ref<string | null>(null)
 // FR-021 — show/hide the inspector pane (the control lives in the always-visible table).
+// Hiding it collapses the whole detail pane (inspector + waveform footer) via
+// DashboardWorkspace's `detail-collapsed`, so the file table takes the full width.
 const showInspector = ref(true)
 // US5 — the Configure Visible Fields modal + the waveform handle the inspector's Play
 // control drives (FR-022).
@@ -155,7 +157,7 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
     <p v-if="error" role="alert" class="text-error">{{ error }}</p>
     <p v-if="loading && items.length === 0" class="text-muted">{{ $t('common.loading') }}</p>
 
-    <DashboardWorkspace storage-key="library-workspace">
+    <DashboardWorkspace storage-key="library-workspace" :detail-collapsed="!showInspector">
       <template #list>
         <div class="flex flex-col gap-4">
           <LibraryFilterBar
@@ -179,8 +181,10 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
         </div>
       </template>
       <template #detail>
+        <!-- The whole detail pane (this inspector + the waveform footer) is collapsed
+             by `:detail-collapsed` above when the inspector is hidden (FR-021), so the
+             inspector itself needs no extra guard here. -->
         <TagInspector
-          v-if="showInspector"
           v-model:draft="activeDraft"
           :item="activeItem"
           :dirty="activeDirty"
