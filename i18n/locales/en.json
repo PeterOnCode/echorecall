@@ -9,6 +9,7 @@
   "generate": {
     "form": {
       "voice": "Voice",
+      "voiceLink": "Open OpenAI.fm voice preview",
       "model": "Model",
       "format": "Format",
       "speed": "Speed",

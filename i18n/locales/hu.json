@@ -9,6 +9,7 @@
   "generate": {
     "form": {
       "voice": "Hang",
+      "voiceLink": "OpenAI.fm hangelőnézet megnyitása",
       "model": "Modell",
       "format": "Formátum",
       "speed": "Sebesség",
