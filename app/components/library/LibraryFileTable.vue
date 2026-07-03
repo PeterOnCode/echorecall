@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { TableColumn, TableRow } from '@nuxt/ui'
 import type { LibraryQuery } from '#core/client'
 import type { LibraryItem } from '../../composables/useLibrary'
 import type { LibraryColumnPref } from '../../composables/useViewPreferences'
@@ -58,6 +58,18 @@ const tableColumns = computed<TableColumn<LibraryItem>[]>(() => [
 // --- Selection -----------------------------------------------------------------
 function select(id: string) {
   activeId.value = id
+}
+// Whole-row activation (FR-013): clicking anywhere on a row sets the active
+// recording. UTable's onSelect ignores clicks originating on an inner <button>/<a>,
+// so the Filename button and the per-row checkbox keep their own behaviour (the
+// checkbox toggles multi-select without changing the active row).
+function onRowSelect(_event: Event, row: TableRow<LibraryItem>) {
+  select(row.original.id)
+}
+// Per-row class — highlight the active row (the one shown in the inspector) and
+// give every row a pointer affordance now that the whole row is clickable.
+function rowClass(row: TableRow<LibraryItem>): string {
+  return activeId.value === row.original.id ? 'cursor-pointer bg-primary/10' : 'cursor-pointer'
 }
 const allSelected = computed(
   () => props.items.length > 0 && props.items.every((i) => selectedIds.value.has(i.id)),
@@ -173,7 +185,14 @@ const hasSelection = computed(() => selectedIds.value.size > 0)
       {{ t('library.noResults') }}
     </p>
 
-    <UTable v-else :data="items" :columns="tableColumns" :get-row-id="(row: LibraryItem) => row.id">
+    <UTable
+      v-else
+      :data="items"
+      :columns="tableColumns"
+      :get-row-id="(row: LibraryItem) => row.id"
+      :meta="{ class: { tr: rowClass } }"
+      @select="onRowSelect"
+    >
       <!-- Header slots -->
       <template #select-header>
         <UCheckbox

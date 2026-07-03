@@ -93,6 +93,11 @@ const saveState = computed<'saved' | 'unsaved'>(() =>
 const dirtyCount = computed(() => drafts.dirtyCount.value)
 const activeFilename = computed(() => activeItem.value?.filename ?? null)
 const activeAudio = computed(() => activeItem.value?.audioProperties)
+// The audio title shown above the waveform — the recording's Title tag when set,
+// otherwise its filename (the identifier `label`/the status bar already use).
+const activeTitle = computed(
+  () => activeItem.value?.metadata?.title || activeItem.value?.filename || null,
+)
 
 // Filter-bar select options. Derived from the loaded page (a reasonable default —
 // the chosen value still narrows the WHOLE library via the server-side query).
@@ -198,17 +203,22 @@ async function onBulkApply(payload: { field: keyof Metadata; value: string }) {
           @open-fields-dialog="fieldsOpen = true"
         />
       </template>
-      <template #footer>
-        <!-- US2 / FR-007–010: the reused 005 waveform review player (single A–B loop
-             + zoom) for the active recording; absent until a row is selected. -->
-        <WaveformPlayer
-          v-if="activeItem"
-          ref="waveformRef"
-          :src="activeItem.audioUrl"
-          :label="activeItem.filename"
-        />
-      </template>
     </DashboardWorkspace>
+
+    <!-- US2 / FR-007–010: the reused 005 waveform review player (single A–B loop
+         + zoom) for the active recording. Moved out of the workspace's #footer to
+         sit full-width below the two-pane workspace, with the audio title above it;
+         absent until a row is selected. -->
+    <div v-if="activeItem" class="flex flex-col gap-2" data-test="library-waveform">
+      <h2 class="truncate text-sm font-medium" :title="activeTitle ?? undefined">
+        {{ activeTitle }}
+      </h2>
+      <WaveformPlayer
+        ref="waveformRef"
+        :src="activeItem.audioUrl"
+        :label="activeItem.filename"
+      />
+    </div>
 
     <!-- US6 / FR-023 — read-only status bar: save state, files loaded, selection,
          UTF-8 charset, and the active recording's real audio properties. -->
