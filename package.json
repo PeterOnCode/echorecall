@@ -7,7 +7,7 @@
     "node": ">=22.6"
   },
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "LAUNCH_EDITOR=code-insiders nuxt dev",
     "build": "nuxt build",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
