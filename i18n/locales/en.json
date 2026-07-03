@@ -252,6 +252,7 @@
       "empty": "Select a recording to edit its tags.",
       "fields": {
         "name": "Name",
+        "sourceText": "Source text",
         "title": "Title",
         "artist": "Artist",
         "album": "Album",
@@ -263,7 +264,7 @@
         "albumArtist": "Album Artist",
         "composer": "Composer",
         "encodedBy": "Encoded By",
-        "notes": "Text",
+        "notes": "Notes",
         "bpm": "BPM",
         "rating": "Rating"
       }

@@ -252,6 +252,7 @@
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez.",
       "fields": {
         "name": "Név",
+        "sourceText": "Forrás szöveg",
         "title": "Cím",
         "artist": "Előadó",
         "album": "Album",
@@ -263,7 +264,7 @@
         "albumArtist": "Album előadó",
         "composer": "Zeneszerző",
         "encodedBy": "Kódoló",
-        "notes": "Szöveg",
+        "notes": "Jegyzet",
         "bpm": "BPM",
         "rating": "Értékelés"
       }

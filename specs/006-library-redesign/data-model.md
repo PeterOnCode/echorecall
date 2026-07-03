@@ -36,11 +36,12 @@ Carries `id`, `text`, `voiceId`, `model`, `format`, `speed`, `createdAt`, `metad
 | Field | Backing |
 |---|---|
 | Name | `filename` (base, rename) |
+| Source text (read-only, FR-018a) | `item.text` (`Generation.text`, immutable — NOT `metadata.notes`) |
 | Title / Artist / Album / Comment / Genre | `metadata.{title,artist,album,comment,genre}` |
 | Date | `metadata.recordedAt` |
 | Track Number | `metadata.track` |
 | Language | `metadata.languages` (multi) |
-| Text/notes | `metadata.notes` → `tags_extra` (R-TAGS) |
+| Notes | `metadata.notes` → `tags_extra` (R-TAGS) |
 | Encoded-By | `metadata.encodedBy` → `tags_extra` (R-TAGS) |
 | Album Artist | `metadata.albumArtist` → `tags_extra` (R-TAGS) |
 | Composer | `metadata.composer` → `tags_extra` (R-TAGS) |

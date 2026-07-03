@@ -212,6 +212,20 @@ function onLang(value: unknown): void {
         </UInput>
       </UFormField>
 
+      <!-- Source text (always-on, read-only): the immutable spoken text
+           (Generation.text) that produced this recording. Distinct from the
+           editable free-form Notes tag below — sourced from the item, never the
+           draft, and never a `field-*` (not a toggleable/orderable tag field). -->
+      <UFormField :label="t('library.inspector.fields.sourceText')">
+        <UTextarea
+          data-test="source-text"
+          :model-value="item?.text ?? ''"
+          readonly
+          :rows="3"
+          class="w-full"
+        />
+      </UFormField>
+
       <UFormField v-for="f in visibleFields" :key="f.id" :label="t(`library.inspector.fields.${f.labelKey}`)">
         <UTextarea
           v-if="f.kind === 'textarea'"

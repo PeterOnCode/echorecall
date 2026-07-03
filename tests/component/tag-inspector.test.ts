@@ -88,6 +88,23 @@ describe('TagInspector (US1)', () => {
     expect(wrapper.find('[data-test="field-title"]').exists()).toBe(false)
   })
 
+  it('shows the recording source text read-only (Generation.text, not the notes tag)', async () => {
+    const wrapper = await mountInspector({ item: item({ text: 'Spoken source words', metadata: {} }) })
+    const el = wrapper.find('[data-test="source-text"]')
+    expect(el.exists()).toBe(true)
+    // The immutable spoken text, sourced from the item (never the editable draft).
+    expect((el.element as HTMLTextAreaElement).value).toContain('Spoken source words')
+    // Read-only: Generation.text cannot be edited from the inspector.
+    expect(el.attributes('readonly')).toBeDefined()
+    // Not a toggleable field — must not be swept up by the field-order logic.
+    expect(el.attributes('data-test')).not.toMatch(/^field-/)
+  })
+
+  it('hides the source text when nothing is selected', async () => {
+    const wrapper = await mountInspector({ item: null })
+    expect(wrapper.find('[data-test="source-text"]').exists()).toBe(false)
+  })
+
   it('emits prev/next and disables them at the global bounds (R-NAV)', async () => {
     const wrapper = await mountInspector({ hasPrev: false, hasNext: true })
     expect(wrapper.find('[data-test="tags-prev"]').attributes('disabled')).toBeDefined()
