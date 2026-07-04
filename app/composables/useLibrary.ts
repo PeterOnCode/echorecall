@@ -159,20 +159,28 @@ export function useLibrary() {
   }
 
   /**
-   * 006 · R-BULK — delete every id then reload ONCE (not per item) so `total` and
-   * pagination stay correct. The caller confirms first; the page resolves a surviving
-   * neighbour for the active selection after the reload.
+   * 006 · R-BULK — delete the ids one by one, isolating per-id failures (one bad
+   * delete must not abandon the rest), then reload ONCE (not per item) so `total`
+   * and pagination stay correct. Returns the per-id outcome so the caller can keep
+   * failed ids selected for retry; any failure also surfaces the delete error.
+   * The caller confirms first; the items watcher clears a dropped active selection.
    */
-  async function removeMany(ids: string[]): Promise<void> {
+  async function removeMany(ids: string[]): Promise<{ succeeded: string[]; failed: string[] }> {
     error.value = null
-    try {
-      for (const id of ids) {
+    const succeeded: string[] = []
+    const failed: string[] = []
+    for (const id of ids) {
+      try {
         await $fetch(`/api/generations/${id}`, { method: 'DELETE' })
+        succeeded.push(id)
+      } catch {
+        failed.push(id)
       }
-    } catch {
-      error.value = t('library.errors.delete')
     }
+    // After the reload (load() clears `error` as it starts), surface any failure.
     await load()
+    if (failed.length > 0) error.value = t('library.errors.delete')
+    return { succeeded, failed }
   }
 
   /**

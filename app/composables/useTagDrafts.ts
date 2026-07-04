@@ -58,14 +58,25 @@ export function useTagDrafts(options: UseTagDraftsOptions) {
 
   /**
    * Return the staged editable view for `id`. Seeded from the saved item the first
-   * time; subsequently the SAME staged object is returned so edits survive selection
-   * switches (auto-preserve).
+   * time; a DIRTY draft is subsequently returned as the SAME staged object so edits
+   * survive selection switches (Q4 auto-preserve). A CLEAN draft, however, is
+   * reseeded whenever the saved item changed underneath it (e.g. a bulk retag
+   * patched the row): the buffer must mirror the saved values, otherwise a later
+   * edit+Save would send the stale set and silently revert the external change.
    */
   function draftFor(id: string, item: LibraryItem): TagDraft {
-    if (!entries.value[id]) {
-      const base = snapshot(item)
-      entries.value = { ...entries.value, [id]: { base, draft: clone(base) } }
+    const existing = entries.value[id]
+    if (existing) {
+      if (!entryIsDirty(existing)) {
+        const base = snapshot(item)
+        if (JSON.stringify(base) !== JSON.stringify(existing.base)) {
+          entries.value = { ...entries.value, [id]: { base, draft: clone(base) } }
+        }
+      }
+      return entries.value[id]!.draft
     }
+    const base = snapshot(item)
+    entries.value = { ...entries.value, [id]: { base, draft: clone(base) } }
     return entries.value[id]!.draft
   }
 

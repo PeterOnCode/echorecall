@@ -68,9 +68,23 @@ describe('bulk delete (R-BULK)', () => {
     const lib = useLibrary()
     lib.query.value = { sort: 'createdAt', order: 'asc', page: 1, pageSize: 20 }
     await lib.load()
-    await lib.removeMany(['a', 'b'])
+    const res = await lib.removeMany(['a', 'b'])
+    expect(res).toEqual({ succeeded: ['a', 'b'], failed: [] })
     expect(lib.items.value.map((i) => i.id)).toEqual(['c'])
     expect(lib.total.value).toBe(1)
+    expect(lib.error.value).toBeNull()
+  })
+
+  it('continues past a failing delete and reports per-id results', async () => {
+    const lib = useLibrary()
+    lib.query.value = { sort: 'createdAt', order: 'asc', page: 1, pageSize: 20 }
+    await lib.load()
+    // 'nope' throws NotFound mid-run; the remaining id must still be deleted.
+    const res = await lib.removeMany(['a', 'nope', 'b'])
+    expect(res.succeeded).toEqual(['a', 'b'])
+    expect(res.failed).toEqual(['nope'])
+    expect(lib.items.value.map((i) => i.id)).toEqual(['c'])
+    expect(lib.error.value).not.toBeNull() // the failure is surfaced, not swallowed
   })
 })
 

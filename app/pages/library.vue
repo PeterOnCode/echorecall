@@ -141,8 +141,11 @@ function onBulkDelete() {
 }
 async function confirmBulkDelete() {
   confirmDeleteOpen.value = false
-  await removeMany([...selectedIds.value])
-  selectedIds.value = new Set()
+  const { succeeded, failed } = await removeMany([...selectedIds.value])
+  // A deleted recording's staged edits can never be committed — drop them so no
+  // phantom "unsaved" state lingers; failed ids stay selected for a retry.
+  for (const id of succeeded) drafts.discard(id)
+  selectedIds.value = new Set(failed)
 }
 function onOpenBulkTagEdit() {
   bulkResult.value = null

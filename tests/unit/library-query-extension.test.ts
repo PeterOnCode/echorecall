@@ -220,6 +220,29 @@ describe('R-FILTER — new sort keys (over existing columns)', () => {
       'a',
     ])
   })
+
+  it('sorts by the BASENAME, not the dated folder prefix (FR-014)', () => {
+    const repo = makeRepo()
+    seed(repo)
+    // Earliest folder but lexicographically-last basename: path order would put
+    // this row FIRST asc; basename order must put it LAST. Guards against the
+    // sort degenerating into created-date order via the audio/YYYY/MM/DD prefix.
+    repo.insert(
+      rec({ id: 'z', path: 'audio/2026/01/01/zzz.mp3', metadata: { title: 'Late name' } }),
+    )
+    expect(repo.list({ sort: 'filename', order: 'asc' }).rows.map((r) => r.id)).toEqual([
+      'a',
+      'b',
+      'c',
+      'z',
+    ])
+    expect(repo.list({ sort: 'filename', order: 'desc' }).rows.map((r) => r.id)).toEqual([
+      'z',
+      'c',
+      'b',
+      'a',
+    ])
+  })
 })
 
 describe('R-FILTER — back-compat', () => {

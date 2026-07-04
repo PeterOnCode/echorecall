@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
-import { defineEventHandler, getQuery } from 'h3'
+import { createError, defineEventHandler, getQuery } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import LibraryPage from '~/pages/library.vue'
 
@@ -50,10 +50,26 @@ registerEndpoint(
     return { generations: rows, total: rows.length, page, pageSize }
   }),
 )
-// PATCH target for the first row's inspector Save — returns the updated item.
+// PATCH target for the first row's inspector Save (returns the updated item);
+// DELETE succeeds. Row b's DELETE always fails, so bulk-delete partial-failure
+// behaviour can be asserted (b stays selected, its draft is kept).
+let deleteCalls: string[] = []
 registerEndpoint(
   '/api/generations/a',
-  defineEventHandler(() => ({ ...rows[0], metadata: { ...rows[0]!.metadata } })),
+  defineEventHandler((event) => {
+    if (event.method === 'DELETE') deleteCalls.push('a')
+    return { ...rows[0], metadata: { ...rows[0]!.metadata } }
+  }),
+)
+registerEndpoint(
+  '/api/generations/b',
+  defineEventHandler((event) => {
+    if (event.method === 'DELETE') {
+      deleteCalls.push('b')
+      throw createError({ statusCode: 500, statusMessage: 'delete failed' })
+    }
+    return { ...rows[1], metadata: { ...rows[1]!.metadata } }
+  }),
 )
 
 async function mountPage() {
@@ -107,5 +123,36 @@ describe('library page (US1)', () => {
     await wrapper.find('[data-test="inspector-save"]').trigger('click')
     await flushPromises()
     expect(listCalls).toBeGreaterThan(0)
+  })
+
+  it('bulk delete keeps failed ids selected and discards deleted recordings’ drafts', async () => {
+    const wrapper = await mountPage()
+    // Locale-independent baseline: the saved-state label before any edit.
+    const savedText = wrapper.find('[data-test="status-save"]').text()
+
+    // Stage an unsaved edit on row a so its draft is dirty (status bar: unsaved).
+    await wrapper.findAll('[data-test="library-row"]')[0]!.trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-test="field-title"]').setValue('Dirty edit')
+    expect(wrapper.find('[data-test="status-save"]').text()).not.toBe(savedText)
+
+    // Select both rows and bulk delete: a's DELETE succeeds, b's fails (500).
+    deleteCalls = []
+    await wrapper.find('[data-test="select-all"]').trigger('click')
+    await wrapper.find('[data-test="bulk-delete"]').trigger('click')
+    await flushPromises()
+    // The confirm dialog teleports to <body>, outside the wrapper's subtree.
+    expect(document.body.querySelector('[data-test="confirm-dialog"]')?.textContent).toContain('2')
+    ;(document.body.querySelector('[data-test="confirm-ok"]') as HTMLElement).click()
+    // The two DELETEs run sequentially (each its own macrotask round), so poll
+    // rather than assume a single flushPromises settles the whole run.
+    await vi.waitFor(() => expect(deleteCalls).toEqual(['a', 'b']))
+    await flushPromises()
+
+    // The failed id stays selected for retry (bulk-delete stays enabled)…
+    expect(wrapper.find('[data-test="bulk-delete"]').attributes('disabled')).toBeUndefined()
+    // …and the deleted recording's dirty draft is discarded, so no phantom
+    // "unsaved" state survives a deletion (its edits can never be committed).
+    expect(wrapper.find('[data-test="status-save"]').text()).toBe(savedText)
   })
 })

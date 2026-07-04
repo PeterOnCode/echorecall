@@ -65,16 +65,25 @@ const SELECT = `
          tag_title, tag_artist, tag_album, tag_genre, tag_comment, tag_recorded_at, tag_track, tags_extra
   FROM generations`
 
-// Allow-list mapping the public sort keys to real columns. Never interpolate a
-// user-supplied string into the SQL — only these fixed columns are reachable.
+// Paths are dated (`audio/YYYY/MM/DD/<slug>.<ext>`), so ordering by the raw `path`
+// would let the folder prefix dominate and degrade "sort by Filename" into
+// creation-date order (FR-014 wants the filename). This extracts the basename:
+// `rtrim(path, <path without '/'>)` strips characters from the right until the
+// last '/' (the only character not in the trim set), leaving the folder prefix,
+// which `replace` then removes. A path with no '/' trims to '' and `replace`
+// with an empty needle returns the path unchanged — i.e. already a basename.
+const PATH_BASENAME = `replace(path, rtrim(path, replace(path, '/', '')), '')`
+
+// Allow-list mapping the public sort keys to fixed column/expression SQL. Never
+// interpolate a user-supplied string — only these fixed snippets are reachable.
 const SORT_COLUMNS: Record<NonNullable<LibraryQuery['sort']>, string> = {
   createdAt: 'created_at',
   title: 'tag_title',
   voice: 'voice_id',
   format: 'format',
   // 006 · R-FILTER — additive sort keys over already-existing columns. "Filename"
-  // sorts by the stored name/path; "Year" + "Date" both sort by tag_recorded_at.
-  filename: 'path',
+  // sorts by the stored file's BASENAME; "Year" + "Date" both sort by tag_recorded_at.
+  filename: PATH_BASENAME,
   artist: 'tag_artist',
   album: 'tag_album',
   recordedAt: 'tag_recorded_at',

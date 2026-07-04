@@ -123,4 +123,31 @@ describe('useTagDrafts', () => {
     expect(res.ok).toBe(true)
     expect(update).not.toHaveBeenCalled()
   })
+
+  it('reseeds a CLEAN draft when the saved item changed underneath (e.g. bulk retag)', async () => {
+    const update = vi.fn(async () => ({ id: '1' }))
+    const { draftFor, isDirty, commit } = useTagDrafts({ update })
+    // Seed from the pre-bulk item; the draft stays clean (no user edit).
+    draftFor('1', item({ id: '1', metadata: { title: 'A', genre: 'Speech' } }))
+    // A bulk tag edit patches the saved item (genre → Jazz) outside the draft.
+    const patched = item({ id: '1', metadata: { title: 'A', genre: 'Jazz' } })
+    const reseeded = draftFor('1', patched)
+    // The clean buffer must mirror the saved values…
+    expect(reseeded.metadata.genre).toBe('Jazz')
+    expect(isDirty('1')).toBe(false)
+    // …so a later edit+Save carries them instead of reverting the bulk edit.
+    reseeded.metadata.title = 'A2'
+    await commit('1')
+    expect(update).toHaveBeenCalledWith('1', { metadata: { title: 'A2', genre: 'Jazz' } })
+  })
+
+  it('preserves a DIRTY draft (user edits win) when the saved item changes', () => {
+    const { draftFor, isDirty } = useTagDrafts({ update: vi.fn() })
+    const d = draftFor('1', item({ id: '1', metadata: { title: 'A', genre: 'Speech' } }))
+    d.metadata.title = 'A-edited'
+    const again = draftFor('1', item({ id: '1', metadata: { title: 'A', genre: 'Jazz' } }))
+    // Q4 auto-preserve: staged edits are never silently discarded.
+    expect(again.metadata.title).toBe('A-edited')
+    expect(isDirty('1')).toBe(true)
+  })
 })
