@@ -2,6 +2,48 @@
 
 All notable changes to EchoRecall are documented here.
 
+## v0.6.0 — July 4, 2026
+
+The Library, reimagined. The Library tab is now a desktop-style waveform
+tag-editor — a sortable, multi-select file table on the left, a full tag editor
+on the right, a filter bar across the top, and a waveform player and status bar
+along the bottom. Organize and retag your whole library without leaving the
+screen.
+
+### ✨ New Features
+
+- **Sortable, selectable file table**: Sort recordings by any column — filename,
+  title, artist, album, year, track, or genre — and select them with checkboxes
+  or by clicking a row. A Configure Columns dialog lets you show, hide, and
+  reorder columns (filename always stays visible).
+- **Library filter bar**: Narrow the entire library at once with a search-all box
+  plus filters for audio format, recording-date range, genre, and language.
+- **Full tag editor**: The inspector now edits the complete tag set — title,
+  artist, album, comment, date, track number, genre, language, name, and more —
+  with a Configure Visible Fields dialog to keep only the fields you use. Source
+  text and Encoded-By are shown for reference (read-only).
+- **Edits held safely until you save**: Your in-progress tag changes are kept per
+  recording, so you can switch between files and come back without losing
+  anything — nothing is written until you press Save.
+- **Bulk tag edit & delete**: Apply a tag change — or a delete — to many selected
+  recordings in a single action.
+- **Status bar**: A new footer shows save state, how many files are loaded, your
+  current selection, and encoding details (codec, bitrate, UTF-8).
+- **Voice preview**: A preview link on the Generate screen lets you hear a sample
+  of each voice before you choose one.
+
+### 🔧 Improvements
+
+- **Step through your whole library**: Previous/Next in the tag editor now moves
+  across every recording — even spanning pages of results — so you can retag in
+  sequence without returning to the table.
+- **Reliable saves**: Saving tags renames and retags the file in one atomic step
+  and reloads it, so the editor always matches the file on disk.
+- **Show or hide the inspector**: Collapse the tag editor to give the file table
+  the full width, and bring it back whenever you need it.
+
+---
+
 ## v0.5.0 — June 24, 2026
 
 The dashboard redesign. Generate and Library now share a single resizable
