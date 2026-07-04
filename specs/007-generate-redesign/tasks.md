@@ -24,7 +24,7 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 **Purpose**: Parallel-build entrypoint so the current Generate page (`/`) keeps working untouched (FR-001).
 
-- [ ] T001 Create the parallel Generate route shell `app/pages/generate-next.vue` rendering a page-intro placeholder only (no logic yet), reachable at `/generate-next`, using the app's `indigo` accent (FR-001/FR-021)
+- [X] T001 Create the parallel Generate route shell `app/pages/generate-next.vue` rendering a page-intro placeholder only (no logic yet), reachable at `/generate-next`, using the app's `indigo` accent (FR-001/FR-021)
 
 ---
 
@@ -32,8 +32,8 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 **Purpose**: The single-scrolling page skeleton that both the editor (US1) and the embedded workspace (US2) fill. MUST complete before US1/US2.
 
-- [ ] T002 [P] Red test `tests/component/generate-next.layout.spec.ts` asserting `generate-next.vue` renders the five stacked regions in order — page intro, editor region, action-bar region, embedded-workspace region, status-bar region (`data-test="generate-next"`) — as a single scrolling page with no resizable split (FR-003)
-- [ ] T003 Implement the single-scroll layout skeleton in `app/pages/generate-next.vue`: page intro + empty container regions (editor 3-col grid, action bar, embedded workspace, status bar), collapsing to one column on narrow viewports (FR-003) — makes T002 green
+- [X] T002 [P] Red test `tests/component/generate-next.layout.spec.ts` asserting `generate-next.vue` renders the five stacked regions in order — page intro, editor region, action-bar region, embedded-workspace region, status-bar region (`data-test="generate-next"`) — as a single scrolling page with no resizable split (FR-003)
+- [X] T003 Implement the single-scroll layout skeleton in `app/pages/generate-next.vue`: page intro + empty container regions (editor 3-col grid, action bar, embedded workspace, status bar), collapsing to one column on narrow viewports (FR-003) — makes T002 green
 
 **Checkpoint**: The parallel page renders its region skeleton; stories can now slot components in.
 
