@@ -15,6 +15,14 @@ interface ExtraTags {
   languages?: string[]
   customText?: { description: string; value: string }[]
   customUrl?: { description: string; url: string }[]
+  // 006 · R-TAGS — extra editable fields packed into the same JSON column (no new
+  // SQL column / migration). Existing rows without these keys read back empty.
+  notes?: string
+  encodedBy?: string
+  albumArtist?: string
+  composer?: string
+  bpm?: number
+  rating?: number
 }
 
 interface GenerationRow {
@@ -57,13 +65,31 @@ const SELECT = `
          tag_title, tag_artist, tag_album, tag_genre, tag_comment, tag_recorded_at, tag_track, tags_extra
   FROM generations`
 
-// Allow-list mapping the public sort keys to real columns. Never interpolate a
-// user-supplied string into the SQL — only these fixed columns are reachable.
+// Paths are dated (`audio/YYYY/MM/DD/<slug>.<ext>`), so ordering by the raw `path`
+// would let the folder prefix dominate and degrade "sort by Filename" into
+// creation-date order (FR-014 wants the filename). This extracts the basename:
+// `rtrim(path, <path without '/'>)` strips characters from the right until the
+// last '/' (the only character not in the trim set), leaving the folder prefix,
+// which `replace` then removes. A path with no '/' trims to '' and `replace`
+// with an empty needle returns the path unchanged — i.e. already a basename.
+const PATH_BASENAME = `replace(path, rtrim(path, replace(path, '/', '')), '')`
+
+// Allow-list mapping the public sort keys to fixed column/expression SQL. Never
+// interpolate a user-supplied string — only these fixed snippets are reachable.
 const SORT_COLUMNS: Record<NonNullable<LibraryQuery['sort']>, string> = {
   createdAt: 'created_at',
   title: 'tag_title',
   voice: 'voice_id',
   format: 'format',
+  // 006 · R-FILTER — additive sort keys over already-existing columns. "Filename"
+  // sorts by the stored file's BASENAME; "Year" + "Date" both sort by tag_recorded_at.
+  filename: PATH_BASENAME,
+  artist: 'tag_artist',
+  album: 'tag_album',
+  recordedAt: 'tag_recorded_at',
+  track: 'tag_track',
+  genre: 'tag_genre',
+  comment: 'tag_comment',
 }
 
 // The columns the free-text `q` searches: source text, the stored filename
@@ -115,6 +141,31 @@ function buildWhere(query: LibraryQuery): { clause: string; params: Record<strin
   if (query.to) {
     params.to = query.to
     conditions.push('created_at <= @to')
+  }
+  // 006 · R-FILTER — additive, read-only filters over already-existing columns.
+  if (query.genre) {
+    params.genre = query.genre
+    conditions.push('tag_genre = @genre')
+  }
+  if (query.language) {
+    // `languages` is a JSON array inside tags_extra; match a single code precisely
+    // via JSON1's json_each (avoids false positives a bare LIKE would hit). A null
+    // or absent tags_extra yields no rows from json_each → the row is excluded.
+    params.language = query.language
+    conditions.push(
+      `EXISTS (SELECT 1 FROM json_each(json_extract(tags_extra, '$.languages')) WHERE value = @language)`,
+    )
+  }
+  // Recording date targets `tag_recorded_at` (the tag the user sets) — distinct from
+  // the `from`/`to` above which target `created_at` (generation time). Rows with a
+  // null recordedAt are excluded once either bound is set.
+  if (query.recordedFrom) {
+    params.recordedFrom = query.recordedFrom
+    conditions.push('tag_recorded_at IS NOT NULL AND tag_recorded_at >= @recordedFrom')
+  }
+  if (query.recordedTo) {
+    params.recordedTo = query.recordedTo
+    conditions.push('tag_recorded_at IS NOT NULL AND tag_recorded_at <= @recordedTo')
   }
 
   return { clause: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params }
@@ -327,6 +378,13 @@ function serializeExtra(metadata: Metadata): string | null {
   if (metadata.languages?.length) extra.languages = metadata.languages
   if (metadata.customText?.length) extra.customText = metadata.customText
   if (metadata.customUrl?.length) extra.customUrl = metadata.customUrl
+  // 006 · R-TAGS — pack the extra editable fields into the same JSON blob.
+  if (metadata.notes) extra.notes = metadata.notes
+  if (metadata.encodedBy) extra.encodedBy = metadata.encodedBy
+  if (metadata.albumArtist) extra.albumArtist = metadata.albumArtist
+  if (metadata.composer) extra.composer = metadata.composer
+  if (typeof metadata.bpm === 'number') extra.bpm = metadata.bpm
+  if (typeof metadata.rating === 'number') extra.rating = metadata.rating
   return Object.keys(extra).length > 0 ? JSON.stringify(extra) : null
 }
 
@@ -345,6 +403,13 @@ function rowToGeneration(row: GenerationRow): Generation {
       if (extra.languages?.length) metadata.languages = extra.languages
       if (extra.customText?.length) metadata.customText = extra.customText
       if (extra.customUrl?.length) metadata.customUrl = extra.customUrl
+      // 006 · R-TAGS — hydrate the extra editable fields (absent on legacy rows).
+      if (typeof extra.notes === 'string') metadata.notes = extra.notes
+      if (typeof extra.encodedBy === 'string') metadata.encodedBy = extra.encodedBy
+      if (typeof extra.albumArtist === 'string') metadata.albumArtist = extra.albumArtist
+      if (typeof extra.composer === 'string') metadata.composer = extra.composer
+      if (typeof extra.bpm === 'number') metadata.bpm = extra.bpm
+      if (typeof extra.rating === 'number') metadata.rating = extra.rating
     } catch (err) {
       // Degrade gracefully: a corrupt tags_extra payload must not break listing.
       console.error(`[sqlite-repository] malformed tags_extra for row ${row.id}`, err)

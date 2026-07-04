@@ -9,6 +9,7 @@
   "generate": {
     "form": {
       "voice": "Hang",
+      "voiceLink": "OpenAI.fm hangelőnézet megnyitása",
       "model": "Modell",
       "format": "Formátum",
       "speed": "Sebesség",
@@ -145,14 +146,30 @@
     "filters": {
       "voice": "Hang",
       "format": "Formátum",
+      "genre": "Műfaj",
+      "language": "Nyelv",
       "allVoices": "Minden hang",
       "allFormats": "Minden formátum",
+      "allGenres": "Minden műfaj",
+      "allLanguages": "Minden nyelv",
       "dateRange": "Dátumtartomány",
+      "recordedRange": "Felvétel dátuma",
       "anyDate": "Bármely dátum",
       "clearDates": "Törlés"
     },
     "columns": {
       "name": "Fájlnév",
+      "title": "Cím",
+      "artist": "Előadó",
+      "album": "Album",
+      "year": "Év",
+      "track": "Sorszám",
+      "genre": "Műfaj",
+      "comment": "Megjegyzés",
+      "date": "Dátum",
+      "composer": "Zeneszerző",
+      "duration": "Hossz",
+      "bitrate": "Bitráta",
       "voice": "Hang",
       "format": "Formátum",
       "created": "Létrehozva",
@@ -198,6 +215,69 @@
       "next": "Következő felvétel",
       "empty": "Válassz egy felvételt a címkéi szerkesztéséhez."
     },
+    "toggleInspector": "Szerkesztő ki/be",
+    "selectAll": "Összes kijelölése",
+    "selectRow": "Sor kijelölése",
+    "columnsDialog": {
+      "title": "Oszlopok beállítása",
+      "open": "Oszlopok beállítása",
+      "moveUp": "Mozgatás felfelé",
+      "moveDown": "Mozgatás lefelé",
+      "reset": "Alapértelmezés visszaállítása",
+      "cancel": "Mégse",
+      "apply": "Alkalmaz"
+    },
+    "bulkActions": {
+      "delete": "Törlés",
+      "edit": "Címkék szerkesztése…",
+      "confirmTitle": "Törlöd a kijelölt felvételeket?",
+      "confirmMessage": "Ez véglegesen eltávolít {count} felvételt és a hangjukat. Ez nem vonható vissza."
+    },
+    "bulkTagEdit": {
+      "title": "Tömeges címkeszerkesztés",
+      "count": "Alkalmazás {count} kijelölt felvételre.",
+      "field": "Mező",
+      "value": "Érték",
+      "result": "{succeeded} frissítve, {failed} sikertelen.",
+      "apply": "Alkalmaz",
+      "cancel": "Mégse"
+    },
+    "inspector": {
+      "prev": "Előző",
+      "next": "Következő",
+      "play": "Hang lejátszása",
+      "save": "Mentés",
+      "configureFields": "Látható mezők beállítása",
+      "dirty": "Nem mentett változások",
+      "empty": "Válassz egy felvételt a címkéi szerkesztéséhez.",
+      "fields": {
+        "name": "Név",
+        "sourceText": "Forrás szöveg",
+        "title": "Cím",
+        "artist": "Előadó",
+        "album": "Album",
+        "genre": "Műfaj",
+        "comment": "Megjegyzés",
+        "date": "Dátum",
+        "track": "Sorszám",
+        "language": "Nyelv",
+        "albumArtist": "Album előadó",
+        "composer": "Zeneszerző",
+        "encodedBy": "Kódoló",
+        "notes": "Jegyzet",
+        "bpm": "BPM",
+        "rating": "Értékelés"
+      }
+    },
+    "inspectorFields": {
+      "title": "Látható mezők beállítása",
+      "open": "Látható mezők beállítása",
+      "moveUp": "Mozgatás felfelé",
+      "moveDown": "Mozgatás lefelé",
+      "reset": "Alapértelmezés visszaállítása",
+      "cancel": "Mégse",
+      "apply": "Alkalmaz"
+    },
     "waveform": {
       "region": "Hullámforma lejátszó",
       "play": "Lejátszás",
@@ -206,6 +286,13 @@
       "addRegion": "Ciklusszakasz hozzáadása",
       "loop": "Szakasz ismétlése",
       "unavailable": "A felvételhez nem érhető el hang."
+    },
+    "status": {
+      "saved": "Minden módosítás mentve",
+      "unsaved": "Nem mentett módosítások ({count})",
+      "files": "{count} fájl betöltve",
+      "selection": "Kijelölve: {name}",
+      "noSelection": "Nincs kijelölés"
     }
   },
   "settings": {

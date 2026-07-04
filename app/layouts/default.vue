@@ -23,7 +23,7 @@ const active = computed({
   <div class="min-h-screen">
     <AppHeader />
     <UMain>
-      <UContainer class="py-6">
+      <UContainer class="max-w-none py-6">
         <UTabs v-model="active" :items="tabs" :content="false" class="mb-6" />
         <slot />
       </UContainer>

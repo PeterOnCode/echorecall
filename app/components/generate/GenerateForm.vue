@@ -22,14 +22,25 @@ const formatItems = FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() }
   <div class="flex flex-col gap-3">
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <UFormField :label="t('generate.form.voice')">
-        <USelectMenu
-          v-model="voiceId"
-          data-test="voice"
-          value-key="id"
-          label-key="label"
-          :items="voices"
-          class="w-full"
-        />
+        <div class="flex gap-2">
+          <USelectMenu
+            v-model="voiceId"
+            data-test="voice"
+            value-key="id"
+            label-key="label"
+            :items="voices"
+            class="min-w-0 flex-1"
+          />
+          <UButton
+            to="https://www.openai.fm/"
+            target="_blank"
+            rel="noopener noreferrer"
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-external-link"
+            :aria-label="t('generate.form.voiceLink')"
+          />
+        </div>
       </UFormField>
       <UFormField :label="t('generate.form.model')">
         <USelectMenu v-model="model" data-test="model" :items="modelItems" class="w-full" />

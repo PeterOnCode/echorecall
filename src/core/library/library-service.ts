@@ -1,6 +1,7 @@
 import type { Readable } from 'node:stream'
 import { ZipArchive } from 'archiver'
-import type { Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
+import type { AudioProperties, Format, Generation, LibraryQuery, Metadata, Model } from '../shared/types'
+import type { AudioPropertiesReader } from './audio-properties'
 import { newId } from '../shared/ids'
 import { DomainError, InvalidFilenameError, NotFoundError } from '../shared/errors'
 import { formatInfo } from '../tts/provider'
@@ -49,7 +50,42 @@ export class LibraryService {
      * absent (e.g. plain unit tests), audio is stored untagged.
      */
     private readonly tagger?: AudioTagger,
+    /**
+     * Optional read-only audio-properties reader (006 · R-AUDIOPROPS). When
+     * present, {@link audioPropertiesFor} decodes codec/bitrate/sampleRate/duration
+     * from the stored file on demand; absent (plain tests) → empty properties.
+     */
+    private readonly audioProps?: AudioPropertiesReader,
   ) {}
+
+  /**
+   * Memoized audio properties keyed by generation id. A recording's audio STREAM is
+   * immutable (retagging rewrites only metadata frames), so a decoded result stays
+   * valid for the life of the process — sparing a disk read + WASM decode for every
+   * row of every list request (R-AUDIOPROPS). Only successful reads are cached, so a
+   * temporarily missing/unreadable file is retried on a later request.
+   */
+  private readonly audioPropsCache = new Map<string, AudioProperties>()
+
+  /**
+   * 006 · R-AUDIOPROPS — read-only audio properties for a row, computed on read
+   * from its stored file. Returns an empty object when no reader is configured or
+   * the file is missing/unreadable (never throws — a single bad file must not break
+   * listing). Nothing is persisted.
+   */
+  async audioPropertiesFor(generation: Generation): Promise<AudioProperties> {
+    if (!this.audioProps) return {}
+    const cached = this.audioPropsCache.get(generation.id)
+    if (cached) return cached
+    try {
+      if (!(await this.audio.existsAt(generation.path))) return {}
+      const props = await this.audioProps(await this.audio.readAt(generation.path))
+      this.audioPropsCache.set(generation.id, props)
+      return props
+    } catch {
+      return {}
+    }
+  }
 
   /**
    * Persist a successful generation. The (already-tagged in US2) audio is written
@@ -233,6 +269,23 @@ export class LibraryService {
 
     this.repo.update(id, { metadata })
     return this.get(id)
+  }
+
+  /**
+   * Atomic combined edit (the PATCH composition): rename and/or retag in one call
+   * without a partial-success window. The filename is validated up front (an
+   * un-sluggable name rejects before any mutation), then metadata is retagged BEFORE
+   * the rename — {@link updateMetadata} tags in memory and throws before writing, so a
+   * tagging failure leaves the file, its name, and the persisted tags all untouched
+   * (vs. rename-first, which would commit the rename and then fail the retag). Returns
+   * the entry with its final filename + tag set.
+   */
+  async update(id: string, patch: { filename?: string; metadata?: Metadata }): Promise<Generation> {
+    let updated = this.get(id) // 404 if missing
+    if (patch.filename !== undefined && !slugify(patch.filename)) throw new InvalidFilenameError()
+    if (patch.metadata !== undefined) updated = await this.updateMetadata(id, patch.metadata)
+    if (patch.filename !== undefined) updated = await this.rename(id, patch.filename)
+    return updated
   }
 
   /** Permanently delete an entry and its audio. */
