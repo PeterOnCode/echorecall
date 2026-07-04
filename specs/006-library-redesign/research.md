@@ -127,7 +127,7 @@ sessions; the spec only requires preserve-within-session.
 | Album Artist | `metadata.albumArtist` → `tags_extra` (TPE2) | **R-TAGS** |
 | Composer | `metadata.composer` → `tags_extra` (TCOM) | **R-TAGS** |
 | BPM | `metadata.bpm` → `tags_extra` (TBPM) | **R-TAGS** |
-| Rating | `metadata.rating` → `tags_extra` (POPM) | **R-TAGS** |
+| Rating | `metadata.rating` → `tags_extra` only (no POPM frame — taglib-wasm property-map limitation) | **R-TAGS** |
 
 All fields are **editable** (the earlier read-only Text/notes + Encoded-By decision is superseded —
 the design renders both as inputs, e.g. Encoded-By = "kid3"). `Configure Visible Fields`
@@ -233,9 +233,11 @@ extending the tag model + taglib mapping in the **core**, persisting them in the
 
 - `Metadata` (`src/core/shared/types.ts`) gains optional `notes?`, `encodedBy?`, `albumArtist?`,
   `composer?`, `bpm?`, `rating?` (serialized into `tags_extra`, not new SQL columns).
-- The taglib write/read mapping writes each as its **native ID3 frame** (TENC/TPE2/TCOM/TBPM/POPM;
+- The taglib write/read mapping writes each as its **native ID3 frame** (TENC/TPE2/TCOM/TBPM;
   notes via a `customText` entry) in the audio file **and** mirrors it in the `tags_extra` JSON for
-  the SQLite row. Formats: BPM = integer; **Rating = 0–5 stars → POPM 0–255**; others free text.
+  the SQLite row — except **Rating, which is `tags_extra`-only** (taglib-wasm's property map cannot
+  write POPM; the 0–5 ↔ POPM byte mapping stays in the core for future file-level sync). Formats:
+  BPM = integer; **Rating = 0–5 stars**; others free text.
 - The retag route (`generations/[id].patch.ts`) accepts the extra fields in the metadata patch.
 
 **No SQL column, no migration.** Existing rows without these keys read back empty.

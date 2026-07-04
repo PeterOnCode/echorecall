@@ -16,11 +16,14 @@ preferences, the inspector field set, the staged-edit (dirty) buffer, and the ta
 ### `Metadata` (`src/core/shared/types.ts`) — extended for R-TAGS
 Existing dedicated fields (unchanged): `title?`, `artist?`, `album?`, `genre?`, `comment?`,
 `recordedAt?`, `track?`, `languages?: string[]`, `customText?`, `customUrl?`. **NEW (R-TAGS,
-serialized into the existing `tags_extra` JSON — no SQL column):** `notes?` (Text/notes, via a
+serialized into the existing `tags_extra` JSON — no SQL column):** `notes?` (via a
 `customText` value), `encodedBy?`, `albumArtist?`, `composer?`, `bpm?` (integer), `rating?` (0–5
-stars → ID3 POPM). The inspector edits this shape via the existing rename+retag PATCH; the taglib
-mapping writes each as its native ID3 frame (TENC/TPE2/TCOM/TBPM/POPM; notes via `customText`) **and**
-mirrors it in the SQLite `tags_extra` JSON — no new SQL column.
+stars). The inspector edits this shape via the existing rename+retag PATCH; the taglib
+mapping writes each as its native ID3 frame (TENC/TPE2/TCOM/TBPM; notes via `customText`) **and**
+mirrors it in the SQLite `tags_extra` JSON — no new SQL column. **Exception: `rating` is
+`tags_extra`-only** — taglib-wasm's property-map write path has no POPM support, so no frame is
+embedded; the 0–5 ↔ POPM 0–255 mapping (`src/core/tagging/rating.ts`) is kept in the core for
+future import/file-sync features.
 
 ### `AudioProperties` (NEW, R-AUDIOPROPS) — read-only, computed on read
 `{ codec?: string; bitrate?: number; sampleRate?: number; duration?: number }` — read server-side

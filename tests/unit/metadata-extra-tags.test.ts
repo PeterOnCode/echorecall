@@ -134,4 +134,13 @@ describe('R-TAGS — Rating 0–5 ↔ POPM 0–255', () => {
     expect(popmToRating(300)).toBe(5)
     expect(popmToRating(-5)).toBe(0)
   })
+
+  it('treats non-finite input as unrated (0), never max', () => {
+    // NaN fails every < comparison, so without a guard it falls through to 5 —
+    // a malformed POPM frame must read as "no rating", not five stars.
+    expect(popmToRating(Number.NaN)).toBe(0)
+    expect(popmToRating(Number.POSITIVE_INFINITY)).toBe(5) // clamps like any huge byte
+    expect(popmToRating(Number.NEGATIVE_INFINITY)).toBe(0)
+    expect(ratingToPopm(Number.NaN)).toBe(0)
+  })
 })
