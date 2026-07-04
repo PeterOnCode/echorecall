@@ -357,5 +357,40 @@
       "close": "Bezárás",
       "open": "Beállítások"
     }
+  },
+  "generateNext": {
+    "intro": {
+      "title": "Generálás",
+      "subtitle": "Készíts felvételeket szövegből — állíts össze egy sort, majd generálj."
+    },
+    "script": {
+      "title": "Szöveg",
+      "badge": "Szöveg",
+      "placeholder": "Add meg a felolvasandó szöveget…",
+      "clear": "Törlés",
+      "add": "Hozzáadás a sorhoz",
+      "empty": "Előbb adj meg szöveget.",
+      "tooLong": "Ez a szöveg túl hosszú."
+    },
+    "settings": {
+      "voice": "Hang",
+      "model": "Modell",
+      "format": "Formátum",
+      "speed": "Sebesség"
+    },
+    "actionBar": {
+      "summary": "A sorban",
+      "saveQueue": "Sor mentése",
+      "loadQueue": "Sor betöltése",
+      "uploadTxt": ".txt feltöltése",
+      "generate": "Generálás"
+    },
+    "queue": {
+      "empty": "A sor üres. Adj hozzá egy szöveget a kezdéshez.",
+      "remove": "Elem eltávolítása"
+    },
+    "upload": {
+      "tooLarge": "Ez a fájl túl nagy."
+    }
   }
 }

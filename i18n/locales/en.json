@@ -357,5 +357,40 @@
       "close": "Close",
       "open": "Settings"
     }
+  },
+  "generateNext": {
+    "intro": {
+      "title": "Generate",
+      "subtitle": "Create recordings from text — build a queue, then generate."
+    },
+    "script": {
+      "title": "Script",
+      "badge": "Text",
+      "placeholder": "Enter the text to synthesize…",
+      "clear": "Clear",
+      "add": "Add to queue",
+      "empty": "Enter some text first.",
+      "tooLong": "This text is too long."
+    },
+    "settings": {
+      "voice": "Voice",
+      "model": "Model",
+      "format": "Format",
+      "speed": "Speed"
+    },
+    "actionBar": {
+      "summary": "In queue",
+      "saveQueue": "Save queue",
+      "loadQueue": "Load queue",
+      "uploadTxt": "Upload .txt",
+      "generate": "Generate"
+    },
+    "queue": {
+      "empty": "The queue is empty. Add a script to get started.",
+      "remove": "Remove item"
+    },
+    "upload": {
+      "tooLarge": "That file is too large."
+    }
   }
 }

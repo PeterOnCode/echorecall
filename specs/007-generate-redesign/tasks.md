@@ -47,20 +47,20 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US1
 
-- [ ] T004 [P] [US1] Component spec `tests/component/ScriptEntryPanel.spec.ts`: textarea + character hint vs `MAX_INPUT_LENGTH`, Clear empties text (queue untouched), Add emits, blank text is blocked (`data-test` `script-panel`/`add-text-input`/`add-text-submit`/`script-clear`/`script-charcount`)
-- [ ] T005 [P] [US1] Component spec `tests/component/GenerationSettingsPanel.spec.ts`: Voice/Model/Format selects over `VOICES`/`MODELS`/`FORMATS`, numeric Speed clamped to [0.25,4.0] (`data-test` `voice`/`model`/`format`/`speed`) — resolution/reset deferred to US3
-- [ ] T006 [P] [US1] Component spec `tests/component/GenerationActionBar.spec.ts`: count badge matches queue size, Save/Load/Upload/Generate emits, Generate disabled when the queue is empty (`data-test` `action-bar`/`action-generate`/`action-save-queue`/`action-load-queue`/`action-upload-txt`/`queue-count-badge`)
-- [ ] T007 [P] [US1] Component spec `tests/component/QueuePanel.spec.ts`: renders pending rows (text preview + status), remove emits, empty state (`data-test` `queue-panel`/`queue-row`/`queue-row-status`/`queue-empty`/`remove-item`)
-- [ ] T008 [US1] Integration spec `tests/integration/generate-next.editor.spec.ts`: Add increments the badge; Clear leaves the queue; Save→Load round-trips via `useQueueFile`; Upload .txt appends parsed rows via `addFromUpload` (`queue-file-input`)
+- [X] T004 [P] [US1] Component spec `tests/component/ScriptEntryPanel.spec.ts`: textarea + character hint vs `MAX_INPUT_LENGTH`, Clear empties text (queue untouched), Add emits, blank text is blocked (`data-test` `script-panel`/`add-text-input`/`add-text-submit`/`script-clear`/`script-charcount`)
+- [X] T005 [P] [US1] Component spec `tests/component/GenerationSettingsPanel.spec.ts`: Voice/Model/Format selects over `VOICES`/`MODELS`/`FORMATS`, numeric Speed clamped to [0.25,4.0] (`data-test` `voice`/`model`/`format`/`speed`) — resolution/reset deferred to US3
+- [X] T006 [P] [US1] Component spec `tests/component/GenerationActionBar.spec.ts`: count badge matches queue size, Save/Load/Upload/Generate emits, Generate disabled when the queue is empty (`data-test` `action-bar`/`action-generate`/`action-save-queue`/`action-load-queue`/`action-upload-txt`/`queue-count-badge`)
+- [X] T007 [P] [US1] Component spec `tests/component/QueuePanel.spec.ts`: renders pending rows (text preview + status), remove emits, empty state (`data-test` `queue-panel`/`queue-row`/`queue-row-status`/`queue-empty`/`remove-item`)
+- [X] T008 [US1] Integration spec `tests/integration/generate-next.editor.spec.ts`: Add increments the badge; Clear leaves the queue; Save→Load round-trips via `useQueueFile`; Upload .txt appends parsed rows via `addFromUpload` (`queue-file-input`)
 
 ### Implementation for US1
 
-- [ ] T009 [P] [US1] Create `app/components/generate/ScriptEntryPanel.vue` (fork `AddTextPanel.vue`): title+badge, textarea, char hint, Clear, Add to queue — makes T004 green
-- [ ] T010 [P] [US1] Create `app/components/generate/GenerationSettingsPanel.vue` (fork `GenerateForm.vue`): Voice/Model/Format `USelectMenu` + numeric Speed; values via `v-model` (resolution stubbed to fallback for now) — makes T005 green
-- [ ] T011 [P] [US1] Create `app/components/generate/GenerationActionBar.vue` (fork `GenerateToolbar.vue`): queue summary + count badge + Save queue / Load queue / Upload .txt batch / Generate — makes T006 green
-- [ ] T012 [P] [US1] Create `app/components/generate/QueuePanel.vue` (replaces `QueueList.vue`): compact pending-item list with text preview + status + remove — makes T007 green
-- [ ] T013 [US1] Wire the editor into `app/pages/generate-next.vue`: three columns (ScriptEntryPanel, GenerationSettingsPanel, reused `MetadataFields.vue`) + GenerationActionBar + QueuePanel, backed by `useQueue` + `useGeneration.generateAll` + `useQueueFile`; Upload .txt calls `useQueue.addFromUpload`; Save/Load use `serialize`/`loadDocument` — makes T008 green (FR-003/FR-004/FR-005/FR-006/FR-007)
-- [ ] T014 [P] [US1] Add en/hu i18n keys for the page intro, script panel, generation-settings labels, metadata labels reused, and action-bar labels in `i18n/locales/en.json` + `i18n/locales/hu.json` (parity, FR-022)
+- [X] T009 [P] [US1] Create `app/components/generate/ScriptEntryPanel.vue` (fork `AddTextPanel.vue`): title+badge, textarea, char hint, Clear, Add to queue — makes T004 green
+- [X] T010 [P] [US1] Create `app/components/generate/GenerationSettingsPanel.vue` (fork `GenerateForm.vue`): Voice/Model/Format `USelectMenu` + numeric Speed; values via `v-model` (resolution stubbed to fallback for now) — makes T005 green
+- [X] T011 [P] [US1] Create `app/components/generate/GenerationActionBar.vue` (fork `GenerateToolbar.vue`): queue summary + count badge + Save queue / Load queue / Upload .txt batch / Generate — makes T006 green
+- [X] T012 [P] [US1] Create `app/components/generate/QueuePanel.vue` (replaces `QueueList.vue`): compact pending-item list with text preview + status + remove — makes T007 green
+- [X] T013 [US1] Wire the editor into `app/pages/generate-next.vue`: three columns (ScriptEntryPanel, GenerationSettingsPanel, reused `MetadataFields.vue`) + GenerationActionBar + QueuePanel, backed by `useQueue` + `useGeneration.generateAll` + `useQueueFile`; Upload .txt calls `useQueue.addFromUpload`; Save/Load use `serialize`/`loadDocument` — makes T008 green (FR-003/FR-004/FR-005/FR-006/FR-007)
+- [X] T014 [P] [US1] Add en/hu i18n keys for the page intro, script panel, generation-settings labels, metadata labels reused, and action-bar labels in `i18n/locales/en.json` + `i18n/locales/hu.json` (parity, FR-022)
 
 **Checkpoint**: US1 is independently demoable — build a queue and Generate (using the existing generation loop) entirely on `/generate-next`. **This is the MVP.**
 

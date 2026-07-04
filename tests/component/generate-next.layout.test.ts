@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import GenerateNextPage from '~/pages/generate-next.vue'
+
+// The page loads voices + default tags on mount (best-effort); mock both so the
+// layout assertions run against a clean, deterministic render.
+registerEndpoint('/api/voices', () => ({ voices: [{ id: 'alloy', label: 'Alloy' }] }))
+registerEndpoint('/api/settings/defaults', () => ({ defaultTags: {} }))
 
 // 007 · Foundational (T002 / FR-003): the redesigned Generate surface is a single
 // vertically-scrolling page with five stacked regions in order — page intro, the
