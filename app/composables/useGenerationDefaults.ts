@@ -1,13 +1,12 @@
 /**
- * The configured Voice/Model/Format/Speed defaults, mirrored client-side. Structurally
- * matches the server's `GenerationDefaults`; kept local so this browser composable never
- * imports the server core barrel. An unset field means "no configured default".
+ * The configured Voice/Model/Format defaults, mirrored client-side. Structurally matches
+ * the server's `GenerationDefaults`; kept local so this browser composable never imports
+ * the server core barrel. An unset field means "no configured default".
  */
 export interface GenerationDefaults {
   voiceId?: string
   model?: string
   format?: string
-  speed?: number
 }
 
 /** Editable form state for the generation-defaults Settings section (all strings; '' = unset). */
@@ -15,14 +14,12 @@ export interface GenerationDefaultsForm {
   voiceId: string
   model: string
   format: string
-  /** Free-text; parsed to a number on save (blank = no speed default). */
-  speed: string
 }
 
-export type GenerationDefaultField = 'voiceId' | 'model' | 'format' | 'speed'
+export type GenerationDefaultField = 'voiceId' | 'model' | 'format'
 
 function emptyForm(): GenerationDefaultsForm {
-  return { voiceId: '', model: '', format: '', speed: '' }
+  return { voiceId: '', model: '', format: '' }
 }
 
 /** Map the saved defaults into the string-based form. */
@@ -31,7 +28,6 @@ function toForm(d: GenerationDefaults): GenerationDefaultsForm {
     voiceId: d.voiceId ?? '',
     model: d.model ?? '',
     format: d.format ?? '',
-    speed: typeof d.speed === 'number' ? String(d.speed) : '',
   }
 }
 
@@ -76,7 +72,6 @@ export function useGenerationDefaults() {
     saving.value = true
     error.value = null
     try {
-      const speed = values.speed.trim()
       const { generationDefaults } = await $fetch<{ generationDefaults: GenerationDefaults }>(
         '/api/settings/generation-defaults',
         {
@@ -85,7 +80,6 @@ export function useGenerationDefaults() {
             voiceId: values.voiceId || undefined,
             model: values.model || undefined,
             format: values.format || undefined,
-            speed: speed ? Number(speed) : undefined,
           },
         },
       )

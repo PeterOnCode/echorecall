@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { FORMATS, MODELS, type Format, type Model, type Voice } from '#core/client'
 
-// 007 · US1/US3 (FR-005/FR-013): the Generation settings column — Voice / Model / Format /
-// Speed over the existing catalogs, controlled via v-model. Forks the 005 GenerateForm as a
-// vertical editor column (no external voice-preview link). Each control has a per-field reset
-// that asks the page to restore that field to its configured default (resolution: last-
-// selected → configured default → built-in fallback is owned by the page, US3).
-type GenSettingField = 'voiceId' | 'model' | 'format' | 'speed'
+// 007 · US1/US3 (FR-005/FR-013): the Generation settings column — Voice / Model / Format
+// over the existing catalogs, controlled via v-model. Forks the 005 GenerateForm as a
+// vertical editor column (no external voice-preview link). Speed is intentionally not
+// exposed: synthesis always runs at 1× (the page pins it), so there is no control for it.
+// Each control has a per-field reset that asks the page to restore that field to its
+// configured default (resolution: last-selected → configured default → built-in fallback
+// is owned by the page, US3).
+type GenSettingField = 'voiceId' | 'model' | 'format'
 
 defineProps<{ voices: Voice[] }>()
 const voiceId = defineModel<string>('voiceId', { required: true })
 const model = defineModel<Model>('model', { required: true })
 const format = defineModel<Format>('format', { required: true })
-const speed = defineModel<number>('speed', { required: true })
 const emit = defineEmits<{ reset: [field: GenSettingField] }>()
 const { t } = useI18n()
 
@@ -77,20 +78,6 @@ const formatItems = FORMATS.map((f) => ({ id: f.id, label: f.ext.toUpperCase() }
         variant="ghost"
         :aria-label="t('generateNext.settings.reset', { field: t('generateNext.settings.format') })"
         @click="emit('reset', 'format')"
-      />
-    </div>
-
-    <div class="flex items-end gap-2">
-      <UFormField :label="t('generateNext.settings.speed')" class="flex-1">
-        <UInputNumber v-model="speed" data-test="speed" :min="0.25" :max="4" :step="0.05" class="w-full" />
-      </UFormField>
-      <UButton
-        data-test="gen-reset-speed"
-        icon="i-lucide-rotate-ccw"
-        color="neutral"
-        variant="ghost"
-        :aria-label="t('generateNext.settings.reset', { field: t('generateNext.settings.speed') })"
-        @click="emit('reset', 'speed')"
       />
     </div>
   </div>

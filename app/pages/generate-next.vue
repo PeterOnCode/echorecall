@@ -37,13 +37,15 @@ const { exportQueue, importQueue } = useQueueFile()
 const { genSettings, setGenSetting, resetGenSetting } = useViewPreferences()
 const { t } = useI18n()
 
-// 007 · US3 (G-DEFAULTS, FR-012/FR-013). Each of Voice/Model/Format/Speed resolves as
+// 007 · US3 (G-DEFAULTS, FR-012/FR-013). Each of Voice/Model/Format resolves as
 // last-selected (client, `genSettings`) → configured default (server) → built-in fallback.
 // The configured half is fetched once on mount; the last-selected half persists on every
 // user change (guarded by `settingsReady` so the initial resolution isn't mistaken for a
 // user pick). A per-field reset forgets the last-selected value and restores the configured
-// default (or the built-in fallback when none is configured).
-type ConfiguredDefaults = { voiceId?: string; model?: string; format?: string; speed?: number }
+// default (or the built-in fallback when none is configured). Speed is not resolved here:
+// synthesis always runs at 1× (`speed` stays the queue's fixed default), so it has no
+// UI control and no defaults resolution.
+type ConfiguredDefaults = { voiceId?: string; model?: string; format?: string }
 const configuredDefaults = ref<ConfiguredDefaults>({})
 const settingsReady = ref(false)
 
@@ -55,24 +57,21 @@ function resolveSettings() {
   voiceId.value = ls.voiceId ?? cd.voiceId ?? fallbackVoice()
   model.value = (ls.model ?? cd.model ?? 'gpt-4o-mini-tts') as Model
   format.value = (ls.format ?? cd.format ?? 'mp3') as Format
-  speed.value = ls.speed ?? cd.speed ?? 1
 }
 
 watch(voiceId, (v) => { if (settingsReady.value) setGenSetting('voiceId', v) })
 watch(model, (v) => { if (settingsReady.value) setGenSetting('model', v) })
 watch(format, (v) => { if (settingsReady.value) setGenSetting('format', v) })
-watch(speed, (v) => { if (settingsReady.value) setGenSetting('speed', v) })
 
 /** Per-field reset (FR-013): forget the last-selected value, restore the configured default. */
-async function onResetSetting(field: 'voiceId' | 'model' | 'format' | 'speed') {
+async function onResetSetting(field: 'voiceId' | 'model' | 'format') {
   resetGenSetting(field)
   // Suppress the change-watcher so restoring the default isn't re-saved as last-selected.
   settingsReady.value = false
   const cd = configuredDefaults.value
   if (field === 'voiceId') voiceId.value = cd.voiceId ?? fallbackVoice()
   else if (field === 'model') model.value = (cd.model ?? 'gpt-4o-mini-tts') as Model
-  else if (field === 'format') format.value = (cd.format ?? 'mp3') as Format
-  else speed.value = cd.speed ?? 1
+  else format.value = (cd.format ?? 'mp3') as Format
   await nextTick()
   settingsReady.value = true
 }
@@ -213,7 +212,6 @@ async function onTxtFileChosen(event: Event) {
           v-model:voice-id="voiceId"
           v-model:model="model"
           v-model:format="format"
-          v-model:speed="speed"
           :voices="voices"
           @reset="onResetSetting"
         />

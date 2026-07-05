@@ -4,10 +4,10 @@ import { useViewPreferences } from '../../app/composables/useViewPreferences'
 
 // 007 · US3 (T020 / G-DEFAULTS, FR-011/012/013) — the per-device "last-selected"
 // generation settings added to useViewPreferences under key
-// `echorecall:viewprefs:genSettings`. A partial `{ voiceId?, model?, format?, speed? }`
-// persisted to localStorage so the editor can restore the user's last picks, with a
-// per-field setter and a per-field reset (reset drops the field so it falls back to the
-// configured default). Reads keep only well-typed known fields; SSR-safe fallback to {}.
+// `echorecall:viewprefs:genSettings`. A partial `{ voiceId?, model?, format? }` persisted
+// to localStorage so the editor can restore the user's last picks, with a per-field setter
+// and a per-field reset (reset drops the field so it falls back to the configured default).
+// Reads keep only well-typed known fields; SSR-safe fallback to {}. Speed is not remembered.
 // Node-env unit test: shim the Vue reactivity auto-imports + in-memory localStorage.
 
 const g = globalThis as unknown as Record<string, unknown>
@@ -48,13 +48,13 @@ describe('useViewPreferences — genSettings last-selected', () => {
   it('persists a per-field last-selected value and re-reads it on a fresh instance', () => {
     const a = useViewPreferences()
     a.setGenSetting('voiceId', 'nova')
-    a.setGenSetting('speed', 1.5)
+    a.setGenSetting('model', 'tts-1')
 
     const raw = (g.localStorage as MemoryStorage).getItem(KEY)
-    expect(JSON.parse(raw!)).toEqual({ voiceId: 'nova', speed: 1.5 })
+    expect(JSON.parse(raw!)).toEqual({ voiceId: 'nova', model: 'tts-1' })
 
     const b = useViewPreferences()
-    expect(b.genSettings.value).toEqual({ voiceId: 'nova', speed: 1.5 })
+    expect(b.genSettings.value).toEqual({ voiceId: 'nova', model: 'tts-1' })
   })
 
   it('per-field reset drops only that field (falls back to configured default on load)', () => {
@@ -71,10 +71,11 @@ describe('useViewPreferences — genSettings last-selected', () => {
   it('ignores unknown/mistyped stored values (SSR-safe, tolerant read)', () => {
     ;(g.localStorage as MemoryStorage).setItem(
       KEY,
-      JSON.stringify({ voiceId: 'sage', model: 42, format: '', bogus: 'x', speed: 'fast' }),
+      JSON.stringify({ voiceId: 'sage', model: 42, format: '', bogus: 'x', speed: 1.5 }),
     )
     const { genSettings } = useViewPreferences()
-    // model 42 (not a string), empty format, non-numeric speed, and the unknown key are dropped.
+    // model 42 (not a string), empty format, the unsupported speed field, and the unknown
+    // key are all dropped.
     expect(genSettings.value).toEqual({ voiceId: 'sage' })
   })
 

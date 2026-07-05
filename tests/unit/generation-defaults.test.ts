@@ -11,8 +11,8 @@ import type { AppConfigRepository } from '../../src/core/settings/app-config-rep
 // Pure unit coverage for the store-backed generation defaults (007 · US3 / G-DEFAULTS,
 // FR-011/012/013). Non-secret: persisted as plain JSON in app_config alongside the
 // default tags, no crypto/app secret. Sanitization drops unknown voice/model/format
-// (validated against the shared catalogs), clamps speed to the provider range, and an
-// all-blank/all-invalid save clears the row. Reads are total — a corrupt row yields {}.
+// (validated against the shared catalogs) and an all-blank/all-invalid save clears the
+// row. Reads are total — a corrupt row yields {}. Speed is not a configurable default.
 
 /** Minimal in-memory AppConfigRepository for the generation-defaults tests. */
 function fakeConfig(initial: Record<string, string> = {}): AppConfigRepository {
@@ -36,7 +36,7 @@ describe('getGenerationDefaults', () => {
     expect(getGenerationDefaults({ config })).toEqual({})
   })
 
-  it('re-sanitizes a stored row, dropping unknown voice/model/format and clamping speed', () => {
+  it('re-sanitizes a stored row, dropping unknown voice/model/format and stray fields', () => {
     const config = fakeConfig({
       [GENERATION_DEFAULTS_CONFIG_KEY]: JSON.stringify({
         voiceId: 'nope',
@@ -46,41 +46,41 @@ describe('getGenerationDefaults', () => {
         bogus: 'x',
       }),
     })
-    // voiceId 'nope' and format 'zzz' are not in the catalogs → dropped; speed clamps to 4.
-    expect(getGenerationDefaults({ config })).toEqual({ model: 'tts-1', speed: 4 })
+    // voiceId 'nope' and format 'zzz' are not in the catalogs → dropped; speed/bogus are not
+    // supported fields → dropped.
+    expect(getGenerationDefaults({ config })).toEqual({ model: 'tts-1' })
   })
 })
 
 describe('setGenerationDefaults', () => {
-  it('keeps known voice/model/format and clamps speed to the provider range', () => {
+  it('keeps known voice/model/format', () => {
     const config = fakeConfig()
     const saved = setGenerationDefaults({ config }, {
       voiceId: 'alloy',
       model: 'tts-1-hd',
       format: 'flac',
-      speed: 0.1, // below the 0.25 floor
     })
-    expect(saved).toEqual({ voiceId: 'alloy', model: 'tts-1-hd', format: 'flac', speed: 0.25 })
+    expect(saved).toEqual({ voiceId: 'alloy', model: 'tts-1-hd', format: 'flac' })
     expect(getGenerationDefaults({ config })).toEqual(saved)
   })
 
-  it('drops unknown values (out-of-catalog voice/model/format, non-numeric speed)', () => {
+  it('drops unknown values (out-of-catalog voice/model/format, unsupported speed)', () => {
     const config = fakeConfig()
     expect(
       setGenerationDefaults({ config }, {
         voiceId: 'nope',
         model: 'bad',
         format: 'zzz',
-        speed: 'fast',
+        speed: 2,
       } as unknown as GenerationDefaultsInput),
     ).toEqual({})
     expect(config.get(GENERATION_DEFAULTS_CONFIG_KEY)).toBeUndefined()
   })
 
-  it('persists a single valid field on its own (speed only)', () => {
+  it('persists a single valid field on its own (format only)', () => {
     const config = fakeConfig()
-    expect(setGenerationDefaults({ config }, { speed: 2 })).toEqual({ speed: 2 })
-    expect(getGenerationDefaults({ config })).toEqual({ speed: 2 })
+    expect(setGenerationDefaults({ config }, { format: 'flac' })).toEqual({ format: 'flac' })
+    expect(getGenerationDefaults({ config })).toEqual({ format: 'flac' })
   })
 
   it('deletes the row when the sanitized set is empty (save-all-blank ≡ clear)', () => {
@@ -93,12 +93,11 @@ describe('setGenerationDefaults', () => {
 
   it('round-trips a full set through get', () => {
     const config = fakeConfig()
-    setGenerationDefaults({ config }, { voiceId: 'nova', model: 'gpt-4o-mini-tts', format: 'mp3', speed: 1.5 })
+    setGenerationDefaults({ config }, { voiceId: 'nova', model: 'gpt-4o-mini-tts', format: 'mp3' })
     expect(getGenerationDefaults({ config })).toEqual({
       voiceId: 'nova',
       model: 'gpt-4o-mini-tts',
       format: 'mp3',
-      speed: 1.5,
     })
   })
 })

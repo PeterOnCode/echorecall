@@ -1,6 +1,5 @@
 import type { Format, Model } from '../shared/types'
 import { isKnownFormat, isKnownModel, isKnownVoice } from '../tts/provider'
-import { normalizeSpeed } from '../tts/generate'
 import type { AppConfigRepository } from './app-config-repository'
 
 /** The single app_config row holding the JSON-serialized generation defaults (007 · US3). */
@@ -16,15 +15,14 @@ export interface GenerationDefaultsDeps {
 }
 
 /**
- * The configurable Voice/Model/Format/Speed defaults (FR-011). Every field is optional —
+ * The configurable Voice/Model/Format defaults (FR-011). Every field is optional —
  * an unset field means "no configured default", so the editor falls through to its
- * built-in fallback (FR-012).
+ * built-in fallback (FR-012). Speed is not configurable: synthesis always runs at 1×.
  */
 export interface GenerationDefaults {
   voiceId?: string
   model?: Model
   format?: Format
-  speed?: number
 }
 
 /** Editable input from the Settings form (loosely typed; sanitized on write). */
@@ -32,14 +30,12 @@ export interface GenerationDefaultsInput {
   voiceId?: string
   model?: string
   format?: string
-  speed?: number
 }
 
 /**
  * Sanitize an arbitrary input (a form body or a parsed stored row) into the supported,
  * catalog-valid {@link GenerationDefaults} subset: `voiceId`/`model`/`format` survive only
- * when they are known catalog values; `speed` survives only when it is a finite number
- * (then clamped to the provider range). Unknown/invalid fields are dropped. Applied on both
+ * when they are known catalog values. Unknown/invalid fields are dropped. Applied on both
  * write and read, so a corrupt or hand-edited row can only ever yield a clean set.
  */
 function sanitize(input: unknown): GenerationDefaults {
@@ -48,7 +44,6 @@ function sanitize(input: unknown): GenerationDefaults {
   if (typeof src.voiceId === 'string' && isKnownVoice(src.voiceId)) out.voiceId = src.voiceId
   if (typeof src.model === 'string' && isKnownModel(src.model)) out.model = src.model as Model
   if (typeof src.format === 'string' && isKnownFormat(src.format)) out.format = src.format as Format
-  if (typeof src.speed === 'number' && Number.isFinite(src.speed)) out.speed = normalizeSpeed(src.speed)
   return out
 }
 

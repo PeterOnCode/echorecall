@@ -77,14 +77,13 @@ describe('Generate redesign a11y sweep (007 / FR-023)', () => {
     expectControlsNamed(w.element as ParentNode, 'ScriptEntryPanel')
   })
 
-  it('GenerationSettingsPanel controls (selects, speed, per-field resets) are all named', async () => {
+  it('GenerationSettingsPanel controls (selects, per-field resets) are all named', async () => {
     const w = await mountSuspended(GenerationSettingsPanel, {
       props: {
         voices: [...VOICES],
         voiceId: VOICES[0]!.id,
         model: 'tts-1',
         format: 'mp3',
-        speed: 1,
       },
     })
     await flushPromises()

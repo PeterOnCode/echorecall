@@ -4,9 +4,10 @@ import type { VueWrapper } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import GenerationSettingsPanel from '~/components/generate/GenerationSettingsPanel.vue'
 
-// 007 · US1 (T005 / FR-005): the Generation settings column — Voice / Model / Format /
-// Speed over the existing catalogs, controlled via v-model. Forks GenerateForm as a
-// vertical editor column. Per-field reset + defaults resolution arrive in US3.
+// 007 · US1 (T005 / FR-005): the Generation settings column — Voice / Model / Format over
+// the existing catalogs, controlled via v-model. Forks GenerateForm as a vertical editor
+// column. Speed is intentionally not exposed (synthesis always runs at 1×). Per-field reset
+// + defaults resolution arrive in US3.
 const voices = [
   { id: 'alloy', label: 'Alloy' },
   { id: 'echo', label: 'Echo' },
@@ -14,7 +15,7 @@ const voices = [
 
 function mountPanel() {
   return mountSuspended(GenerationSettingsPanel, {
-    props: { voices, voiceId: 'alloy', model: 'gpt-4o-mini-tts', format: 'mp3', speed: 1 },
+    props: { voices, voiceId: 'alloy', model: 'gpt-4o-mini-tts', format: 'mp3' },
   })
 }
 
@@ -29,11 +30,17 @@ function pickMenu(w: VueWrapper, testId: string, value: string) {
 }
 
 describe('GenerationSettingsPanel', () => {
-  it('renders the four generation controls', async () => {
+  it('renders the three generation controls', async () => {
     const wrapper = await mountPanel()
-    for (const id of ['voice', 'model', 'format', 'speed']) {
+    for (const id of ['voice', 'model', 'format']) {
       expect(wrapper.find(`[data-test="${id}"]`).exists(), id).toBe(true)
     }
+  })
+
+  it('does not expose a speed control (synthesis always runs at 1×)', async () => {
+    const wrapper = await mountPanel()
+    expect(wrapper.find('[data-test="speed"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="gen-reset-speed"]').exists()).toBe(false)
   })
 
   it('updates voice / model / format via v-model', async () => {
@@ -52,12 +59,6 @@ describe('GenerationSettingsPanel', () => {
     expect(wrapper.emitted('update:format')?.at(-1)?.[0]).toBe('flac')
   })
 
-  it('exposes a speed control clamped to the provider range', async () => {
-    const wrapper = await mountPanel()
-    const speed = wrapper.find('[data-test="speed"]')
-    expect(speed.exists()).toBe(true)
-  })
-
   // 007 · US3 (T022 / FR-013): each control offers a per-field reset that asks the page to
   // restore the field to its configured default (resolution is owned by the page).
   it('emits a per-field reset for each control', async () => {
@@ -66,7 +67,6 @@ describe('GenerationSettingsPanel', () => {
       ['gen-reset-voice', 'voiceId'],
       ['gen-reset-model', 'model'],
       ['gen-reset-format', 'format'],
-      ['gen-reset-speed', 'speed'],
     ]
     for (const [testId, field] of cases) {
       const btn = wrapper.find(`[data-test="${testId}"]`)

@@ -6,8 +6,8 @@ import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import GenerationDefaultsSettings from '~/components/settings/GenerationDefaultsSettings.vue'
 
 // 007 · US3 (T021 / G-DEFAULTS, FR-011): the Settings section for the configurable
-// Voice/Model/Format/Speed generation defaults, alongside Default Tags. Loads the saved
-// set, saves (replace), clears, and resets a single field. Drives the real
+// Voice/Model/Format generation defaults, alongside Default Tags. Loads the saved set,
+// saves (replace), clears, and resets a single field. Drives the real
 // /api/settings/generation-defaults routes and /api/voices via registered endpoints.
 
 let saved: Record<string, unknown> = {}
@@ -58,17 +58,15 @@ beforeEach(() => {
 })
 
 describe('GenerationDefaultsSettings (US3)', () => {
-  it('renders the four default fields plus save/clear/reset/status controls', async () => {
+  it('renders the three default fields plus save/clear/reset/status controls', async () => {
     const wrapper = await mount()
     for (const id of [
       'gen-default-voice',
       'gen-default-model',
       'gen-default-format',
-      'gen-default-speed',
       'gen-default-reset-voice',
       'gen-default-reset-model',
       'gen-default-reset-format',
-      'gen-default-reset-speed',
       'gen-default-save',
       'gen-default-clear',
       'gen-default-status',
@@ -77,22 +75,27 @@ describe('GenerationDefaultsSettings (US3)', () => {
     }
   })
 
+  it('does not expose a speed default (synthesis always runs at 1×)', async () => {
+    const wrapper = await mount()
+    expect(wrapper.find('[data-test="gen-default-speed"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="gen-default-reset-speed"]').exists()).toBe(false)
+  })
+
   it('saves the chosen defaults (PUT with the selected values)', async () => {
     const wrapper = await mount()
     pickMenu(wrapper, 'gen-default-voice', 'nova')
     pickMenu(wrapper, 'gen-default-model', 'tts-1')
     pickMenu(wrapper, 'gen-default-format', 'flac')
-    await wrapper.find('[data-test="gen-default-speed"]').setValue('1.5')
     await flushPromises()
 
     await wrapper.find('[data-test="gen-default-save"]').trigger('click')
     await flushPromises()
 
-    expect(puts.at(-1)).toMatchObject({ voiceId: 'nova', model: 'tts-1', format: 'flac', speed: 1.5 })
+    expect(puts.at(-1)).toMatchObject({ voiceId: 'nova', model: 'tts-1', format: 'flac' })
   })
 
   it('per-field reset omits that field on the next save', async () => {
-    saved = { voiceId: 'alloy', model: 'tts-1', format: 'mp3', speed: 1.5 }
+    saved = { voiceId: 'alloy', model: 'tts-1', format: 'mp3' }
     const wrapper = await mount()
 
     await wrapper.find('[data-test="gen-default-reset-voice"]').trigger('click')
@@ -102,7 +105,7 @@ describe('GenerationDefaultsSettings (US3)', () => {
 
     const body = puts.at(-1)!
     expect(body.voiceId).toBeUndefined() // reset dropped the voice default
-    expect(body).toMatchObject({ model: 'tts-1', format: 'mp3', speed: 1.5 })
+    expect(body).toMatchObject({ model: 'tts-1', format: 'mp3' })
   })
 
   it('clears all saved defaults (DELETE)', async () => {

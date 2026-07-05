@@ -142,21 +142,21 @@ const INSPECTOR_FIELDS_KEY = 'echorecall:viewprefs:inspectorFields'
 // ---------------------------------------------------------------------------
 // 007 · US3 (G-DEFAULTS) — per-device "last-selected" generation settings.
 //
-// The Generate editor resolves each of Voice/Model/Format/Speed as last-selected →
-// configured default → built-in fallback (FR-012). The last-selected half lives here:
-// a partial `{ voiceId?, model?, format?, speed? }` persisted per-device in localStorage.
-// A per-field reset drops just that field so it falls back to the configured default
-// (FR-013). Reads keep only well-typed fields; SSR-safe fallback to {}.
+// The Generate editor resolves each of Voice/Model/Format as last-selected → configured
+// default → built-in fallback (FR-012). The last-selected half lives here: a partial
+// `{ voiceId?, model?, format? }` persisted per-device in localStorage. A per-field reset
+// drops just that field so it falls back to the configured default (FR-013). Reads keep
+// only well-typed fields; SSR-safe fallback to {}. Speed is not remembered — synthesis
+// always runs at 1×.
 // ---------------------------------------------------------------------------
 
-/** The four generation-settings fields that remember a last-selected value. */
-export type GenSettingField = 'voiceId' | 'model' | 'format' | 'speed'
+/** The generation-settings fields that remember a last-selected value. */
+export type GenSettingField = 'voiceId' | 'model' | 'format'
 
 export interface GenSettingsPref {
   voiceId?: string
   model?: string
   format?: string
-  speed?: number
 }
 
 const GEN_SETTINGS_KEY = 'echorecall:viewprefs:genSettings'
@@ -169,7 +169,6 @@ function sanitizeGenSettings(input: unknown): GenSettingsPref {
   if (typeof src.voiceId === 'string' && src.voiceId) out.voiceId = src.voiceId
   if (typeof src.model === 'string' && src.model) out.model = src.model
   if (typeof src.format === 'string' && src.format) out.format = src.format
-  if (typeof src.speed === 'number' && Number.isFinite(src.speed)) out.speed = src.speed
   return out
 }
 

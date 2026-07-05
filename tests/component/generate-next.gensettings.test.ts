@@ -5,10 +5,11 @@ import GenerateNextPage from '~/pages/generate-next.vue'
 import GenerationSettingsPanel from '~/components/generate/GenerationSettingsPanel.vue'
 
 // 007 · US3 (T028 / G-DEFAULTS, FR-012/FR-013): the Generate page resolves each of
-// Voice/Model/Format/Speed as last-selected → configured default → built-in fallback, and a
+// Voice/Model/Format as last-selected → configured default → built-in fallback, and a
 // per-field reset (emitted by the settings panel) restores the field to its configured
 // default. The last-selected half lives in localStorage (`echorecall:viewprefs:genSettings`),
-// the configured half comes from GET /api/settings/generation-defaults.
+// the configured half comes from GET /api/settings/generation-defaults. Speed is not a
+// generation control (synthesis always runs at 1×), so it is not resolved here.
 
 const VOICES = [
   { id: 'alloy', label: 'Alloy' },
@@ -42,11 +43,10 @@ describe('generate-next generation-settings resolution (US3)', () => {
     expect(panel.props('voiceId')).toBe('alloy') // first voice
     expect(panel.props('model')).toBe('gpt-4o-mini-tts')
     expect(panel.props('format')).toBe('mp3')
-    expect(panel.props('speed')).toBe(1)
   })
 
   it('uses the configured defaults when no last-selected value exists', async () => {
-    configured = { voiceId: 'sage', model: 'tts-1', format: 'flac', speed: 2 }
+    configured = { voiceId: 'sage', model: 'tts-1', format: 'flac' }
     const wrapper = await mountSuspended(GenerateNextPage)
     // Drain onMounted's chain: loadVoices → defaults → generation-defaults → resolve → nextTick.
     for (let i = 0; i < 6; i++) await flushPromises()
@@ -54,11 +54,10 @@ describe('generate-next generation-settings resolution (US3)', () => {
     expect(panel.props('voiceId')).toBe('sage')
     expect(panel.props('model')).toBe('tts-1')
     expect(panel.props('format')).toBe('flac')
-    expect(panel.props('speed')).toBe(2)
   })
 
   it('prefers the last-selected value over the configured default', async () => {
-    configured = { voiceId: 'sage', model: 'tts-1', format: 'flac', speed: 2 }
+    configured = { voiceId: 'sage', model: 'tts-1', format: 'flac' }
     localStorage.setItem(GEN_KEY, JSON.stringify({ voiceId: 'nova' }))
     const wrapper = await mountSuspended(GenerateNextPage)
     // Drain onMounted's chain: loadVoices → defaults → generation-defaults → resolve → nextTick.

@@ -354,18 +354,15 @@
     },
     "generationDefaults": {
       "title": "Alapértelmezett generálási beállítások",
-      "description": "Állíts be alapértelmezett Hangot, Modellt, Formátumot és Sebességet az új generálásokhoz. A legutóbb használt érték elsőbbséget élvez.",
+      "description": "Állíts be alapértelmezett Hangot, Modellt és Formátumot az új generálásokhoz. A legutóbb használt érték elsőbbséget élvez.",
       "saved": "A mentett alapértékek akkor érvényesek, ha nincs legutóbbi választás.",
       "noneSaved": "Nincs beállított alapértelmezés — az új generálások beépített értékeket használnak.",
       "none": "(nincs)",
       "fields": {
         "voice": "Hang",
         "model": "Modell",
-        "format": "Formátum",
-        "speed": "Sebesség"
+        "format": "Formátum"
       },
-      "speedPlaceholder": "1.0",
-      "speedHint": "0,25 és 4,0 között.",
       "reset": "{field} visszaállítása alapértékre",
       "save": "Alapértékek mentése",
       "clear": "Alapértékek törlése",
@@ -399,7 +396,6 @@
       "voice": "Hang",
       "model": "Modell",
       "format": "Formátum",
-      "speed": "Sebesség",
       "reset": "{field} visszaállítása alapértékre"
     },
     "actionBar": {

@@ -12,9 +12,9 @@ import {
 
 // Integration coverage for store-backed generation defaults (007 · US3): the real
 // pipeline the /api/settings/generation-defaults routes run — a file-backed SQLite
-// app_config store with Voice/Model/Format/Speed persisted as plain (non-secret) JSON
-// alongside the default tags. The thin h3 route envelopes are out of scope here (matching
-// the sibling settings-defaults suite); this drives the real core functions the routes
+// app_config store with Voice/Model/Format persisted as plain (non-secret) JSON alongside
+// the default tags. The thin h3 route envelopes are out of scope here (matching the
+// sibling settings-defaults suite); this drives the real core functions the routes
 // delegate to.
 
 let dir: string
@@ -37,9 +37,9 @@ describe('generation defaults — store-backed (007)', () => {
   it('PUT saves the sanitized set, stored as plain JSON, readable from a fresh connection', () => {
     const saved = setGenerationDefaults(
       { config },
-      { voiceId: 'alloy', model: 'tts-1', format: 'flac', speed: 1.25 },
+      { voiceId: 'alloy', model: 'tts-1', format: 'flac' },
     )
-    expect(saved).toEqual({ voiceId: 'alloy', model: 'tts-1', format: 'flac', speed: 1.25 })
+    expect(saved).toEqual({ voiceId: 'alloy', model: 'tts-1', format: 'flac' })
 
     // Persisted as plain JSON (non-secret), not encrypted.
     const raw = config.get(GENERATION_DEFAULTS_CONFIG_KEY)
@@ -58,9 +58,9 @@ describe('generation defaults — store-backed (007)', () => {
   })
 
   it('re-saving with changed values replaces the stored set', () => {
-    setGenerationDefaults({ config }, { voiceId: 'alloy', speed: 1 })
-    setGenerationDefaults({ config }, { voiceId: 'nova', speed: 2 })
-    expect(getGenerationDefaults({ config })).toEqual({ voiceId: 'nova', speed: 2 })
+    setGenerationDefaults({ config }, { voiceId: 'alloy', format: 'mp3' })
+    setGenerationDefaults({ config }, { voiceId: 'nova', format: 'flac' })
+    expect(getGenerationDefaults({ config })).toEqual({ voiceId: 'nova', format: 'flac' })
   })
 
   it('DELETE (and an empty PUT) clears the saved defaults', () => {

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { FORMATS, MODELS, type Voice } from '#core/client'
 
-// 007 · US3 (G-DEFAULTS / FR-011): configurable Voice/Model/Format/Speed defaults, saved
-// to the server (plain JSON, non-secret) alongside Default Tags. The Generate editor
-// resolves these as the fallback when no last-selected value exists. A blank field means
-// "no default"; a per-field reset clears just that field (persisted on the next Save).
+// 007 · US3 (G-DEFAULTS / FR-011): configurable Voice/Model/Format defaults, saved to the
+// server (plain JSON, non-secret) alongside Default Tags. The Generate editor resolves
+// these as the fallback when no last-selected value exists. A blank field means "no
+// default"; a per-field reset clears just that field (persisted on the next Save). Speed
+// is not configurable — synthesis always runs at 1×.
 const { t } = useI18n()
 const { values, hasSaved, loading, saving, error, load, save, clear, resetField } =
   useGenerationDefaults()
@@ -120,32 +121,6 @@ async function onSave() {
         :aria-label="t('settings.generationDefaults.reset', { field: t('settings.generationDefaults.fields.format') })"
         :disabled="loading || saving"
         @click="resetField('format')"
-      />
-    </div>
-
-    <div class="flex items-end gap-2">
-      <UFormField
-        :label="t('settings.generationDefaults.fields.speed')"
-        :help="t('settings.generationDefaults.speedHint')"
-        class="flex-1"
-      >
-        <UInput
-          v-model="values.speed"
-          data-test="gen-default-speed"
-          inputmode="decimal"
-          :placeholder="t('settings.generationDefaults.speedPlaceholder')"
-          :disabled="loading || saving"
-          class="w-full"
-        />
-      </UFormField>
-      <UButton
-        data-test="gen-default-reset-speed"
-        icon="i-lucide-rotate-ccw"
-        color="neutral"
-        variant="ghost"
-        :aria-label="t('settings.generationDefaults.reset', { field: t('settings.generationDefaults.fields.speed') })"
-        :disabled="loading || saving"
-        @click="resetField('speed')"
       />
     </div>
 
