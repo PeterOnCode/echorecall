@@ -331,14 +331,15 @@ export function useQueue() {
   )
 
   // Per-item + total cost estimate over the whole queue (US5 / FR-018/FR-019). Each row
-  // is priced by its own model against its character count; unavailable (token-priced)
-  // rows are counted separately and excluded from the total, never treated as $0.
+  // is priced by its own model against its text (chars for the character-priced models,
+  // spoken duration for gpt-4o-mini-tts); any unavailable (unknown-model) row is counted
+  // separately and excluded from the total, never treated as $0.
   const queueCost = computed<QueueCost>(() => {
     const perItem = new Map<string, CostEstimate>()
     let totalUsd = 0
     let unavailableCount = 0
     for (const item of items.value) {
-      const estimate = estimateItemCost(item.model, item.text.length)
+      const estimate = estimateItemCost(item.model, item.text)
       perItem.set(item.clientId, estimate)
       if (estimate === 'unavailable') unavailableCount++
       else totalUsd += estimate.amountUsd

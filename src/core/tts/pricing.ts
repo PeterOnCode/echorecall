@@ -1,34 +1,61 @@
 import type { Model } from '../shared/types'
 
 // 007 · US5 (G-PRICING, FR-018/FR-019): pure, dependency-free per-item cost estimation.
-// Character-priced models (`tts-1`, `tts-1-hd`) have a published $/1M-characters rate;
-// the token-priced `gpt-4o-mini-tts` cannot be estimated from character count and is
-// reported 'unavailable' (never a number, never $0). Lives in the core so it is
-// CLI-reachable and re-exported through the client subset for the Generate editor.
+// Character-priced models (`tts-1`, `tts-1-hd`) have a published $/1M-characters rate.
+// The token-priced `gpt-4o-mini-tts` has no character rate, so it is estimated from an
+// audio-duration model: words ÷ words-per-minute gives minutes, minutes × $/audio-minute
+// gives the (dominant) audio cost, plus a small text-input-token cost. Approximate — the
+// true cost depends on the generated audio's duration — but a usable pre-generation figure.
+// Lives in the core so it is CLI-reachable and re-exported through the client subset.
+
+/** Descriptor for a character-priced model: a flat USD rate per 1,000,000 input characters. */
+type CharPricing = { usdPerMillionChars: number }
 
 /**
- * USD per 1,000,000 characters for character-priced models; the token-priced model is
- * marked `'tokenPriced'` (no character-based rate). Approximate published TTS rates.
+ * Descriptor for the token-priced `gpt-4o-mini-tts`, estimated by generated-audio duration.
+ * Audio dominates; the text-input tokens are a minor add-on. Rates from OpenAI's pricing
+ * table (audio ≈ $0.015 per generated minute; text input $0.60 / 1M tokens).
  */
-export const MODEL_PRICING: Readonly<
-  Record<Model, { usdPerMillionChars: number } | 'tokenPriced'>
-> = {
-  'tts-1': { usdPerMillionChars: 15 },
-  'tts-1-hd': { usdPerMillionChars: 30 },
-  'gpt-4o-mini-tts': 'tokenPriced',
+type DurationPricing = {
+  usdPerAudioMinute: number
+  usdPerMillionTextTokens: number
+  wordsPerMinute: number
+  charsPerToken: number
 }
 
-/** A per-item estimate: a dollar amount, or `'unavailable'` for token-priced models. */
+/**
+ * Per-model pricing. Character-priced models carry `usdPerMillionChars`; the token-priced
+ * model carries a duration descriptor. Approximate published TTS rates.
+ */
+export const MODEL_PRICING: Readonly<Record<Model, CharPricing | DurationPricing>> = {
+  'tts-1': { usdPerMillionChars: 15 },
+  'tts-1-hd': { usdPerMillionChars: 30 },
+  'gpt-4o-mini-tts': {
+    usdPerAudioMinute: 0.015,
+    usdPerMillionTextTokens: 0.6,
+    wordsPerMinute: 150,
+    charsPerToken: 4,
+  },
+}
+
+/** A per-item estimate: a dollar amount, or `'unavailable'` for an unpriced (unknown) model. */
 export type CostEstimate = { amountUsd: number } | 'unavailable'
 
 /**
- * Estimate one item's cost from its model and character count. Estimable models return
- * `{ amountUsd }` (sub-cent precision retained; empty text → `{ amountUsd: 0 }`);
- * token-priced (or unknown) models return `'unavailable'` — never a number, so an
- * unavailable item is never mistaken for a free one.
+ * Estimate one item's cost from its model and input `text`. Character-priced models charge
+ * by text length; `gpt-4o-mini-tts` is estimated by spoken duration (word count ÷ WPM) plus
+ * a small text-token cost. Empty text → `{ amountUsd: 0 }`. An unknown/unpriced model returns
+ * `'unavailable'` — never a number, so an unpriced item is never mistaken for a free one.
  */
-export function estimateItemCost(model: Model, charCount: number): CostEstimate {
+export function estimateItemCost(model: Model, text: string): CostEstimate {
   const pricing = MODEL_PRICING[model]
-  if (!pricing || pricing === 'tokenPriced') return 'unavailable'
-  return { amountUsd: (charCount / 1_000_000) * pricing.usdPerMillionChars }
+  if (!pricing) return 'unavailable'
+  if ('usdPerMillionChars' in pricing) {
+    return { amountUsd: (text.length / 1_000_000) * pricing.usdPerMillionChars }
+  }
+  const words = text.trim().split(/\s+/).filter(Boolean).length
+  const audioCost = (words / pricing.wordsPerMinute) * pricing.usdPerAudioMinute
+  const textTokens = Math.ceil(text.length / pricing.charsPerToken)
+  const textCost = (textTokens / 1_000_000) * pricing.usdPerMillionTextTokens
+  return { amountUsd: audioCost + textCost }
 }
