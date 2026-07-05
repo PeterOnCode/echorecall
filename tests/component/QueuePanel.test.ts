@@ -65,3 +65,62 @@ describe('QueuePanel', () => {
     expect(rowCost.text().length).toBeGreaterThan(0)
   })
 })
+
+// Selection + bulk actions: a per-row checkbox drives selection, a select-all toggles
+// them together, "Delete selected" acts on the checked rows (disabled with none checked),
+// and "Clear queue" empties the whole queue. State is owned by the page (useQueue's
+// checkedIds); the panel is controlled via `selectedIds` and emits the intents.
+describe('QueuePanel selection + bulk actions', () => {
+  const items = [item('a', 'first'), item('b', 'second'), item('c', 'third')]
+
+  it('renders a checkbox per row plus a select-all', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    expect(wrapper.find('[data-test="queue-select-all"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-test="queue-row-checkbox"]')).toHaveLength(3)
+  })
+
+  it('emits toggle with the row clientId when a row checkbox is clicked', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await wrapper.findAll('[data-test="queue-row-checkbox"]')[1]!.trigger('click')
+    expect(wrapper.emitted('toggle')?.at(-1)?.[0]).toBe('b')
+  })
+
+  it('emits toggle-all from the select-all checkbox', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await wrapper.find('[data-test="queue-select-all"]').trigger('click')
+    expect(wrapper.emitted('toggle-all')).toBeTruthy()
+  })
+
+  it('reflects selectedIds on the row checkboxes', async () => {
+    const wrapper = await mountSuspended(QueuePanel, {
+      props: { items, selectedIds: new Set(['b']) },
+    })
+    const boxes = wrapper.findAll('[data-test="queue-row-checkbox"]')
+    expect(boxes[0]!.attributes('aria-checked')).toBe('false')
+    expect(boxes[1]!.attributes('aria-checked')).toBe('true')
+  })
+
+  it('disables Delete selected when nothing is selected, enables it otherwise', async () => {
+    const none = await mountSuspended(QueuePanel, { props: { items } })
+    expect((none.find('[data-test="queue-delete-selected"]').element as HTMLButtonElement).disabled).toBe(true)
+
+    const some = await mountSuspended(QueuePanel, { props: { items, selectedIds: new Set(['a', 'c']) } })
+    const del = some.find('[data-test="queue-delete-selected"]')
+    expect((del.element as HTMLButtonElement).disabled).toBe(false)
+    expect(del.text()).toContain('2') // count of selected
+    await del.trigger('click')
+    expect(some.emitted('delete-selected')).toBeTruthy()
+  })
+
+  it('emits clear from the Clear queue button', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await wrapper.find('[data-test="queue-clear"]').trigger('click')
+    expect(wrapper.emitted('clear')).toBeTruthy()
+  })
+
+  it('shows no bulk toolbar when the queue is empty', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items: [] } })
+    expect(wrapper.find('[data-test="queue-select-all"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="queue-clear"]').exists()).toBe(false)
+  })
+})

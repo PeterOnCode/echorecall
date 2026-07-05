@@ -411,7 +411,12 @@
     },
     "queue": {
       "empty": "The queue is empty. Add a script to get started.",
-      "remove": "Remove item"
+      "remove": "Remove item",
+      "selectAll": "Select all items",
+      "selectRow": "Select item",
+      "selectedCount": "{count} selected",
+      "deleteSelected": "Delete selected ({count})",
+      "clear": "Clear queue"
     },
     "upload": {
       "tooLarge": "That file is too large."

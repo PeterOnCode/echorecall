@@ -411,7 +411,12 @@
     },
     "queue": {
       "empty": "A sor üres. Adj hozzá egy szöveget a kezdéshez.",
-      "remove": "Elem eltávolítása"
+      "remove": "Elem eltávolítása",
+      "selectAll": "Összes elem kijelölése",
+      "selectRow": "Elem kijelölése",
+      "selectedCount": "{count} kijelölve",
+      "deleteSelected": "Kijelöltek törlése ({count})",
+      "clear": "Sor törlése"
     },
     "upload": {
       "tooLarge": "Ez a fájl túl nagy."

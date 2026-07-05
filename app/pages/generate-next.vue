@@ -15,6 +15,7 @@ const {
   format,
   speed,
   metadata,
+  checkedIds,
   generateTarget,
   queueCost,
   serialize,
@@ -22,6 +23,10 @@ const {
   addItem,
   addFromUpload,
   removeItem,
+  removeMany,
+  toggleChecked,
+  toggleAll,
+  clear: clearQueue,
   applyMetadataToPending,
   stampRecordingDates,
   setDefaults,
@@ -108,6 +113,11 @@ onMounted(async () => {
 
 function onAdd(text: string) {
   addItem(text)
+}
+
+/** Bulk-remove the currently checked rows from the queue (client-only, no confirm needed). */
+function onDeleteSelected() {
+  removeMany([...checkedIds.value])
 }
 
 // 007 · US4 (G-CANCEL, FR-014): the generation progress modal opens on Generate,
@@ -225,7 +235,16 @@ async function onTxtFileChosen(event: Event) {
         @upload-txt="onUploadTxt"
         @generate="onGenerate"
       />
-      <QueuePanel :items="items" :cost="queueCost" @remove="removeItem" />
+      <QueuePanel
+        :items="items"
+        :cost="queueCost"
+        :selected-ids="checkedIds"
+        @remove="removeItem"
+        @toggle="toggleChecked"
+        @toggle-all="toggleAll(items)"
+        @delete-selected="onDeleteSelected"
+        @clear="clearQueue"
+      />
       <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
         {{ importError }}
       </p>
