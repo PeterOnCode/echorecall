@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useQueue } from '../../app/composables/useQueue'
 
 // 007 · US6 (T043 / FR-020): recording date defaults to the GENERATION day, not add time.
@@ -12,6 +12,7 @@ import { useQueue } from '../../app/composables/useQueue'
 const g = globalThis as unknown as Record<string, unknown>
 g.ref = ref
 g.computed = computed
+g.watch = watch
 
 /** Today as a local-day YYYY-MM-DD string (matches the composable's todayIso). */
 function todayIso(): string {

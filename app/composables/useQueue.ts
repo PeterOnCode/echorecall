@@ -111,6 +111,35 @@ export function useQueue() {
   const searchTerm = ref('')
   const filters = ref<QueueFilters>({})
 
+  // The form-level Voice/Model/Format/Metadata are live batch settings: editing any of them
+  // rewrites that field on every row already in the queue — not just future rows — so the
+  // per-item + total cost recalculates immediately (a Model change is what re-prices a row).
+  // Since the redesigned Generate page has no per-row editor, the form is the only editor, so
+  // a form change is an explicit "apply to all". Already-generated (`done`) rows are left
+  // alone; metadata additionally skips rows edited individually (`metadataEdited`) so their
+  // per-row values survive. Speed is intentionally NOT written through — it is not stored per
+  // row and the cost estimate never depends on it (it applies only at generation time). An
+  // empty queue makes every watcher a no-op, so mount-time resolution and per-field reset
+  // (which both drive these refs) propagate harmlessly.
+  watch(voiceId, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.voiceId = v
+  })
+  watch(model, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.model = v
+  })
+  watch(format, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.format = v
+  })
+  watch(
+    metadata,
+    (m) => {
+      for (const item of items.value) {
+        if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(m)
+      }
+    },
+    { deep: true },
+  )
+
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
     // A new row inherits only whatever the shared form metadata carries; the recording
     // date is NOT pre-stamped here (007 · US6 / FR-020). It is filled with today's date

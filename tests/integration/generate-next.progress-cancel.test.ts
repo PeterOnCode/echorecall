@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useQueue } from '../../app/composables/useQueue'
 import { useGeneration } from '../../app/composables/useGeneration'
 
@@ -16,6 +16,7 @@ import { useGeneration } from '../../app/composables/useGeneration'
 const g = globalThis as unknown as Record<string, unknown>
 g.ref = ref
 g.computed = computed
+g.watch = watch
 
 // The mock invokes this for each generated item's text, letting a test trigger a cancel
 // while a specific item is in flight (simulating the user confirming cancel mid-run).
