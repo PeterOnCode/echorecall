@@ -433,6 +433,11 @@
         "completed": "Generation complete.",
         "cancelled": "Generation stopped."
       }
+    },
+    "cost": {
+      "unavailable": "Unavailable",
+      "total": "Est. cost: {amount}",
+      "unavailableNote": "+{count} unavailable"
     }
   }
 }

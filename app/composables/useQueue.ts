@@ -1,5 +1,5 @@
-import type { Format, ListItem, Metadata, Model } from '#core/client'
-import { MAX_INPUT_LENGTH, formatInfo, parseUploadText } from '#core/client'
+import type { CostEstimate, Format, ListItem, Metadata, Model } from '#core/client'
+import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from '#core/client'
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
 import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
@@ -30,6 +30,19 @@ export interface UploadSummary {
   added: number
   skippedBlank: number
   rejectedTooLong: number
+}
+
+/**
+ * Client-derived cost aggregate for the queue (007 · US5 / G-PRICING, FR-018/FR-019).
+ * `perItem` maps each row's clientId to its estimate (from `item.text.length` +
+ * `item.model`); `totalUsd` sums ONLY estimable amounts (an unavailable item is never
+ * counted as $0); `unavailableCount` drives the "+ N unavailable" note. Display-only —
+ * derived, never persisted, and never gates Generate.
+ */
+export interface QueueCost {
+  perItem: Map<string, CostEstimate>
+  totalUsd: number
+  unavailableCount: number
 }
 
 /** Fields a single queue row can be edited with (US3); each key is optional. */
@@ -297,6 +310,22 @@ export function useQueue() {
       : [...items.value],
   )
 
+  // Per-item + total cost estimate over the whole queue (US5 / FR-018/FR-019). Each row
+  // is priced by its own model against its character count; unavailable (token-priced)
+  // rows are counted separately and excluded from the total, never treated as $0.
+  const queueCost = computed<QueueCost>(() => {
+    const perItem = new Map<string, CostEstimate>()
+    let totalUsd = 0
+    let unavailableCount = 0
+    for (const item of items.value) {
+      const estimate = estimateItemCost(item.model, item.text.length)
+      perItem.set(item.clientId, estimate)
+      if (estimate === 'unavailable') unavailableCount++
+      else totalUsd += estimate.amountUsd
+    }
+    return { perItem, totalUsd, unavailableCount }
+  })
+
   // Active-selection navigation for the toolbar prev/next (FR-005), over the
   // visible rows; disabled at the boundaries.
   const activeIndex = computed(() => visibleItems.value.findIndex((i) => i.clientId === activeId.value))
@@ -365,6 +394,7 @@ export function useQueue() {
     filters,
     visibleItems,
     generateTarget,
+    queueCost,
     activeIndex,
     hasPrev,
     hasNext,

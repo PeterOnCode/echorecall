@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // 007 · US1 (FR-007): the generation action bar — a queue summary + count badge and
 // Save queue / Load queue / Upload .txt batch / Generate. Generate is disabled when the
-// queue is empty or a run is in flight. `totalUsd`/`unavailableCount` are optional and
-// filled by the per-item cost estimate in US5 (kept here so the bar's props are stable).
-withDefaults(
+// queue is empty or a run is in flight. `totalUsd`/`unavailableCount` come from the
+// per-item cost estimate (US5): the queue total + a "+N unavailable" note (display-only).
+const props = withDefaults(
   defineProps<{
     queueCount: number
     busy?: boolean
@@ -13,7 +13,17 @@ withDefaults(
   { busy: false, totalUsd: 0, unavailableCount: 0 },
 )
 const emit = defineEmits<{ 'save-queue': []; 'load-queue': []; 'upload-txt': []; generate: [] }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+/** Format the queue total in the active locale; sub-cent estimates keep up to 4 decimals. */
+const totalLabel = computed(() =>
+  new Intl.NumberFormat(locale.value, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(props.totalUsd),
+)
 </script>
 
 <template>
@@ -21,9 +31,19 @@ const { t } = useI18n()
     data-test="action-bar"
     class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-default p-3"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <span class="text-sm text-muted">{{ t('generateNext.actionBar.summary') }}</span>
       <UBadge data-test="queue-count-badge" color="primary" variant="subtle">{{ queueCount }}</UBadge>
+      <span data-test="queue-total-cost" class="text-sm text-muted">
+        {{ t('generateNext.cost.total', { amount: totalLabel }) }}
+      </span>
+      <span
+        v-if="unavailableCount > 0"
+        data-test="queue-unavailable-note"
+        class="text-xs text-muted"
+      >
+        {{ t('generateNext.cost.unavailableNote', { count: unavailableCount }) }}
+      </span>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">

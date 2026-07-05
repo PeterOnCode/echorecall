@@ -433,6 +433,11 @@
         "completed": "A generálás kész.",
         "cancelled": "A generálás leállt."
       }
+    },
+    "cost": {
+      "unavailable": "Nem elérhető",
+      "total": "Becsült költség: {amount}",
+      "unavailableNote": "+{count} nem elérhető"
     }
   }
 }

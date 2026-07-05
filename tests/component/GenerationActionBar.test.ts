@@ -35,4 +35,35 @@ describe('GenerationActionBar', () => {
     expect(wrapper.emitted('upload-txt')).toBeTruthy()
     expect(wrapper.emitted('generate')).toBeTruthy()
   })
+
+  // US5 (T038 / FR-018/FR-019): the queue total cost + "+N unavailable" note.
+  it('shows the queue total cost', async () => {
+    const wrapper = await mountSuspended(GenerationActionBar, {
+      props: { queueCount: 2, totalUsd: 0.0105 },
+    })
+    const total = wrapper.find('[data-test="queue-total-cost"]')
+    expect(total.exists()).toBe(true)
+    expect(total.text()).toMatch(/\d/)
+  })
+
+  it('shows a "+N unavailable" note only when some items are unavailable', async () => {
+    const none = await mountSuspended(GenerationActionBar, {
+      props: { queueCount: 2, unavailableCount: 0 },
+    })
+    expect(none.find('[data-test="queue-unavailable-note"]').exists()).toBe(false)
+
+    const some = await mountSuspended(GenerationActionBar, {
+      props: { queueCount: 3, unavailableCount: 2 },
+    })
+    const note = some.find('[data-test="queue-unavailable-note"]')
+    expect(note.exists()).toBe(true)
+    expect(note.text()).toContain('2')
+  })
+
+  it('never blocks Generate on the estimate state (only empty/busy disable it)', async () => {
+    const wrapper = await mountSuspended(GenerationActionBar, {
+      props: { queueCount: 2, totalUsd: 0, unavailableCount: 2 },
+    })
+    expect((wrapper.find('[data-test="action-generate"]').element as HTMLButtonElement).disabled).toBe(false)
+  })
 })

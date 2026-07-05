@@ -143,16 +143,16 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US5
 
-- [ ] T036 [P] [US5] Core unit spec `tests/unit/pricing.spec.ts`: `estimateItemCost` per model (`tts-1`=charN/1e6·15, `tts-1-hd`=·30), `gpt-4o-mini-tts`→`'unavailable'`, empty text → `{amountUsd:0}` for estimable models
-- [ ] T037 [US5] Unit spec `tests/unit/useQueue.cost.spec.ts`: `QueueCost` per-item map from `item.text.length`, `totalUsd` sums estimable only (never counts unavailable as $0), `unavailableCount`
-- [ ] T038 [US5] Component spec (extend `QueuePanel` + `GenerationActionBar`): per-item cost / "unavailable" (`queue-row-cost`), total (`queue-total-cost`), "+N unavailable" note (`queue-unavailable-note`); Generate not blocked by estimate state
+- [X] T036 [P] [US5] Core unit spec `tests/unit/pricing.spec.ts`: `estimateItemCost` per model (`tts-1`=charN/1e6·15, `tts-1-hd`=·30), `gpt-4o-mini-tts`→`'unavailable'`, empty text → `{amountUsd:0}` for estimable models
+- [X] T037 [US5] Unit spec `tests/unit/useQueue.cost.spec.ts`: `QueueCost` per-item map from `item.text.length`, `totalUsd` sums estimable only (never counts unavailable as $0), `unavailableCount`
+- [X] T038 [US5] Component spec (extend `QueuePanel` + `GenerationActionBar`): per-item cost / "unavailable" (`queue-row-cost`), total (`queue-total-cost`), "+N unavailable" note (`queue-unavailable-note`); Generate not blocked by estimate state
 
 ### Implementation for US5
 
-- [ ] T039 [P] [US5] Create core module `src/core/tts/pricing.ts` (`MODEL_PRICING`, `CostEstimate`, `estimateItemCost`) and export from `src/core/index.ts` — makes T036 green
-- [ ] T040 [US5] Derive `QueueCost` (perItem/totalUsd/unavailableCount) in `app/composables/useQueue.ts` via `estimateItemCost` over each item's text length — makes T037 green
-- [ ] T041 [US5] Render per-item cost in `QueuePanel.vue` and the total + "+N unavailable" note in `GenerationActionBar.vue`; keep it display-only (never gate Generate) — makes T038 green
-- [ ] T042 [P] [US5] Add en/hu i18n keys for cost, "unavailable", and "+N items unavailable" (parity, FR-022)
+- [X] T039 [P] [US5] Create core module `src/core/tts/pricing.ts` (`MODEL_PRICING`, `CostEstimate`, `estimateItemCost`) and export from `src/core/index.ts` — makes T036 green
+- [X] T040 [US5] Derive `QueueCost` (perItem/totalUsd/unavailableCount) in `app/composables/useQueue.ts` via `estimateItemCost` over each item's text length — makes T037 green
+- [X] T041 [US5] Render per-item cost in `QueuePanel.vue` and the total + "+N unavailable" note in `GenerationActionBar.vue`; keep it display-only (never gate Generate) — makes T038 green
+- [X] T042 [P] [US5] Add en/hu i18n keys for cost, "unavailable", and "+N items unavailable" (parity, FR-022)
 
 **Checkpoint**: Honest per-item + total estimates shown before Generate; independently testable.
 

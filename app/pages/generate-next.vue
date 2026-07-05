@@ -15,6 +15,7 @@ const {
   speed,
   metadata,
   generateTarget,
+  queueCost,
   serialize,
   loadDocument,
   addItem,
@@ -215,12 +216,14 @@ async function onTxtFileChosen(event: Event) {
       <GenerationActionBar
         :queue-count="items.length"
         :busy="generating"
+        :total-usd="queueCost.totalUsd"
+        :unavailable-count="queueCost.unavailableCount"
         @save-queue="onSaveQueue"
         @load-queue="onLoadQueue"
         @upload-txt="onUploadTxt"
         @generate="onGenerate"
       />
-      <QueuePanel :items="items" @remove="removeItem" />
+      <QueuePanel :items="items" :cost="queueCost" @remove="removeItem" />
       <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
         {{ importError }}
       </p>
