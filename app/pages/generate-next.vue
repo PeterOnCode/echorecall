@@ -3,11 +3,12 @@ import type { Format, Metadata, Model } from '#core/client'
 import { MAX_UPLOAD_BYTES } from '#core/client'
 
 // 007 · Parallel Generate route (FR-001). Single vertically-scrolling page — page intro →
-// three-column editor (Script / Generation settings / Metadata) → generation action bar +
-// pending-queue panel. A focused queue builder: generated recordings are managed on the
-// separate Library tab (/library), so the Generate page no longer embeds the Library
-// workspace (removed at the user's request). Replaces the 005 two-pane QueueList + metadata
-// editor. Cut over to `/` once proven (FR-002). Accent = the app's `indigo` primary.
+// two-column editor (Script / Generation settings) with a full-width Metadata row below →
+// generation action bar + pending-queue panel. A focused queue builder: generated
+// recordings are managed on the separate Library tab (/library), so the Generate page no
+// longer embeds the Library workspace (removed at the user's request). Replaces the 005
+// two-pane QueueList + metadata editor. Cut over to `/` once proven (FR-002). Accent = the
+// app's `indigo` primary.
 const {
   items,
   voiceId,
@@ -202,8 +203,9 @@ async function onTxtFileChosen(event: Event) {
       <p class="text-sm text-muted">{{ t('generateNext.intro.subtitle') }}</p>
     </section>
 
-    <!-- Three-column generation editor (no resizable split — FR-003) -->
-    <section data-test="gen-editor" class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <!-- Two-column generation editor: Script + Generation settings on the top row,
+         Metadata on its own full-width row below (no resizable split — FR-003). -->
+    <section data-test="gen-editor" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div data-test="gen-col-script" class="flex flex-col gap-2">
         <ScriptEntryPanel @add="onAdd" />
       </div>
@@ -216,7 +218,7 @@ async function onTxtFileChosen(event: Event) {
           @reset="onResetSetting"
         />
       </div>
-      <div data-test="gen-col-metadata" class="flex flex-col gap-2">
+      <div data-test="gen-col-metadata" class="flex flex-col gap-2 lg:col-span-2">
         <MetadataFields v-model="metadata" />
       </div>
     </section>
