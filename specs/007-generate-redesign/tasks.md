@@ -180,9 +180,9 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 **Purpose**: i18n/a11y verification, quality gates, and the final cutover (FR-002/FR-022/FR-023, SC-007/SC-009).
 
-- [ ] T045 [P] i18n parity test `tests/unit/i18n.generate-next.spec.ts`: every new key added by this feature exists in both `en.json` and `hu.json` with no missing/extra keys (FR-022/SC-007)
-- [ ] T046 [P] Accessibility sweep test `tests/component/generate-next.a11y.spec.ts`: every new control (script textarea + Clear + Add, four selects + resets, Save/Load/Upload/Generate, per-item remove, progress-modal confirm) is tab-reachable, Enter/Space-activatable, and ARIA-labelled (FR-023/SC-007)
-- [ ] T047 Run `mise exec node@22.22.2 -- pnpm typecheck` and `… pnpm lint`; fix any issues, honoring the `~`-alias / composable-type-import / `runtimeConfig.public` / i18n-composer gotchas
+- [X] T045 [P] i18n parity test `tests/unit/i18n.generate-next.spec.ts`: every new key added by this feature exists in both `en.json` and `hu.json` with no missing/extra keys (FR-022/SC-007)
+- [X] T046 [P] Accessibility sweep test `tests/component/generate-next.a11y.spec.ts`: every new control (script textarea + Clear + Add, four selects + resets, Save/Load/Upload/Generate, per-item remove, progress-modal confirm) is tab-reachable, Enter/Space-activatable, and ARIA-labelled (FR-023/SC-007) — caught+fixed a missing accessible name on the script textarea
+- [X] T047 Run `mise exec node@22.22.2 -- pnpm typecheck` and `… pnpm lint`; fix any issues, honoring the `~`-alias / composable-type-import / `runtimeConfig.public` / i18n-composer gotchas
 - [ ] T048 **Cutover** (FR-002/SC-009): repoint the Generate nav target to the new surface, move `app/pages/generate-next.vue` into `app/pages/index.vue`, and DELETE the superseded 005 Generate components (`AddTextPanel.vue`, `GenerateForm.vue`, `GenerateToolbar.vue`, `QueueList.vue`, and `QueueColumnsDialog.vue` if unused) plus their now-dead tests; update any references so `/` renders the redesigned page and existing links resolve
 - [ ] T049 Execute the [quickstart.md](./quickstart.md) validation scenarios end-to-end against `pnpm dev`, confirming SC-001…SC-011 (indigo accent, no green, Account area omitted)
 - [ ] T050 Final green gate: `mise exec node@22.22.2 -- pnpm test`, `… pnpm test:component`, `… pnpm typecheck`, `… pnpm lint` all pass

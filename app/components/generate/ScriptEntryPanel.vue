@@ -57,6 +57,7 @@ function onKeydown(event: KeyboardEvent) {
         data-test="add-text-input"
         :rows="6"
         :placeholder="t('generateNext.script.placeholder')"
+        :aria-label="t('generateNext.script.title')"
         class="w-full"
         @input="error = null"
         @keydown.enter="onKeydown"
