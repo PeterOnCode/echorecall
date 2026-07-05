@@ -4,13 +4,16 @@ import { defineEventHandler, readBody } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import GeneratePage from '~/pages/index.vue'
 
-// Component coverage for US10 (FR-048): the Generate form pre-fills non-title
-// metadata from deployment defaults (GET /api/settings/defaults), Title stays
-// blank, the defaults flow onto new queue rows (rows clone the shared form
-// metadata), and the user can still override or clear any field before generating.
-// Endpoints are mocked at the HTTP boundary; this drives the real queue + page.
+// Component coverage for US10 (FR-048): the Generate metadata form pre-fills non-title
+// fields from deployment defaults (GET /api/settings/defaults), the defaults flow onto
+// new queue rows (rows clone the shared form metadata), and the user can still override
+// or clear any field before generating. Title itself is no longer a form field (007
+// derives it at generation time from the row's text — see useQueue.stampDerivedMetadata),
+// so it is never defaulted here either. Endpoints are mocked at the HTTP boundary; this
+// drives the real queue + page.
 
 registerEndpoint('/api/voices', () => ({ voices: [{ id: 'alloy', label: 'Alloy' }] }))
+registerEndpoint('/api/settings/generation-defaults', () => ({ generationDefaults: {} }))
 
 const DEFAULT_TAGS = {
   artist: 'EchoRecall',
@@ -58,7 +61,7 @@ registerEndpoint('/api/generations', {
 
 async function mountPage() {
   const wrapper = await mountSuspended(GeneratePage)
-  await flushPromises() // resolve onMounted loadVoices() + the defaults fetch
+  await flushPromises() // resolve onMounted loadVoices() + the defaults fetches
   return wrapper
 }
 
@@ -67,7 +70,7 @@ function inputValue(wrapper: Awaited<ReturnType<typeof mountPage>>, test: string
 }
 
 describe('Generate form — default tag values (US10)', () => {
-  it('pre-fills non-title fields from deployment defaults, leaving Title blank', async () => {
+  it('pre-fills non-title fields from deployment defaults', async () => {
     const wrapper = await mountPage()
     // The defaults arrive from an async fetch on mount; wait for them to settle.
     await vi.waitFor(() => expect(inputValue(wrapper, 'meta-artist')).toBe('EchoRecall'))
@@ -80,8 +83,8 @@ describe('Generate form — default tag values (US10)', () => {
     expect(chips.join(' ')).toContain('eng')
     expect(chips.join(' ')).toContain('hun')
 
-    // Title is never defaulted (FR-048).
-    expect(inputValue(wrapper, 'meta-title')).toBe('')
+    // Title is not a Generate form field at all (007) — derived at generate time instead.
+    expect(wrapper.find('[data-test="meta-title"]').exists()).toBe(false)
   })
 
   it('carries the defaults onto a new row, and honors per-field override/clear at generate', async () => {
@@ -97,7 +100,7 @@ describe('Generate form — default tag values (US10)', () => {
     await wrapper.find('[data-test="add-text-submit"]').trigger('click')
 
     postedBodies.length = 0
-    await wrapper.find('[data-test="toolbar-generate"]').trigger('click')
+    await wrapper.find('[data-test="action-generate"]').trigger('click')
 
     await vi.waitFor(() => {
       const sent = postedBodies.find((b) => b.text === 'hello')
@@ -106,7 +109,9 @@ describe('Generate form — default tag values (US10)', () => {
       expect(sent?.metadata?.genre).toBeUndefined() // cleared default stays cleared
       expect(sent?.metadata?.album).toBe('Daily Briefing') // untouched default preserved
       expect(sent?.metadata?.languages).toEqual(['eng', 'hun'])
-      expect(sent?.metadata?.title).toBeUndefined() // never defaulted
+      // Title is derived from the text at generate time (007), not defaulted.
+      expect(sent?.metadata?.title).toBe('hello')
+      expect(sent?.metadata?.track).toBe('1')
     })
   })
 

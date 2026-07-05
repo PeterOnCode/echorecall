@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import type { Metadata } from '#core/client'
-import type { ItemPatch, QueueItem, UploadSummary } from '../composables/useQueue'
+import type { Format, Metadata, Model } from '#core/client'
+import { MAX_UPLOAD_BYTES } from '#core/client'
 
-// Generate workspace (005 redesign / US1+US2): a resizable two-pane dashboard —
-// the queue list on the left, the selected item's metadata editor on the right —
-// driven by a centralized GenerateToolbar (upload, prev/next, generate, save/open
-// queue, settings). The defaults bar (voice/model/format/speed) and the interim
-// text-add path build the queue (the ad-hoc text panel arrives in US4); the shared
-// metadata editor still pre-fills new rows from the deployment default tags (003).
-// Generate targets the checked rows if any are checked, else the whole queue, and
-// removes each successfully generated row (failures stay for retry); the run's
-// successes remain downloadable as one batch `.zip` afterwards (FR-022). Queues are
-// saved to / opened from local files the user owns — no server storage (FR-013).
+// 007 · The Generate surface (FR-002 cutover). Single vertically-scrolling page — page intro →
+// two-column editor (Script / Generation settings) with a full-width Metadata row below →
+// generation action bar + pending-queue panel. A focused queue builder: generated
+// recordings are managed on the separate Library tab (/library), so the Generate page does
+// not embed the Library workspace. Replaced the 005 two-pane QueueList + metadata editor.
+// Accent = the app's `indigo` primary.
+// View preferences are read first so the queue can be told which metadata fields are visible
+// (only visible fields are saved onto rows — Configure Visible Fields, 007).
+const { genSettings, setGenSetting, resetGenSetting, metadataFields, setMetadataFields } =
+  useViewPreferences()
 const {
   items,
   voiceId,
@@ -19,251 +19,257 @@ const {
   format,
   speed,
   metadata,
-  activeId,
   checkedIds,
-  searchTerm,
-  filters,
-  visibleItems,
   generateTarget,
-  hasPrev,
-  hasNext,
-  selectPrev,
-  selectNext,
+  queueCost,
   serialize,
   loadDocument,
   addItem,
   addFromUpload,
   removeItem,
   removeMany,
-  updateItem,
+  toggleChecked,
+  toggleAll,
+  clear: clearQueue,
   applyMetadataToPending,
+  stampRecordingDates,
+  stampDerivedMetadata,
   setDefaults,
-} = useQueue()
-const { voices, generating, lastBatchIds, loadVoices, generateAll, downloadArchive } = useGeneration()
+} = useQueue({
+  visibleMetadataFields: () => metadataFields.value.filter((f) => f.visible).map((f) => f.id),
+})
+const { voices, generating, progress, loadVoices, generateAll, requestCancel, reset } =
+  useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
-const { queueColumns } = useViewPreferences()
-// The Settings modal is hosted in the app header (US7); the toolbar's settings action
-// just flips its shared open flag.
-const { open: settingsOpen } = useSettingsModal()
 const { t } = useI18n()
 
-// Whether the column-visibility chooser is open (US3 / FR-012).
-const columnsOpen = ref(false)
+// Configure Visible Fields modal state (007): the applied set persists via useViewPreferences,
+// which drives both the form's rendered fields and the queue's metadata projection.
+const metadataFieldsOpen = ref(false)
+function onApplyMetadataFields(next: typeof metadataFields.value) {
+  setMetadataFields(next)
+}
 
-const uploadSummary = ref<UploadSummary | null>(null)
-// Whether any saved default tag was applied (003) — drives the form hint.
-const defaultsApplied = ref(false)
+// 007 · US3 (G-DEFAULTS, FR-012/FR-013). Each of Voice/Model/Format resolves as
+// last-selected (client, `genSettings`) → configured default (server) → built-in fallback.
+// The configured half is fetched once on mount; the last-selected half persists on every
+// user change (guarded by `settingsReady` so the initial resolution isn't mistaken for a
+// user pick). A per-field reset forgets the last-selected value and restores the configured
+// default (or the built-in fallback when none is configured). Speed is not resolved here:
+// synthesis always runs at 1× (`speed` stays the queue's fixed default), so it has no
+// UI control and no defaults resolution.
+type ConfiguredDefaults = { voiceId?: string; model?: string; format?: string }
+const configuredDefaults = ref<ConfiguredDefaults>({})
+const settingsReady = ref(false)
 
-// Refs to imperative DOM/child handles: the upload dropzone (toolbar Upload reuses
-// its hidden input + size guard) and the hidden "open queue" file input.
-const dropzone = ref<{ open: () => void } | null>(null)
+const fallbackVoice = () => voices.value[0]?.id ?? ''
+
+function resolveSettings() {
+  const ls = genSettings.value
+  const cd = configuredDefaults.value
+  voiceId.value = ls.voiceId ?? cd.voiceId ?? fallbackVoice()
+  model.value = (ls.model ?? cd.model ?? 'gpt-4o-mini-tts') as Model
+  format.value = (ls.format ?? cd.format ?? 'mp3') as Format
+}
+
+watch(voiceId, (v) => { if (settingsReady.value) setGenSetting('voiceId', v) })
+watch(model, (v) => { if (settingsReady.value) setGenSetting('model', v) })
+watch(format, (v) => { if (settingsReady.value) setGenSetting('format', v) })
+
+/** Per-field reset (FR-013): forget the last-selected value, restore the configured default. */
+async function onResetSetting(field: 'voiceId' | 'model' | 'format') {
+  resetGenSetting(field)
+  // Suppress the change-watcher so restoring the default isn't re-saved as last-selected.
+  settingsReady.value = false
+  const cd = configuredDefaults.value
+  if (field === 'voiceId') voiceId.value = cd.voiceId ?? fallbackVoice()
+  else if (field === 'model') model.value = (cd.model ?? 'gpt-4o-mini-tts') as Model
+  else format.value = (cd.format ?? 'mp3') as Format
+  await nextTick()
+  settingsReady.value = true
+}
+
+// Hidden inputs: `.json` saved-queue load (Load queue) and `.txt` batch (Upload .txt).
 const queueFileInput = ref<HTMLInputElement | null>(null)
-
-// Import flow state: a parsed-but-not-yet-applied document awaiting confirmation
-// (only when replacing a non-empty queue), plus the last import error message.
-const pendingDoc = ref<ReturnType<typeof serialize> | null>(null)
-const confirmReplace = ref(false)
+const txtFileInput = ref<HTMLInputElement | null>(null)
 const importError = ref<string | null>(null)
 
-// The row shown in the detail pane; null → the pane shows its empty state (FR-003).
-const activeItem = computed<QueueItem | null>(
-  () => items.value.find((i) => i.clientId === activeId.value) ?? null,
-)
-
 onMounted(async () => {
-  await loadVoices()
-  if (!voiceId.value && voices.value.length > 0) voiceId.value = voices.value[0]!.id
-
-  // Pre-fill non-title metadata from the saved default tags (003). Best effort:
-  // a failed or empty fetch simply leaves the fields blank.
+  // Voices, default tags, and generation defaults are best-effort: a degraded/offline env
+  // just falls back to built-ins rather than blanking the whole page.
+  try {
+    await loadVoices()
+  } catch {
+    // voices optional
+  }
   try {
     const { defaultTags } = await $fetch<{ defaultTags: Metadata }>('/api/settings/defaults')
-    if (defaultTags && Object.keys(defaultTags).length > 0) {
-      setDefaults(defaultTags)
-      defaultsApplied.value = Object.keys(defaultTags).some((key) => key !== 'title')
-    }
+    if (defaultTags && Object.keys(defaultTags).length > 0) setDefaults(defaultTags)
   } catch {
-    // Defaults are optional; leave the form blank on any error.
+    // defaults optional
   }
+  try {
+    const { generationDefaults } = await $fetch<{ generationDefaults: ConfiguredDefaults }>(
+      '/api/settings/generation-defaults',
+    )
+    configuredDefaults.value = generationDefaults ?? {}
+  } catch {
+    // generation defaults optional
+  }
+  // Resolve the four controls (last-selected → configured → fallback), then arm the
+  // change-watchers so subsequent user edits persist as last-selected.
+  resolveSettings()
+  await nextTick()
+  settingsReady.value = true
 })
 
 function onAdd(text: string) {
   addItem(text)
 }
 
-function onUploaded(content: string, filename: string) {
-  uploadSummary.value = addFromUpload(content, filename)
+/** Bulk-remove the currently checked rows from the queue (client-only, no confirm needed). */
+function onDeleteSelected() {
+  removeMany([...checkedIds.value])
 }
 
-/** Apply a per-row edit from the detail-pane editor to the active item only. */
-function onUpdate(patch: ItemPatch) {
-  if (activeId.value) updateItem(activeId.value, patch)
-}
-
-// The shared (form-level) metadata editor lives in a collapsible accordion, open by
-// default. It seeds new rows and is stamped onto un-edited rows at generation.
-const metadataSections = [{ label: t('generate.metadata.legend'), slot: 'metadata' as const, value: 'metadata' }]
-
-const canGenerate = computed(() => items.value.length > 0)
+// 007 · US4 (G-CANCEL, FR-014): the generation progress modal opens on Generate,
+// disables the page while the run is in flight (`generating`), and — via the modal's
+// in-modal confirm — allows a graceful stop. It stays open on the end summary until the
+// user dismisses it (`done`), which closes it and resets the progress state.
+const progressOpen = ref(false)
 
 async function onGenerate() {
-  if (!canGenerate.value || generating.value) return
-  // Resolve the target once (checked-else-all) and use the same snapshot for both
-  // stamping and generation: apply the form-level metadata to the batch's un-edited
-  // rows (incl. rows added before it was filled) — but only the rows actually being
-  // generated, so unchecked rows are never silently overwritten — then process them
-  // and remove each success from the queue.
+  if (items.value.length === 0 || generating.value) return
+  // Resolve the target once (checked-else-all), stamp the form metadata onto its
+  // un-edited rows, fill today's recording date on any row still missing one (US6 /
+  // FR-020), derive the Title + Track that are not user-editable on Generate, then
+  // generate and drop each success from the queue.
   const target = generateTarget.value
   applyMetadataToPending(target)
+  stampRecordingDates(target)
+  stampDerivedMetadata(target)
+  reset()
+  progressOpen.value = true
   await generateAll(target, speed.value, removeItem)
+  // Generated recordings are managed on the Library tab (/library); the run's outcome is
+  // shown in the progress modal's end summary.
 }
 
-/** Download the most recent run's successful items as one `.zip` (FR-022). */
-async function onDownloadBatch() {
-  await downloadArchive(lastBatchIds.value)
+/** The modal's cancel-confirm was accepted: request a graceful stop (finish in-flight). */
+function onProgressConfirmCancel() {
+  requestCancel()
 }
 
-// Toolbar Upload reuses the dropzone's hidden input (and its accept/size guards).
-function onToolbarUpload() {
-  dropzone.value?.open()
+/** Dismiss the end summary: close the modal and clear the progress state. */
+function onProgressDone() {
+  progressOpen.value = false
+  reset()
 }
 
-/** Save the current queue to a local `.echoqueue.json` file (FR-013). */
 function onSaveQueue() {
   exportQueue(serialize())
 }
 
-/** Open the local file picker for a saved queue. */
-function onOpenQueue() {
+function onLoadQueue() {
   queueFileInput.value?.click()
 }
 
-/** Validate a picked queue file; replace the queue (confirming first if non-empty). */
+function onUploadTxt() {
+  txtFileInput.value?.click()
+}
+
+/** Validate a picked `.json` queue file and replace the queue with its rows. */
 async function onQueueFileChosen(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = '' // allow re-selecting the same file
   if (!file) return
-
   const result = await importQueue(file)
   if (!result.ok) {
     importError.value = t(`generate.queueFile.error.${result.reason}`)
     return
   }
   importError.value = null
-  if (items.value.length > 0) {
-    pendingDoc.value = result.doc
-    confirmReplace.value = true
-  } else {
-    loadDocument(result.doc)
+  loadDocument(result.doc)
+}
+
+/** Read a picked `.txt` batch and append its parsed rows to the queue (FR-007). */
+async function onTxtFileChosen(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  if (file.size > MAX_UPLOAD_BYTES) {
+    importError.value = t('generateNext.upload.tooLarge')
+    return
   }
-}
-
-function onConfirmReplace() {
-  if (pendingDoc.value) loadDocument(pendingDoc.value)
-  pendingDoc.value = null
-  confirmReplace.value = false
-}
-
-function onCancelReplace() {
-  pendingDoc.value = null
-  confirmReplace.value = false
-}
-
-/** Remove all checked rows (the QueueList confirms before emitting this — FR-011). */
-function onDeleteSelected() {
-  removeMany([...checkedIds.value])
+  const content = await file.text()
+  importError.value = null
+  addFromUpload(content, file.name)
 }
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <GenerateToolbar
-      :has-prev="hasPrev"
-      :has-next="hasNext"
-      :can-generate="canGenerate"
-      :generating="generating"
-      :checked-count="checkedIds.size"
-      @upload="onToolbarUpload"
-      @prev="selectPrev"
-      @next="selectNext"
-      @generate="onGenerate"
-      @save-queue="onSaveQueue"
-      @open-queue="onOpenQueue"
-      @open-settings="settingsOpen = true"
-    />
+  <div data-test="generate-next" class="flex flex-col gap-6" :inert="generating">
+    <!-- Page intro -->
+    <section data-test="gen-page-intro" class="flex flex-col gap-1">
+      <h1 class="text-xl font-semibold">{{ t('generateNext.intro.title') }}</h1>
+      <p class="text-sm text-muted">{{ t('generateNext.intro.subtitle') }}</p>
+    </section>
 
-    <GenerateForm
-      v-model:voice-id="voiceId"
-      v-model:model="model"
-      v-model:format="format"
-      v-model:speed="speed"
-      :voices="voices"
-    />
-
-    <AddTextPanel @add="onAdd" />
-
-    <UploadDropzone ref="dropzone" :summary="uploadSummary" @uploaded="onUploaded" />
-
-    <UAccordion :items="metadataSections" default-value="metadata">
-      <template #metadata>
-        <div class="flex flex-col gap-1">
-          <p v-if="defaultsApplied" data-test="defaults-hint" class="text-xs text-muted">
-            {{ t('generate.metadata.defaultsHint') }}
-          </p>
-          <MetadataFields v-model="metadata" />
-        </div>
-      </template>
-    </UAccordion>
-
-    <DashboardWorkspace storage-key="generate-workspace" :detail-empty="!activeItem">
-      <template #list>
-        <QueueList
-          v-model:active-id="activeId"
-          v-model:checked-ids="checkedIds"
-          v-model:search="searchTerm"
-          v-model:filters="filters"
-          :items="visibleItems"
+    <!-- Two-column generation editor: Script + Generation settings on the top row,
+         Metadata on its own full-width row below (no resizable split — FR-003). -->
+    <section data-test="gen-editor" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div data-test="gen-col-script" class="flex flex-col gap-2">
+        <ScriptEntryPanel @add="onAdd" />
+      </div>
+      <div data-test="gen-col-settings" class="flex flex-col gap-2">
+        <GenerationSettingsPanel
+          v-model:voice-id="voiceId"
+          v-model:model="model"
+          v-model:format="format"
           :voices="voices"
-          :visible-columns="queueColumns"
-          @remove="removeItem"
-          @open-columns="columnsOpen = true"
-          @delete-selected="onDeleteSelected"
+          @reset="onResetSetting"
         />
-      </template>
-      <template #detail>
-        <QueueItemEditor
-          v-if="activeItem"
-          :item="activeItem"
-          :voices="voices"
-          @update="onUpdate"
+      </div>
+      <div data-test="gen-col-metadata" class="flex flex-col gap-2 lg:col-span-2">
+        <MetadataFields
+          v-model="metadata"
+          :fields="metadataFields"
+          @configure="metadataFieldsOpen = true"
         />
-      </template>
-      <template #empty>
-        <p data-test="generate-detail-empty" class="text-sm text-muted">
-          {{ t('generate.workspace.detailEmpty') }}
-        </p>
-      </template>
-    </DashboardWorkspace>
+      </div>
+    </section>
 
-    <div v-if="lastBatchIds.length > 0">
-      <UButton
-        data-test="download-all"
-        color="neutral"
-        variant="outline"
-        icon="i-lucide-download"
-        @click="onDownloadBatch"
-      >
-        {{ t('generate.actions.downloadAll') }}
-      </UButton>
-    </div>
+    <!-- Generation action bar + pending-queue panel -->
+    <section data-test="gen-action-bar-region" class="flex flex-col gap-3">
+      <GenerationActionBar
+        :queue-count="items.length"
+        :busy="generating"
+        :total-usd="queueCost.totalUsd"
+        :unavailable-count="queueCost.unavailableCount"
+        @save-queue="onSaveQueue"
+        @load-queue="onLoadQueue"
+        @upload-txt="onUploadTxt"
+        @generate="onGenerate"
+      />
+      <QueuePanel
+        :items="items"
+        :cost="queueCost"
+        :selected-ids="checkedIds"
+        @remove="removeItem"
+        @toggle="toggleChecked"
+        @toggle-all="toggleAll(items)"
+        @delete-selected="onDeleteSelected"
+        @clear="clearQueue"
+      />
+      <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
+        {{ importError }}
+      </p>
+    </section>
 
-    <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
-      {{ importError }}
-    </p>
-
-    <!-- display:none keeps the native input out of the tab order / a11y tree; the
-         toolbar's labelled "open queue" button is the accessible trigger. -->
+    <!-- Hidden file inputs (display:none keeps them out of the tab order / a11y tree;
+         the action-bar buttons are the accessible triggers). -->
     <input
       ref="queueFileInput"
       data-test="queue-file-input"
@@ -272,17 +278,31 @@ function onDeleteSelected() {
       class="hidden"
       @change="onQueueFileChosen"
     >
+    <input
+      ref="txtFileInput"
+      data-test="txt-file-input"
+      type="file"
+      accept=".txt,text/plain"
+      class="hidden"
+      @change="onTxtFileChosen"
+    >
 
-    <ConfirmDialog
-      :open="confirmReplace"
-      :title="t('generate.queueFile.replaceTitle')"
-      :message="t('generate.queueFile.replaceMessage', { count: items.length })"
-      :confirm-label="t('generate.queueFile.replaceConfirm')"
-      :cancel-label="t('generate.queueFile.replaceCancel')"
-      @confirm="onConfirmReplace"
-      @cancel="onCancelReplace"
+    <!-- Generation progress modal (US4 — teleports to body, so the inert root above
+         never disables it). Opens on Generate; the modal's in-modal confirm drives a
+         graceful stop; the end summary stays until dismissed. -->
+    <GenerationProgressModal
+      :open="progressOpen"
+      :progress="progress"
+      @confirm-cancel="onProgressConfirmCancel"
+      @done="onProgressDone"
     />
 
-    <QueueColumnsDialog v-model:open="columnsOpen" v-model:columns="queueColumns" />
+    <!-- Configure Visible Fields modal for the metadata editor (007): toggle + reorder the
+         fields; only visible fields render in the form and are saved onto queue rows. -->
+    <MetadataFieldsDialog
+      v-model:open="metadataFieldsOpen"
+      :fields="metadataFields"
+      @apply="onApplyMetadataFields"
+    />
   </div>
 </template>

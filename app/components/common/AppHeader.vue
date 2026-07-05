@@ -5,17 +5,13 @@
 // version check.
 const version = useAppVersion()
 const { t } = useI18n()
-const route = useRoute()
 
 // Settings moved into a modal (005 · US7 / FR-017): the standalone tab/page is gone.
 // The header hosts the one shared SettingsModal so it is reachable on every surface,
-// driven by a useState-backed open flag. The Generate surface opens it from its own
-// workspace toolbar (FR-004), so the header gear is the entry point only on surfaces
-// that have no toolbar (e.g. Library) — keeping exactly one settings entry per surface
-// (FR-017's "only entry point") without leaving toolbar-less surfaces unable to reach
-// it. Route comparison mirrors the layout's tab routing (no locale prefix).
+// driven by a useState-backed open flag. Neither Generate (007 redesign) nor Library
+// has its own toolbar settings entry, so the header gear is the sole Settings entry
+// point everywhere (FR-017's "only entry point").
 const { open: settingsOpen } = useSettingsModal()
-const showSettingsGear = computed(() => route.path !== '/')
 </script>
 
 <template>
@@ -33,7 +29,6 @@ const showSettingsGear = computed(() => route.path !== '/')
 
     <template #right>
       <UButton
-        v-if="showSettingsGear"
         data-test="header-settings"
         color="neutral"
         variant="ghost"

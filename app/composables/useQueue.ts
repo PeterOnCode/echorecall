@@ -142,7 +142,7 @@ export function useQueue(options?: UseQueueOptions) {
     const visible = new Set<string>(visibleMetadataFields())
     const clone = cloneMetadata(m)
     for (const key of configurableMetadataFields) {
-      if (!visible.has(key)) delete clone[key]
+      if (!visible.has(key)) Reflect.deleteProperty(clone, key)
     }
     return clone
   }

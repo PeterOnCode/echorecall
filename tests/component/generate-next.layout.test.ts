@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GenerateNextPage from '~/pages/generate-next.vue'
+import GenerateNextPage from '~/pages/index.vue'
 
 // The page loads voices + default tags on mount (best-effort); mock both so the
 // layout assertions run against a clean, deterministic render.

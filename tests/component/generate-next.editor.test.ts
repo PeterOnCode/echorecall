@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GenerateNextPage from '~/pages/generate-next.vue'
+import GenerateNextPage from '~/pages/index.vue'
 
 // 007 · US1 (T008 / FR-004/FR-007): page-level wiring for the redesigned Generate editor.
 // The Script column's Add appends a queue row and the action bar's count badge tracks the

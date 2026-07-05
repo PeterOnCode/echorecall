@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { defineEventHandler, readBody } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GenerateNextPage from '~/pages/generate-next.vue'
+import GenerateNextPage from '~/pages/index.vue'
 
 // 007 · Title + Track are not user-editable on Generate — they are derived at generation time
 // and sent to the API. This drives the REAL page: add rows, click Generate, and assert each
