@@ -74,12 +74,12 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US2
 
-- [ ] T015 [US2] Integration spec `tests/integration/generate-next.embed.spec.ts`: the embedded workspace renders `LibraryFilterBar`/`LibraryFileTable`/`TagInspector`/`LibraryStatusBar`; **asserts no `WaveformPlayer` is present**; a tag edit+Save goes through the shared `useLibrary`; a newly generated recording appears after a run (FR-008/FR-009/FR-010)
+- [X] T015 [US2] Integration spec `tests/integration/generate-next.embed.spec.ts`: the embedded workspace renders `LibraryFilterBar`/`LibraryFileTable`/`TagInspector`/`LibraryStatusBar`; **asserts no `WaveformPlayer` is present**; a tag edit+Save goes through the shared `useLibrary`; a newly generated recording appears after a run (FR-008/FR-009/FR-010)
 
 ### Implementation for US2
 
-- [ ] T016 [US2] Mount the 006 Library components in `app/pages/generate-next.vue`'s embedded-workspace region (`LibraryFilterBar`, `LibraryFileTable`, `LibraryColumnsDialog`, `BulkTagEditDialog`, `TagInspector`, `InspectorFieldsDialog`, `LibraryStatusBar`) wired to `useLibrary` + `useViewPreferences` + `useTagDrafts`, **explicitly excluding `WaveformPlayer.vue`** (FR-008/FR-009)
-- [ ] T017 [US2] After a generation run completes, refresh `useLibrary` so newly generated recordings appear in the embedded table (FR-010) — makes T015 green
+- [X] T016 [US2] Mount the 006 Library components in `app/pages/generate-next.vue`'s embedded-workspace region (`LibraryFilterBar`, `LibraryFileTable`, `LibraryColumnsDialog`, `BulkTagEditDialog`, `TagInspector`, `InspectorFieldsDialog`, `LibraryStatusBar`) wired to `useLibrary` + `useViewPreferences` + `useTagDrafts`, **explicitly excluding `WaveformPlayer.vue`** (FR-008/FR-009)
+- [X] T017 [US2] After a generation run completes, refresh `useLibrary` so newly generated recordings appear in the embedded table (FR-010) — makes T015 green
 
 **Checkpoint**: US1 + US2 deliver the full P1 Generate surface (editor + live library workspace) at the parallel route.
 

@@ -31,6 +31,8 @@ const { t } = useI18n()
 const queueFileInput = ref<HTMLInputElement | null>(null)
 const txtFileInput = ref<HTMLInputElement | null>(null)
 const importError = ref<string | null>(null)
+// The embedded 006 Library workspace; reloaded after a run so new recordings appear.
+const embedRef = ref<{ reload: () => void | Promise<void> } | null>(null)
 
 onMounted(async () => {
   // Voices and default tags are best-effort: a degraded/offline env just leaves the
@@ -60,6 +62,8 @@ async function onGenerate() {
   const target = generateTarget.value
   applyMetadataToPending(target)
   await generateAll(target, speed.value, removeItem)
+  // The run produced new recordings — refresh the embedded library so they appear (FR-010).
+  await embedRef.value?.reload()
 }
 
 function onSaveQueue() {
@@ -148,15 +152,14 @@ async function onTxtFileChosen(event: Event) {
       </p>
     </section>
 
-    <!-- Embedded Library-style workspace (US2 — reuse 006 components, no waveform player) -->
+    <!-- Embedded Library-style workspace (US2 — reuse 006 components, no waveform player).
+         The 006 LibraryStatusBar inside this workspace is the surface's status bar. -->
     <section data-test="gen-embed">
-      <!-- US2: LibraryFilterBar + LibraryFileTable + TagInspector + LibraryStatusBar -->
+      <EmbeddedLibraryWorkspace ref="embedRef" />
     </section>
 
-    <!-- Status bar (US2) -->
-    <section data-test="gen-status-bar">
-      <!-- US1/US2: generation status bar -->
-    </section>
+    <!-- Status-bar region anchor (the embedded workspace renders the 006 status bar). -->
+    <section data-test="gen-status-bar" class="sr-only" aria-hidden="true" />
 
     <!-- Hidden file inputs (display:none keeps them out of the tab order / a11y tree;
          the action-bar buttons are the accessible triggers). -->
