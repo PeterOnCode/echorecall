@@ -126,9 +126,11 @@ export function useQueue(options?: UseQueueOptions) {
   // The configurable metadata fields (mirrors useViewPreferences' METADATA_FIELD_IDS). Only
   // the currently-visible subset is written onto a row; a hidden configurable field is dropped
   // before the row's metadata is saved (007). Any key outside this list — e.g. deployment
-  // defaults for fields not in the metadata form — is always preserved.
+  // defaults for fields not in the metadata form, or the derived `title`/`track` — is always
+  // preserved. `title` and `track` are intentionally NOT configurable: they are derived at
+  // generation time by {@link stampDerivedMetadata}, so the projection must never strip them.
   const configurableMetadataFields: MetadataFieldId[] = [
-    'title', 'artist', 'album', 'genre', 'track', 'recordedAt', 'comment', 'languages', 'customText', 'customUrl',
+    'artist', 'album', 'genre', 'recordedAt', 'comment', 'languages', 'customText', 'customUrl',
   ]
   const visibleMetadataFields = () => options?.visibleMetadataFields?.() ?? configurableMetadataFields
   // A primitive derived from the visible set so the metadata watcher re-projects rows when the
@@ -361,6 +363,31 @@ export function useQueue(options?: UseQueueOptions) {
     }
   }
 
+  /**
+   * Stamp the derived Title + Track onto each target row right before generation (007). Neither
+   * is user-editable on Generate (both are removed from the metadata form + Configure Visible
+   * Fields dialog); they are derived here so every generated recording carries a sensible title
+   * and its queue position as a track number:
+   *
+   * - **Title** — the first 60 characters of the row's text, ellipsised when longer. Filled only
+   *   when the row has no title, so a title carried in from an imported queue survives.
+   * - **Track** — the row's 1-based position in the full queue (what the QueuePanel shows),
+   *   always refreshed so it matches the current order.
+   *
+   * Runs AFTER {@link applyMetadataToPending} / {@link stampRecordingDates} so the projection
+   * (which never touches title/track) can't drop the derived values.
+   */
+  function stampDerivedMetadata(target: QueueItem[] = items.value): void {
+    for (const item of target) {
+      if (item.status === 'done') continue
+      const next = cloneMetadata(item.metadata)
+      if (next.title === undefined || next.title === '') next.title = deriveTitle(item.text)
+      const position = items.value.indexOf(item)
+      if (position >= 0) next.track = String(position + 1)
+      item.metadata = next
+    }
+  }
+
   // The rows currently shown by the list pane: the queue narrowed by the free-text
   // search and the per-field filters (US3 / FR-009/010), order preserved. A simple
   // O(n) scan per change — adequate well past the ≥200-row target (SC-003) without
@@ -498,9 +525,18 @@ export function useQueue(options?: UseQueueOptions) {
     updateItem,
     applyMetadataToPending,
     stampRecordingDates,
+    stampDerivedMetadata,
     setDefaults,
     clear,
   }
+}
+
+/**
+ * Derive a row's title from its text (007): the first 60 characters, with an ellipsis appended
+ * when the text is longer than 60. Text of 60 characters or fewer is used as-is.
+ */
+function deriveTitle(text: string): string {
+  return text.length > 60 ? `${text.slice(0, 60)}…` : text
 }
 
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */

@@ -34,6 +34,7 @@ const {
   clear: clearQueue,
   applyMetadataToPending,
   stampRecordingDates,
+  stampDerivedMetadata,
   setDefaults,
 } = useQueue({
   visibleMetadataFields: () => metadataFields.value.filter((f) => f.visible).map((f) => f.id),
@@ -142,10 +143,12 @@ async function onGenerate() {
   if (items.value.length === 0 || generating.value) return
   // Resolve the target once (checked-else-all), stamp the form metadata onto its
   // un-edited rows, fill today's recording date on any row still missing one (US6 /
-  // FR-020), then generate and drop each success from the queue.
+  // FR-020), derive the Title + Track that are not user-editable on Generate, then
+  // generate and drop each success from the queue.
   const target = generateTarget.value
   applyMetadataToPending(target)
   stampRecordingDates(target)
+  stampDerivedMetadata(target)
   reset()
   progressOpen.value = true
   await generateAll(target, speed.value, removeItem)

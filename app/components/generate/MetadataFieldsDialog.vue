@@ -2,7 +2,7 @@
 import type { MetadataFieldId, MetadataFieldPref } from '../../composables/useViewPreferences'
 
 // 007 · Configure Visible Fields modal for the Generate metadata editor (mirrors
-// InspectorFieldsDialog). Shows the 10 toggleable metadata fields, lets the user toggle
+// InspectorFieldsDialog). Shows the 8 toggleable metadata fields, lets the user toggle
 // visibility AND reorder (move up/down), enforces a not-all-hidden guard, and commits only
 // on Apply (Cancel discards, Reset restores the canonical all-visible order). Edits a LOCAL
 // working copy seeded from the committed `fields`; the page persists the applied set via
@@ -12,13 +12,13 @@ const emit = defineEmits<{ 'update:open': [boolean]; apply: [MetadataFieldPref[]
 const { t } = useI18n()
 
 // Canonical inventory + order. The dialog is the UI authority for the field set. Each id is
-// 1:1 with a Metadata key and reuses the existing `generate.metadata.<id>` label.
+// 1:1 with a Metadata key and reuses the existing `generate.metadata.<id>` label. `title` and
+// `track` are intentionally absent — they are derived automatically at generation time and are
+// not user-configurable on Generate.
 const INVENTORY: MetadataFieldId[] = [
-  'title',
   'artist',
   'album',
   'genre',
-  'track',
   'recordedAt',
   'comment',
   'languages',

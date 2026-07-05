@@ -29,12 +29,15 @@ beforeEach(() => {
 })
 
 describe('generate-next Configure Visible Fields wiring (007)', () => {
-  it('renders all metadata fields and a Configure button by default', async () => {
+  it('renders the configurable metadata fields and a Configure button by default', async () => {
     const wrapper = await mountSuspended(GenerateNextPage)
     await drainMount()
     expect(wrapper.find('[data-test="metadata-configure-fields"]').exists()).toBe(true)
-    expect(wrapper.find('[data-test="meta-title"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="meta-artist"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="meta-comment"]').exists()).toBe(true)
+    // Title + Track are derived at generation time, so they are never shown in the form.
+    expect(wrapper.find('[data-test="meta-title"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="meta-track"]').exists()).toBe(false)
     wrapper.unmount()
   })
 
@@ -53,7 +56,7 @@ describe('generate-next Configure Visible Fields wiring (007)', () => {
 
     // The comment control is gone from the form; other fields remain.
     expect(wrapper.find('[data-test="meta-comment"]').exists()).toBe(false)
-    expect(wrapper.find('[data-test="meta-title"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="meta-artist"]').exists()).toBe(true)
 
     // The applied set persisted per-device with comment hidden.
     const persisted = JSON.parse(localStorage.getItem(MFKEY)!) as { id: string; visible: boolean }[]

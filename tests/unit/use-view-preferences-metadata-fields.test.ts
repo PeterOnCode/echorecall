@@ -35,12 +35,13 @@ afterEach(() => {
   delete g.localStorage
 })
 
+// 007 · `title` and `track` are NOT in the configurable set — they are derived at generation
+// time (Title = first 60 chars of text, Track = 1-based queue position), so they are neither
+// shown in the metadata form nor listed in the Configure Visible Fields dialog.
 const METADATA_IDS = [
-  'title',
   'artist',
   'album',
   'genre',
-  'track',
   'recordedAt',
   'comment',
   'languages',
@@ -49,10 +50,17 @@ const METADATA_IDS = [
 ]
 
 describe('useViewPreferences – metadata fields (007)', () => {
-  it('exposes the 10 toggleable metadata fields as an ordered array, all visible by default', () => {
+  it('exposes the 8 toggleable metadata fields as an ordered array, all visible by default', () => {
     const { metadataFields } = useViewPreferences()
     expect(metadataFields.value.map((f) => f.id)).toEqual(METADATA_IDS)
     expect(metadataFields.value.every((f) => f.visible)).toBe(true)
+  })
+
+  it('excludes the derived title + track fields from the configurable set', () => {
+    const { metadataFields } = useViewPreferences()
+    const ids = metadataFields.value.map((f) => f.id)
+    expect(ids).not.toContain('title')
+    expect(ids).not.toContain('track')
   })
 
   it('persists visibility + order and restores them for a fresh instance', () => {
@@ -76,8 +84,8 @@ describe('useViewPreferences – metadata fields (007)', () => {
   it('resets to the default ordered, all-visible set', () => {
     const { metadataFields, setMetadataFields, resetMetadataFields } = useViewPreferences()
     setMetadataFields([
-      { id: 'title' as const, visible: false },
-      ...metadataFields.value.filter((f) => f.id !== 'title'),
+      { id: 'artist' as const, visible: false },
+      ...metadataFields.value.filter((f) => f.id !== 'artist'),
     ])
     resetMetadataFields()
     expect(metadataFields.value.map((f) => f.id)).toEqual(METADATA_IDS)

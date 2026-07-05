@@ -10,12 +10,12 @@ import type { MetadataFieldId, MetadataFieldPref } from '~/composables/useViewPr
 // dialog edits a LOCAL working copy; the page persists the applied set. UModal teleports its
 // panel to document.body, so the controls are queried there.
 
+// 007 · `title` and `track` are derived at generation time, so they are not part of the
+// Configure Visible Fields dialog inventory.
 const IDS: MetadataFieldId[] = [
-  'title',
   'artist',
   'album',
   'genre',
-  'track',
   'recordedAt',
   'comment',
   'languages',
@@ -43,6 +43,9 @@ describe('MetadataFieldsDialog', () => {
       expect(el(`mfield-move-up-${id}`), id).not.toBeNull()
       expect(el(`mfield-move-down-${id}`), id).not.toBeNull()
     }
+    // Title + Track are derived, not configurable — no toggle for them.
+    expect(el('mfield-toggle-title')).toBeNull()
+    expect(el('mfield-toggle-track')).toBeNull()
     wrapper.unmount()
   })
 
@@ -67,13 +70,13 @@ describe('MetadataFieldsDialog', () => {
   })
 
   it('disables the last visible toggle so fields can never all be hidden', async () => {
-    const onlyTitle = IDS.map((id) => ({ id, visible: id === 'title' }))
+    const onlyArtist = IDS.map((id) => ({ id, visible: id === 'artist' }))
     const wrapper = await mountSuspended(MetadataFieldsDialog, {
-      props: { open: true, fields: onlyTitle },
+      props: { open: true, fields: onlyArtist },
     })
     await flushPromises()
 
-    expect((el('mfield-toggle-title') as HTMLButtonElement).disabled).toBe(true)
+    expect((el('mfield-toggle-artist') as HTMLButtonElement).disabled).toBe(true)
     expect((el('mfield-toggle-album') as HTMLButtonElement).disabled).toBe(false)
     wrapper.unmount()
   })
@@ -84,13 +87,13 @@ describe('MetadataFieldsDialog', () => {
     })
     await flushPromises()
 
-    el('mfield-move-down-title')!.click() // title ↓ swaps with artist
+    el('mfield-move-down-artist')!.click() // artist ↓ swaps with album
     await flushPromises()
     el('metadata-fields-apply')!.click()
     await flushPromises()
 
     const payload = wrapper.emitted('apply')!.at(-1)![0] as MetadataFieldPref[]
-    expect(payload.map((f) => f.id).slice(0, 2)).toEqual(['artist', 'title'])
+    expect(payload.map((f) => f.id).slice(0, 2)).toEqual(['album', 'artist'])
     wrapper.unmount()
   })
 

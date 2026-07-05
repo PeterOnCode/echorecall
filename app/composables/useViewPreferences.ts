@@ -108,10 +108,13 @@ export interface InspectorFieldPref {
 }
 
 /**
- * The toggleable + reorderable Generate metadata fields (007) — the editable set of the
- * shared MetadataFields form. Each id is 1:1 with a {@link Metadata} key; a hidden field is
- * dropped from the form AND excluded from the metadata saved onto queue rows. Ordered like
- * the inspector fields (array order == display order).
+ * The metadata-field ids the shared MetadataFields form knows how to render (007). Each id is
+ * 1:1 with a {@link Metadata} key. The Generate page's *configurable* subset — the fields the
+ * Configure Visible Fields dialog toggles/reorders and that are saved onto queue rows — is the
+ * narrower {@link METADATA_FIELD_IDS} below: it EXCLUDES `title` and `track`, which are derived
+ * automatically at generation time (Title = first 60 chars of the text, Track = the row's
+ * 1-based queue position) rather than user-edited. `title`/`track` stay in this union because
+ * the same component still renders them for the Library / queue-row editors (no `fields` prop).
  */
 export type MetadataFieldId =
   | 'title'
@@ -159,12 +162,13 @@ const INSPECTOR_FIELD_IDS: InspectorFieldId[] = [
   'bpm',
   'rating',
 ]
+// The Generate configurable set: `title` and `track` are intentionally absent — they are
+// derived at generation time (see useQueue.stampDerivedMetadata), so they are neither shown in
+// the metadata form nor listed in the Configure Visible Fields dialog.
 const METADATA_FIELD_IDS: MetadataFieldId[] = [
-  'title',
   'artist',
   'album',
   'genre',
-  'track',
   'recordedAt',
   'comment',
   'languages',
