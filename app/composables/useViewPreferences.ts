@@ -107,6 +107,29 @@ export interface InspectorFieldPref {
   visible: boolean
 }
 
+/**
+ * The toggleable + reorderable Generate metadata fields (007) — the editable set of the
+ * shared MetadataFields form. Each id is 1:1 with a {@link Metadata} key; a hidden field is
+ * dropped from the form AND excluded from the metadata saved onto queue rows. Ordered like
+ * the inspector fields (array order == display order).
+ */
+export type MetadataFieldId =
+  | 'title'
+  | 'artist'
+  | 'album'
+  | 'genre'
+  | 'track'
+  | 'recordedAt'
+  | 'comment'
+  | 'languages'
+  | 'customText'
+  | 'customUrl'
+
+export interface MetadataFieldPref {
+  id: MetadataFieldId
+  visible: boolean
+}
+
 const LIBRARY_COLUMN_IDS: LibraryColumnId[] = [
   'title',
   'artist',
@@ -136,8 +159,21 @@ const INSPECTOR_FIELD_IDS: InspectorFieldId[] = [
   'bpm',
   'rating',
 ]
+const METADATA_FIELD_IDS: MetadataFieldId[] = [
+  'title',
+  'artist',
+  'album',
+  'genre',
+  'track',
+  'recordedAt',
+  'comment',
+  'languages',
+  'customText',
+  'customUrl',
+]
 const LIBRARY_COLUMNS_KEY = 'echorecall:viewprefs:libraryColumns'
 const INSPECTOR_FIELDS_KEY = 'echorecall:viewprefs:inspectorFields'
+const METADATA_FIELDS_KEY = 'echorecall:viewprefs:metadataFields'
 
 // ---------------------------------------------------------------------------
 // 007 · US3 (G-DEFAULTS) — per-device "last-selected" generation settings.
@@ -270,6 +306,21 @@ export function useViewPreferences() {
     inspectorFields.value = sanitizeOrdered(undefined, INSPECTOR_FIELD_IDS)
   }
 
+  // 007 — ordered, toggleable Generate metadata fields (only visible fields are saved onto
+  // queue rows; see useQueue's metadata projection).
+  const metadataFields = ref<MetadataFieldPref[]>(readOrdered(METADATA_FIELDS_KEY, METADATA_FIELD_IDS))
+  watch(metadataFields, (v) => persistRaw(METADATA_FIELDS_KEY, v), { deep: true, flush: 'sync' })
+
+  /** Commit a (possibly reordered + retoggled) metadata field set; refuses to hide all. */
+  function setMetadataFields(next: MetadataFieldPref[]): void {
+    const clean = sanitizeOrdered(next, METADATA_FIELD_IDS)
+    if (!clean.some((f) => f.visible)) return
+    metadataFields.value = clean
+  }
+  function resetMetadataFields(): void {
+    metadataFields.value = sanitizeOrdered(undefined, METADATA_FIELD_IDS)
+  }
+
   // 007 · US3 — last-selected generation settings (per-device).
   const genSettings = ref<GenSettingsPref>(readGenSettings())
   watch(genSettings, (v) => persistRaw(GEN_SETTINGS_KEY, v), { deep: true, flush: 'sync' })
@@ -295,6 +346,9 @@ export function useViewPreferences() {
     inspectorFields,
     setInspectorFields,
     resetInspectorFields,
+    metadataFields,
+    setMetadataFields,
+    resetMetadataFields,
     genSettings,
     setGenSetting,
     resetGenSetting,

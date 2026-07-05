@@ -9,6 +9,10 @@ import { MAX_UPLOAD_BYTES } from '#core/client'
 // longer embeds the Library workspace (removed at the user's request). Replaces the 005
 // two-pane QueueList + metadata editor. Cut over to `/` once proven (FR-002). Accent = the
 // app's `indigo` primary.
+// View preferences are read first so the queue can be told which metadata fields are visible
+// (only visible fields are saved onto rows — Configure Visible Fields, 007).
+const { genSettings, setGenSetting, resetGenSetting, metadataFields, setMetadataFields } =
+  useViewPreferences()
 const {
   items,
   voiceId,
@@ -31,12 +35,20 @@ const {
   applyMetadataToPending,
   stampRecordingDates,
   setDefaults,
-} = useQueue()
+} = useQueue({
+  visibleMetadataFields: () => metadataFields.value.filter((f) => f.visible).map((f) => f.id),
+})
 const { voices, generating, progress, loadVoices, generateAll, requestCancel, reset } =
   useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
-const { genSettings, setGenSetting, resetGenSetting } = useViewPreferences()
 const { t } = useI18n()
+
+// Configure Visible Fields modal state (007): the applied set persists via useViewPreferences,
+// which drives both the form's rendered fields and the queue's metadata projection.
+const metadataFieldsOpen = ref(false)
+function onApplyMetadataFields(next: typeof metadataFields.value) {
+  setMetadataFields(next)
+}
 
 // 007 · US3 (G-DEFAULTS, FR-012/FR-013). Each of Voice/Model/Format resolves as
 // last-selected (client, `genSettings`) → configured default (server) → built-in fallback.
@@ -219,7 +231,11 @@ async function onTxtFileChosen(event: Event) {
         />
       </div>
       <div data-test="gen-col-metadata" class="flex flex-col gap-2 lg:col-span-2">
-        <MetadataFields v-model="metadata" />
+        <MetadataFields
+          v-model="metadata"
+          :fields="metadataFields"
+          @configure="metadataFieldsOpen = true"
+        />
       </div>
     </section>
 
@@ -277,6 +293,14 @@ async function onTxtFileChosen(event: Event) {
       :progress="progress"
       @confirm-cancel="onProgressConfirmCancel"
       @done="onProgressDone"
+    />
+
+    <!-- Configure Visible Fields modal for the metadata editor (007): toggle + reorder the
+         fields; only visible fields render in the form and are saved onto queue rows. -->
+    <MetadataFieldsDialog
+      v-model:open="metadataFieldsOpen"
+      :fields="metadataFields"
+      @apply="onApplyMetadataFields"
     />
   </div>
 </template>

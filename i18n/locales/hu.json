@@ -56,6 +56,15 @@
       "skipped": "Néhány címkét ez a formátum nem támogat, ezért kimaradt: {fields}.",
       "skippedAll": "Ez a formátum nem tárol címkéket, ezért a metaadatok kimaradtak."
     },
+    "metadataFields": {
+      "title": "Látható mezők beállítása",
+      "configure": "Mezők beállítása",
+      "moveUp": "Mozgatás felfelé",
+      "moveDown": "Mozgatás lefelé",
+      "reset": "Visszaállítás",
+      "cancel": "Mégse",
+      "apply": "Alkalmaz"
+    },
     "queue": {
       "empty": "Még nincs tétel — írj be szöveget vagy tölts fel egy .txt fájlt a lista összeállításához.",
       "remove": "Tétel eltávolítása",

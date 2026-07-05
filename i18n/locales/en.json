@@ -56,6 +56,15 @@
       "skipped": "Some tags aren’t supported by this format and were skipped: {fields}.",
       "skippedAll": "This format can’t carry tags, so the metadata was skipped."
     },
+    "metadataFields": {
+      "title": "Configure visible fields",
+      "configure": "Configure fields",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
     "queue": {
       "empty": "No items yet — type text or upload a .txt to build your list.",
       "remove": "Remove item",

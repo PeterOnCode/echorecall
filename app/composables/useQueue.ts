@@ -3,6 +3,7 @@ import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from 
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
 import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
+import type { MetadataFieldId } from './useViewPreferences'
 
 export type ItemStatus = 'queued' | 'generating' | 'done' | 'failed'
 
@@ -86,12 +87,23 @@ export function isUntaggableFormat(format: Format): boolean {
   return formatInfo(format)?.taggable === 'none'
 }
 
+/** Options for {@link useQueue}. */
+export interface UseQueueOptions {
+  /**
+   * The metadata fields currently visible in the Configure Visible Fields dialog (007). Only
+   * these fields are written onto queue rows; a hidden configurable field is stripped from a
+   * row's saved metadata. Omitted keeps every field (the pre-feature behavior). Non-configurable
+   * keys (e.g. deployment default tags for fields not in the metadata form) always pass through.
+   */
+  visibleMetadataFields?: () => readonly MetadataFieldId[]
+}
+
 /**
  * Ephemeral batch queue (FR-001/010). Holds the per-row list plus the form-level
  * voice/model/format/speed applied to every row. Lives only in client state and
  * is never sent anywhere except, row by row, to the generate endpoint.
  */
-export function useQueue() {
+export function useQueue(options?: UseQueueOptions) {
   const items = ref<QueueItem[]>([])
   const voiceId = ref('')
   const model = ref<Model>('gpt-4o-mini-tts')
@@ -110,6 +122,28 @@ export function useQueue() {
   // narrow the visible rows client-side (US3 / FR-009/010).
   const searchTerm = ref('')
   const filters = ref<QueueFilters>({})
+
+  // The configurable metadata fields (mirrors useViewPreferences' METADATA_FIELD_IDS). Only
+  // the currently-visible subset is written onto a row; a hidden configurable field is dropped
+  // before the row's metadata is saved (007). Any key outside this list — e.g. deployment
+  // defaults for fields not in the metadata form — is always preserved.
+  const configurableMetadataFields: MetadataFieldId[] = [
+    'title', 'artist', 'album', 'genre', 'track', 'recordedAt', 'comment', 'languages', 'customText', 'customUrl',
+  ]
+  const visibleMetadataFields = () => options?.visibleMetadataFields?.() ?? configurableMetadataFields
+  // A primitive derived from the visible set so the metadata watcher re-projects rows when the
+  // user shows/hides a field (not only when the form metadata itself changes).
+  const visibleMetadataKey = computed(() => [...visibleMetadataFields()].join(','))
+
+  /** Clone `m`, dropping any configurable field that is currently hidden (007). */
+  function projectMetadata(m: Metadata): Metadata {
+    const visible = new Set<string>(visibleMetadataFields())
+    const clone = cloneMetadata(m)
+    for (const key of configurableMetadataFields) {
+      if (!visible.has(key)) delete clone[key]
+    }
+    return clone
+  }
 
   // The form-level Voice/Model/Format/Metadata are live batch settings: editing any of them
   // rewrites that field on every row already in the queue — not just future rows — so the
@@ -130,22 +164,24 @@ export function useQueue() {
   watch(format, (v) => {
     for (const item of items.value) if (item.status !== 'done') item.format = v
   })
+  // Re-projects on a form-metadata edit AND on a visibility change (showing a field re-adds its
+  // value from the form; hiding one drops it from every non-edited row).
   watch(
-    metadata,
-    (m) => {
+    [metadata, visibleMetadataKey],
+    () => {
       for (const item of items.value) {
-        if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(m)
+        if (item.status !== 'done' && !item.metadataEdited) item.metadata = projectMetadata(metadata.value)
       }
     },
     { deep: true },
   )
 
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
-    // A new row inherits only whatever the shared form metadata carries; the recording
-    // date is NOT pre-stamped here (007 · US6 / FR-020). It is filled with today's date
-    // at generation time via {@link stampRecordingDates}, only when still empty — which
+    // A new row inherits only the visible fields of the shared form metadata (007); the
+    // recording date is NOT pre-stamped here (007 · US6 / FR-020). It is filled with today's
+    // date at generation time via {@link stampRecordingDates}, only when still empty — which
     // resolves the 005 clobber where applyMetadataToPending overwrote an add-time default.
-    const itemMetadata = cloneMetadata(metadata.value)
+    const itemMetadata = projectMetadata(metadata.value)
     return {
       clientId: newClientId(),
       text,
@@ -301,7 +337,7 @@ export function useQueue() {
    */
   function applyMetadataToPending(target: QueueItem[] = items.value): void {
     for (const item of target) {
-      if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(metadata.value)
+      if (item.status !== 'done' && !item.metadataEdited) item.metadata = projectMetadata(metadata.value)
     }
   }
 
