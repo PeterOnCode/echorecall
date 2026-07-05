@@ -57,4 +57,22 @@ describe('GenerationSettingsPanel', () => {
     const speed = wrapper.find('[data-test="speed"]')
     expect(speed.exists()).toBe(true)
   })
+
+  // 007 · US3 (T022 / FR-013): each control offers a per-field reset that asks the page to
+  // restore the field to its configured default (resolution is owned by the page).
+  it('emits a per-field reset for each control', async () => {
+    const wrapper = await mountPanel()
+    const cases: [string, string][] = [
+      ['gen-reset-voice', 'voiceId'],
+      ['gen-reset-model', 'model'],
+      ['gen-reset-format', 'format'],
+      ['gen-reset-speed', 'speed'],
+    ]
+    for (const [testId, field] of cases) {
+      const btn = wrapper.find(`[data-test="${testId}"]`)
+      expect(btn.exists(), testId).toBe(true)
+      await btn.trigger('click')
+      expect(wrapper.emitted('reset')?.at(-1)?.[0], field).toBe(field)
+    }
+  })
 })

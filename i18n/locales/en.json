@@ -352,6 +352,29 @@
         "clear": "Could not clear the default tags. Please try again."
       }
     },
+    "generationDefaults": {
+      "title": "Default generation settings",
+      "description": "Set default Voice, Model, Format, and Speed for new generations. Your last-used value takes precedence.",
+      "saved": "Saved defaults apply when no recent choice exists.",
+      "noneSaved": "No defaults set — new generations use built-in fallbacks.",
+      "none": "(none)",
+      "fields": {
+        "voice": "Voice",
+        "model": "Model",
+        "format": "Format",
+        "speed": "Speed"
+      },
+      "speedPlaceholder": "1.0",
+      "speedHint": "Between 0.25 and 4.0.",
+      "reset": "Reset {field} to default",
+      "save": "Save defaults",
+      "clear": "Clear defaults",
+      "errors": {
+        "load": "Could not load the generation defaults.",
+        "save": "Could not save the generation defaults. Please try again.",
+        "clear": "Could not clear the generation defaults. Please try again."
+      }
+    },
     "modal": {
       "title": "Settings",
       "close": "Close",
@@ -376,7 +399,8 @@
       "voice": "Voice",
       "model": "Model",
       "format": "Format",
-      "speed": "Speed"
+      "speed": "Speed",
+      "reset": "Reset {field} to default"
     },
     "actionBar": {
       "summary": "In queue",

@@ -63,3 +63,16 @@ export {
   DEFAULT_TAGS_CONFIG_KEY,
 } from './settings/default-tags'
 export type { DefaultTagsDeps, DefaultTagsInput } from './settings/default-tags'
+// Generation defaults (007 · US3): non-secret, store-backed Voice/Model/Format/Speed
+// defaults for the Generate editor, editable from the Settings modal alongside Default Tags.
+export {
+  getGenerationDefaults,
+  setGenerationDefaults,
+  clearGenerationDefaults,
+  GENERATION_DEFAULTS_CONFIG_KEY,
+} from './settings/generation-defaults'
+export type {
+  GenerationDefaults,
+  GenerationDefaultsDeps,
+  GenerationDefaultsInput,
+} from './settings/generation-defaults'

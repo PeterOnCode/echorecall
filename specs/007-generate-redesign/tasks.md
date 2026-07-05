@@ -93,21 +93,21 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US3
 
-- [ ] T018 [P] [US3] Core unit spec `tests/unit/generation-defaults.spec.ts`: sanitize (drop unknown voice/model/format, clamp speed), round-trip, all-blank ≡ clear, `get` never throws — against an in-memory `AppConfigRepository`
-- [ ] T019 [P] [US3] Route/integration spec `tests/integration/generation-defaults.route.spec.ts`: `GET`/`PUT`/`DELETE /api/settings/generation-defaults` return `{ generationDefaults }`, sanitize on PUT, clear on empty/DELETE
-- [ ] T020 [P] [US3] Unit spec `tests/unit/useViewPreferences.genSettings.spec.ts`: last-selected read-merge-sanitize under key `echorecall:viewprefs:genSettings`; unknown values ignored; SSR-safe fallback
-- [ ] T021 [P] [US3] Component spec `tests/component/GenerationDefaultsSettings.spec.ts`: fields + Save + Clear + per-field reset + status (`data-test` `gen-default-voice`/`-model`/`-format`/`-speed`/`gen-default-reset-*`/`gen-default-save`/`gen-default-clear`/`gen-default-status`)
-- [ ] T022 [US3] Extend `tests/component/GenerationSettingsPanel.spec.ts`: per-field reset emits + resolution order (last-selected → configured default → fallback) (`gen-reset-voice`/`-model`/`-format`/`-speed`)
+- [X] T018 [P] [US3] Core unit spec `tests/unit/generation-defaults.spec.ts`: sanitize (drop unknown voice/model/format, clamp speed), round-trip, all-blank ≡ clear, `get` never throws — against an in-memory `AppConfigRepository`
+- [X] T019 [P] [US3] Route/integration spec `tests/integration/generation-defaults.route.spec.ts`: `GET`/`PUT`/`DELETE /api/settings/generation-defaults` return `{ generationDefaults }`, sanitize on PUT, clear on empty/DELETE
+- [X] T020 [P] [US3] Unit spec `tests/unit/useViewPreferences.genSettings.spec.ts`: last-selected read-merge-sanitize under key `echorecall:viewprefs:genSettings`; unknown values ignored; SSR-safe fallback
+- [X] T021 [P] [US3] Component spec `tests/component/GenerationDefaultsSettings.spec.ts`: fields + Save + Clear + per-field reset + status (`data-test` `gen-default-voice`/`-model`/`-format`/`-speed`/`gen-default-reset-*`/`gen-default-save`/`gen-default-clear`/`gen-default-status`)
+- [X] T022 [US3] Extend `tests/component/GenerationSettingsPanel.spec.ts`: per-field reset emits + resolution order (last-selected → configured default → fallback) (`gen-reset-voice`/`-model`/`-format`/`-speed`)
 
 ### Implementation for US3
 
-- [ ] T023 [P] [US3] Create core module `src/core/settings/generation-defaults.ts` (`GENERATION_DEFAULTS_CONFIG_KEY`, `GenerationDefaults`, `getGenerationDefaults`/`setGenerationDefaults`/`clearGenerationDefaults`) mirroring `default-tags.ts`, validating via `isKnownVoice`/`isKnownModel`/`isKnownFormat`/`normalizeSpeed`; export from `src/core/index.ts` — makes T018 green
-- [ ] T024 [P] [US3] Create server routes `server/api/settings/generation-defaults.get.ts`, `.put.ts`, `.delete.ts` over `getAppConfigRepository()` — makes T019 green
-- [ ] T025 [P] [US3] Create `app/composables/useGenerationDefaults.ts` (load/save/clear + per-field reset over the new routes), mirroring `useDefaultTags` — supports T021
-- [ ] T026 [US3] Extend `app/composables/useViewPreferences.ts` with `genSettings` last-selected (`{voiceId?,model?,format?,speed?}`) + read/persist + per-field reset — makes T020 green
-- [ ] T027 [US3] Create `app/components/settings/GenerationDefaultsSettings.vue` and mount it in `app/components/settings/SettingsModal.vue` beside `DefaultTagsSettings` — makes T021 green
-- [ ] T028 [US3] Wire resolution (last-selected → configured default → fallback) and per-field reset into `GenerationSettingsPanel.vue` + `generate-next.vue`/`useQueue` so the four controls initialize and persist correctly — makes T022 green (FR-012/FR-013)
-- [ ] T029 [P] [US3] Add en/hu i18n keys for the generation-defaults Settings section + reset labels (parity, FR-022)
+- [X] T023 [P] [US3] Create core module `src/core/settings/generation-defaults.ts` (`GENERATION_DEFAULTS_CONFIG_KEY`, `GenerationDefaults`, `getGenerationDefaults`/`setGenerationDefaults`/`clearGenerationDefaults`) mirroring `default-tags.ts`, validating via `isKnownVoice`/`isKnownModel`/`isKnownFormat`/`normalizeSpeed`; export from `src/core/index.ts` — makes T018 green
+- [X] T024 [P] [US3] Create server routes `server/api/settings/generation-defaults.get.ts`, `.put.ts`, `.delete.ts` over `getAppConfigRepository()` — makes T019 green
+- [X] T025 [P] [US3] Create `app/composables/useGenerationDefaults.ts` (load/save/clear + per-field reset over the new routes), mirroring `useDefaultTags` — supports T021
+- [X] T026 [US3] Extend `app/composables/useViewPreferences.ts` with `genSettings` last-selected (`{voiceId?,model?,format?,speed?}`) + read/persist + per-field reset — makes T020 green
+- [X] T027 [US3] Create `app/components/settings/GenerationDefaultsSettings.vue` and mount it in `app/components/settings/SettingsModal.vue` beside `DefaultTagsSettings` — makes T021 green
+- [X] T028 [US3] Wire resolution (last-selected → configured default → fallback) and per-field reset into `GenerationSettingsPanel.vue` + `generate-next.vue`/`useQueue` so the four controls initialize and persist correctly — makes T022 green (FR-012/FR-013)
+- [X] T029 [P] [US3] Add en/hu i18n keys for the generation-defaults Settings section + reset labels (parity, FR-022)
 
 **Checkpoint**: Voice/Model/Format/Speed persist and resolve per the clarified order; independently testable via Settings.
 

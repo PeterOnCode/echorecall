@@ -139,6 +139,49 @@ const INSPECTOR_FIELD_IDS: InspectorFieldId[] = [
 const LIBRARY_COLUMNS_KEY = 'echorecall:viewprefs:libraryColumns'
 const INSPECTOR_FIELDS_KEY = 'echorecall:viewprefs:inspectorFields'
 
+// ---------------------------------------------------------------------------
+// 007 · US3 (G-DEFAULTS) — per-device "last-selected" generation settings.
+//
+// The Generate editor resolves each of Voice/Model/Format/Speed as last-selected →
+// configured default → built-in fallback (FR-012). The last-selected half lives here:
+// a partial `{ voiceId?, model?, format?, speed? }` persisted per-device in localStorage.
+// A per-field reset drops just that field so it falls back to the configured default
+// (FR-013). Reads keep only well-typed fields; SSR-safe fallback to {}.
+// ---------------------------------------------------------------------------
+
+/** The four generation-settings fields that remember a last-selected value. */
+export type GenSettingField = 'voiceId' | 'model' | 'format' | 'speed'
+
+export interface GenSettingsPref {
+  voiceId?: string
+  model?: string
+  format?: string
+  speed?: number
+}
+
+const GEN_SETTINGS_KEY = 'echorecall:viewprefs:genSettings'
+
+/** Keep only well-typed, non-empty fields (catalog validity is the defaults layer's job). */
+function sanitizeGenSettings(input: unknown): GenSettingsPref {
+  if (!input || typeof input !== 'object') return {}
+  const src = input as Record<string, unknown>
+  const out: GenSettingsPref = {}
+  if (typeof src.voiceId === 'string' && src.voiceId) out.voiceId = src.voiceId
+  if (typeof src.model === 'string' && src.model) out.model = src.model
+  if (typeof src.format === 'string' && src.format) out.format = src.format
+  if (typeof src.speed === 'number' && Number.isFinite(src.speed)) out.speed = src.speed
+  return out
+}
+
+function readGenSettings(): GenSettingsPref {
+  try {
+    const raw = storage()?.getItem(GEN_SETTINGS_KEY)
+    return sanitizeGenSettings(raw ? JSON.parse(raw) : undefined)
+  } catch {
+    return {}
+  }
+}
+
 /**
  * Coerce arbitrary stored/incoming input into a clean ordered visibility list:
  * keep known ids in the given order (deduped, an explicit `false` honoured, anything
@@ -228,6 +271,22 @@ export function useViewPreferences() {
     inspectorFields.value = sanitizeOrdered(undefined, INSPECTOR_FIELD_IDS)
   }
 
+  // 007 · US3 — last-selected generation settings (per-device).
+  const genSettings = ref<GenSettingsPref>(readGenSettings())
+  watch(genSettings, (v) => persistRaw(GEN_SETTINGS_KEY, v), { deep: true, flush: 'sync' })
+
+  /** Remember a field's last-selected value (called when the user changes a control). */
+  function setGenSetting<K extends GenSettingField>(field: K, value: GenSettingsPref[K]): void {
+    genSettings.value = { ...genSettings.value, [field]: value }
+  }
+
+  /** Forget a field's last-selected value so it falls back to the configured default. */
+  function resetGenSetting(field: GenSettingField): void {
+    genSettings.value = Object.fromEntries(
+      Object.entries(genSettings.value).filter(([key]) => key !== field),
+    ) as GenSettingsPref
+  }
+
   return {
     queueColumns,
     setColumn,
@@ -237,5 +296,8 @@ export function useViewPreferences() {
     inspectorFields,
     setInspectorFields,
     resetInspectorFields,
+    genSettings,
+    setGenSetting,
+    resetGenSetting,
   }
 }
