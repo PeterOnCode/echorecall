@@ -415,6 +415,24 @@
     },
     "upload": {
       "tooLarge": "Ez a fájl túl nagy."
+    },
+    "progress": {
+      "title": "Generálás",
+      "current": "Generálás: {index}/{total}: {name}",
+      "succeeded": "Sikeres: {count}",
+      "failed": "Sikertelen: {count}",
+      "notGenerated": "Nem generált: {count}",
+      "stop": "Generálás leállítása",
+      "close": "Bezárás",
+      "confirm": {
+        "message": "Leállítod, miután az aktuális fájl elkészült? A hátralévő fájlok nem generálódnak le.",
+        "accept": "Generálás leállítása",
+        "decline": "Folytatás"
+      },
+      "summary": {
+        "completed": "A generálás kész.",
+        "cancelled": "A generálás leállt."
+      }
     }
   }
 }

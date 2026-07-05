@@ -121,15 +121,15 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US4
 
-- [ ] T030 [P] [US4] Component spec `tests/component/GenerationProgressModal.spec.ts`: shows current file + succeeded/failed tally; page disabled while running; close-request → in-modal confirm (`progress-cancel-confirm`), confirm/decline emits, summary states (`progress-modal`/`progress-current`/`progress-succeeded`/`progress-failed`/`progress-summary`) — must NOT use a native `confirm`/`alert`
-- [ ] T031 [US4] Integration spec `tests/integration/generate-next.progress-cancel.spec.ts` (mocked `$fetch`): sequential run, a failure is recorded and skipped (run continues), confirm-then-stop finishes the in-flight item then breaks before the next, remaining items reported not-generated, summary counts correct (FR-015/FR-016/FR-017)
+- [X] T030 [P] [US4] Component spec `tests/component/GenerationProgressModal.spec.ts`: shows current file + succeeded/failed tally; page disabled while running; close-request → in-modal confirm (`progress-cancel-confirm`), confirm/decline emits, summary states (`progress-modal`/`progress-current`/`progress-succeeded`/`progress-failed`/`progress-summary`) — must NOT use a native `confirm`/`alert`
+- [X] T031 [US4] Integration spec `tests/integration/generate-next.progress-cancel.spec.ts` (mocked `$fetch`): sequential run, a failure is recorded and skipped (run continues), confirm-then-stop finishes the in-flight item then breaks before the next, remaining items reported not-generated, summary counts correct (FR-015/FR-016/FR-017)
 
 ### Implementation for US4
 
-- [ ] T032 [US4] Extend `app/composables/useGeneration.ts`: add reactive `progress` (`{ total, index, current, succeeded[], failed[], notGenerated[], state }`) and a `cancelRequested` ref checked **between items** in `generateAll` (await the in-flight `generateItem`, then break); expose progress + `requestCancel`/`reset` — makes T031 green (no `AbortController`)
-- [ ] T033 [US4] Create `app/components/generate/GenerationProgressModal.vue` with an in-modal `@nuxt/ui` confirm (no native dialog) — makes T030 green
-- [ ] T034 [US4] Wire the modal into `app/pages/generate-next.vue`: open on Generate, disable the rest of the page while running, route close→confirm→`requestCancel`, show the end summary (FR-014)
-- [ ] T035 [P] [US4] Add en/hu i18n keys for the progress modal, cancel-confirm, and summary (parity, FR-022)
+- [X] T032 [US4] Extend `app/composables/useGeneration.ts`: add reactive `progress` (`{ total, index, current, succeeded[], failed[], notGenerated[], state }`) and a `cancelRequested` ref checked **between items** in `generateAll` (await the in-flight `generateItem`, then break); expose progress + `requestCancel`/`reset` — makes T031 green (no `AbortController`)
+- [X] T033 [US4] Create `app/components/generate/GenerationProgressModal.vue` with an in-modal `@nuxt/ui` confirm (no native dialog) — makes T030 green
+- [X] T034 [US4] Wire the modal into `app/pages/generate-next.vue`: open on Generate, disable the rest of the page while running, route close→confirm→`requestCancel`, show the end summary (FR-014)
+- [X] T035 [P] [US4] Add en/hu i18n keys for the progress modal, cancel-confirm, and summary (parity, FR-022)
 
 **Checkpoint**: Long runs are visible and safely cancellable; independently testable.
 

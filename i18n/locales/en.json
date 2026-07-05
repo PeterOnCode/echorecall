@@ -415,6 +415,24 @@
     },
     "upload": {
       "tooLarge": "That file is too large."
+    },
+    "progress": {
+      "title": "Generating",
+      "current": "Generating {index} of {total}: {name}",
+      "succeeded": "Succeeded: {count}",
+      "failed": "Failed: {count}",
+      "notGenerated": "Not generated: {count}",
+      "stop": "Stop generation",
+      "close": "Close",
+      "confirm": {
+        "message": "Stop after the current file finishes? Any remaining files will not be generated.",
+        "accept": "Stop generating",
+        "decline": "Keep going"
+      },
+      "summary": {
+        "completed": "Generation complete.",
+        "cancelled": "Generation stopped."
+      }
     }
   }
 }

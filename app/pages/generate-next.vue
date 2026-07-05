@@ -23,7 +23,8 @@ const {
   applyMetadataToPending,
   setDefaults,
 } = useQueue()
-const { voices, generating, loadVoices, generateAll } = useGeneration()
+const { voices, generating, progress, loadVoices, generateAll, requestCancel, reset } =
+  useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
 const { genSettings, setGenSetting, resetGenSetting } = useViewPreferences()
 const { t } = useI18n()
@@ -108,15 +109,34 @@ function onAdd(text: string) {
   addItem(text)
 }
 
+// 007 · US4 (G-CANCEL, FR-014): the generation progress modal opens on Generate,
+// disables the page while the run is in flight (`generating`), and — via the modal's
+// in-modal confirm — allows a graceful stop. It stays open on the end summary until the
+// user dismisses it (`done`), which closes it and resets the progress state.
+const progressOpen = ref(false)
+
 async function onGenerate() {
   if (items.value.length === 0 || generating.value) return
   // Resolve the target once (checked-else-all), stamp the form metadata onto its
   // un-edited rows, then generate and drop each success from the queue.
   const target = generateTarget.value
   applyMetadataToPending(target)
+  reset()
+  progressOpen.value = true
   await generateAll(target, speed.value, removeItem)
   // The run produced new recordings — refresh the embedded library so they appear (FR-010).
   await embedRef.value?.reload()
+}
+
+/** The modal's cancel-confirm was accepted: request a graceful stop (finish in-flight). */
+function onProgressConfirmCancel() {
+  requestCancel()
+}
+
+/** Dismiss the end summary: close the modal and clear the progress state. */
+function onProgressDone() {
+  progressOpen.value = false
+  reset()
 }
 
 function onSaveQueue() {
@@ -163,7 +183,7 @@ async function onTxtFileChosen(event: Event) {
 </script>
 
 <template>
-  <div data-test="generate-next" class="flex flex-col gap-6">
+  <div data-test="generate-next" class="flex flex-col gap-6" :inert="generating">
     <!-- Page intro -->
     <section data-test="gen-page-intro" class="flex flex-col gap-1">
       <h1 class="text-xl font-semibold">{{ t('generateNext.intro.title') }}</h1>
@@ -233,5 +253,15 @@ async function onTxtFileChosen(event: Event) {
       class="hidden"
       @change="onTxtFileChosen"
     >
+
+    <!-- Generation progress modal (US4 — teleports to body, so the inert root above
+         never disables it). Opens on Generate; the modal's in-modal confirm drives a
+         graceful stop; the end summary stays until dismissed. -->
+    <GenerationProgressModal
+      :open="progressOpen"
+      :progress="progress"
+      @confirm-cancel="onProgressConfirmCancel"
+      @done="onProgressDone"
+    />
   </div>
 </template>
