@@ -22,6 +22,7 @@ const {
   addFromUpload,
   removeItem,
   applyMetadataToPending,
+  stampRecordingDates,
   setDefaults,
 } = useQueue()
 const { voices, generating, progress, loadVoices, generateAll, requestCancel, reset } =
@@ -119,9 +120,11 @@ const progressOpen = ref(false)
 async function onGenerate() {
   if (items.value.length === 0 || generating.value) return
   // Resolve the target once (checked-else-all), stamp the form metadata onto its
-  // un-edited rows, then generate and drop each success from the queue.
+  // un-edited rows, fill today's recording date on any row still missing one (US6 /
+  // FR-020), then generate and drop each success from the queue.
   const target = generateTarget.value
   applyMetadataToPending(target)
+  stampRecordingDates(target)
   reset()
   progressOpen.value = true
   await generateAll(target, speed.value, removeItem)

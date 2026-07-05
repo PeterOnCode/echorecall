@@ -166,11 +166,11 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US6
 
-- [ ] T043 [US6] Unit spec `tests/unit/useQueue.recordedAt.spec.ts`: `makeItem` no longer stamps a default `recordedAt`; the generate flow stamps `todayIso()` only when `recordedAt` is empty; a user-set `recordedAt` is never overwritten; several items in one run each behave correctly
+- [X] T043 [US6] Unit spec `tests/unit/useQueue.recordedAt.spec.ts`: `makeItem` no longer stamps a default `recordedAt`; the generate flow stamps `todayIso()` only when `recordedAt` is empty; a user-set `recordedAt` is never overwritten; several items in one run each behave correctly
 
 ### Implementation for US6
 
-- [ ] T044 [US6] Remove the `tomorrowIso()` default from `useQueue.makeItem`, add a `todayIso()` helper, and stamp `recordedAt` at generation time (over the generate target, only when empty) in `app/composables/useQueue.ts` / the generate flow — makes T043 green
+- [X] T044 [US6] Remove the `tomorrowIso()` default from `useQueue.makeItem`, add a `todayIso()` helper, and stamp `recordedAt` at generation time (over the generate target, only when empty) in `app/composables/useQueue.ts` / the generate flow — makes T043 green
 
 **Checkpoint**: Recording date is correct and non-destructive; the long-standing clobber is resolved.
 

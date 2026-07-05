@@ -112,11 +112,11 @@ export function useQueue() {
   const filters = ref<QueueFilters>({})
 
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
-    // A new row's recording date defaults to tomorrow (FR-008/data-model §1), unless
-    // the shared form metadata already carries one. Stored as a `YYYY-MM-DD` string so
-    // it round-trips through the metadata editor's calendar picker and the queue file.
+    // A new row inherits only whatever the shared form metadata carries; the recording
+    // date is NOT pre-stamped here (007 · US6 / FR-020). It is filled with today's date
+    // at generation time via {@link stampRecordingDates}, only when still empty — which
+    // resolves the 005 clobber where applyMetadataToPending overwrote an add-time default.
     const itemMetadata = cloneMetadata(metadata.value)
-    if (itemMetadata.recordedAt === undefined) itemMetadata.recordedAt = tomorrowIso()
     return {
       clientId: newClientId(),
       text,
@@ -276,6 +276,26 @@ export function useQueue() {
     }
   }
 
+  /**
+   * Stamp today's date (local-day `YYYY-MM-DD`) as the recording date on every target
+   * row that still has none, right before generation (007 · US6 / FR-020). A user-set
+   * `recordedAt` (any non-empty value) is never overwritten. Runs AFTER
+   * {@link applyMetadataToPending} so it also covers rows that just took the shared
+   * form's (date-less) metadata. Resolves the 005 clobber: makeItem no longer pre-stamps
+   * a date, so the value the user sees on saved recordings is the day they generated.
+   */
+  function stampRecordingDates(target: QueueItem[] = items.value): void {
+    const today = todayIso()
+    for (const item of target) {
+      const current = item.metadata?.recordedAt
+      if (current === undefined || current === '') {
+        const next = cloneMetadata(item.metadata)
+        next.recordedAt = today
+        item.metadata = next
+      }
+    }
+  }
+
   // The rows currently shown by the list pane: the queue narrowed by the free-text
   // search and the per-field filters (US3 / FR-009/010), order preserved. A simple
   // O(n) scan per change — adequate well past the ≥200-row target (SC-003) without
@@ -411,6 +431,7 @@ export function useQueue() {
     toggleAll,
     updateItem,
     applyMetadataToPending,
+    stampRecordingDates,
     setDefaults,
     clear,
   }
@@ -438,10 +459,9 @@ function newClientId(): string {
   })
 }
 
-/** Tomorrow as a local-day `YYYY-MM-DD` string (the recording-date default, FR-008). */
-function tomorrowIso(): string {
+/** Today as a local-day `YYYY-MM-DD` string (the generation-time recording date, FR-020). */
+function todayIso(): string {
   const d = new Date()
-  d.setDate(d.getDate() + 1)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
