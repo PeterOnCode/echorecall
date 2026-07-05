@@ -4,9 +4,10 @@ import { MAX_UPLOAD_BYTES } from '#core/client'
 
 // 007 · Parallel Generate route (FR-001). Single vertically-scrolling page — page intro →
 // three-column editor (Script / Generation settings / Metadata) → generation action bar +
-// pending-queue panel → embedded 006 Library workspace (US2, no waveform player) → status
-// bar (US2). Replaces the 005 two-pane QueueList + metadata editor. Cut over to `/` and
-// delete the old page/components once proven (FR-002). Accent = the app's `indigo` primary.
+// pending-queue panel. A focused queue builder: generated recordings are managed on the
+// separate Library tab (/library), so the Generate page no longer embeds the Library
+// workspace (removed at the user's request). Replaces the 005 two-pane QueueList + metadata
+// editor. Cut over to `/` once proven (FR-002). Accent = the app's `indigo` primary.
 const {
   items,
   voiceId,
@@ -75,8 +76,6 @@ async function onResetSetting(field: 'voiceId' | 'model' | 'format' | 'speed') {
 const queueFileInput = ref<HTMLInputElement | null>(null)
 const txtFileInput = ref<HTMLInputElement | null>(null)
 const importError = ref<string | null>(null)
-// The embedded 006 Library workspace; reloaded after a run so new recordings appear.
-const embedRef = ref<{ reload: () => void | Promise<void> } | null>(null)
 
 onMounted(async () => {
   // Voices, default tags, and generation defaults are best-effort: a degraded/offline env
@@ -128,8 +127,8 @@ async function onGenerate() {
   reset()
   progressOpen.value = true
   await generateAll(target, speed.value, removeItem)
-  // The run produced new recordings — refresh the embedded library so they appear (FR-010).
-  await embedRef.value?.reload()
+  // Generated recordings are managed on the Library tab (/library); the run's outcome is
+  // shown in the progress modal's end summary.
 }
 
 /** The modal's cancel-confirm was accepted: request a graceful stop (finish in-flight). */
@@ -231,15 +230,6 @@ async function onTxtFileChosen(event: Event) {
         {{ importError }}
       </p>
     </section>
-
-    <!-- Embedded Library-style workspace (US2 — reuse 006 components, no waveform player).
-         The 006 LibraryStatusBar inside this workspace is the surface's status bar. -->
-    <section data-test="gen-embed">
-      <EmbeddedLibraryWorkspace ref="embedRef" />
-    </section>
-
-    <!-- Status-bar region anchor (the embedded workspace renders the 006 status bar). -->
-    <section data-test="gen-status-bar" class="sr-only" aria-hidden="true" />
 
     <!-- Hidden file inputs (display:none keeps them out of the tab order / a11y tree;
          the action-bar buttons are the accessible triggers). -->

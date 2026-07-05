@@ -8,14 +8,15 @@ registerEndpoint('/api/voices', () => ({ voices: [{ id: 'alloy', label: 'Alloy' 
 registerEndpoint('/api/settings/defaults', () => ({ defaultTags: {} }))
 
 // 007 · Foundational (T002 / FR-003): the redesigned Generate surface is a single
-// vertically-scrolling page with five stacked regions in order — page intro, the
-// three-column editor (Script / Generation settings / Metadata), the action bar, the
-// embedded Library-style workspace, and the status bar — NOT the 005 resizable
-// two-pane dashboard. This test pins the region skeleton the user stories fill.
+// vertically-scrolling page with its regions stacked in order — page intro, the
+// three-column editor (Script / Generation settings / Metadata), and the action bar +
+// pending-queue — NOT the 005 resizable two-pane dashboard. The embedded Library
+// workspace was removed at the user's request (Library lives on /library), so the page
+// is now a focused queue builder. This test pins the region skeleton.
 describe('generate-next page layout (007)', () => {
-  const REGIONS = ['gen-page-intro', 'gen-editor', 'gen-action-bar-region', 'gen-embed', 'gen-status-bar']
+  const REGIONS = ['gen-page-intro', 'gen-editor', 'gen-action-bar-region']
 
-  it('renders the five stacked regions in order under a single scrolling root', async () => {
+  it('renders the stacked regions in order under a single scrolling root', async () => {
     const wrapper = await mountSuspended(GenerateNextPage)
 
     expect(wrapper.find('[data-test="generate-next"]').exists()).toBe(true)

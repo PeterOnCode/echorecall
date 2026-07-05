@@ -68,6 +68,12 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ## Phase 4: User Story 2 — Embedded Library-style workspace (Priority: P1)
 
+> **⚠️ REVERTED (2026-07-05, user request):** the embedded Library workspace was removed from the
+> Generate page — the redesigned Generate surface is now a focused queue builder (intro → editor →
+> action bar + queue), and the Library stays on its own `/library` tab. `EmbeddedLibraryWorkspace.vue`
+> and `tests/component/generate-next.embed.test.ts` were deleted; the layout test dropped the
+> `gen-embed`/`gen-status-bar` regions. The tasks below are kept for history.
+
 **Goal**: Embed the fully-functional 006 Library components below the editor over the same `useLibrary` data — **without** the waveform player (FR-008/G-EMBED).
 
 **Independent Test**: The lower workspace renders filter bar + file table + Tag Editor inspector + status bar (no player); filter/sort/multi-select/edit+Save/bulk-delete behave as on the Library tab; a generated recording appears in the embedded table (spec US2 acceptance).
