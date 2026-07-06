@@ -510,6 +510,7 @@ export function useQueue(options?: UseQueueOptions) {
       model: fileItem.model,
       format: fileItem.format,
       metadata: cloneMetadata(fileItem.metadata),
+      metadataEdited: Object.keys(fileItem.metadata).length > 0,
       status: 'queued',
       source: fileItem.source,
       ...(fileItem.instructions !== undefined ? { instructions: fileItem.instructions } : {}),

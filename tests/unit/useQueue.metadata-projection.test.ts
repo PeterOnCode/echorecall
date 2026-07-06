@@ -108,4 +108,28 @@ describe('useQueue metadata projection (007 · Configure Visible Fields)', () =>
     const row = q.addItem('hello')!
     expect(row.metadata).toMatchObject({ title: 'T', album: 'A', genre: 'G' })
   })
+
+  it('keeps imported row metadata when preparing loaded queue rows for generation', () => {
+    const q = useQueue()
+    q.metadata.value = {}
+    q.loadDocument({
+      schema: 'echorecall.queue',
+      version: 1,
+      items: [
+        {
+          text: 'loaded script',
+          voiceId: 'alloy',
+          model: 'gpt-4o-mini-tts',
+          format: 'mp3',
+          metadata: { comment: 'loaded comment' },
+          source: 'text',
+        },
+      ],
+    })
+    const row = q.items.value[0]!
+
+    q.applyMetadataToPending(q.generateTarget.value)
+
+    expect(row.metadata.comment).toBe('loaded comment')
+  })
 })

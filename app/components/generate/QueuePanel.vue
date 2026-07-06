@@ -179,7 +179,7 @@ function costLabel(clientId: string): string {
         <template #text-cell="{ row }">
           <span
             data-test="queue-row"
-            class="queue-drag-handle block w-full cursor-move select-none truncate text-sm"
+            class="queue-drag-handle block w-full cursor-move select-none whitespace-normal break-words text-sm"
             :title="t('generateNext.queue.dragHandle')"
           >{{ row.original.text }}</span>
         </template>
