@@ -13,6 +13,9 @@ const props = withDefaults(
   { busy: false, totalUsd: 0, unavailableCount: 0 },
 )
 const emit = defineEmits<{ 'save-queue': []; 'load-queue': []; 'upload-txt': []; generate: [] }>()
+// The first track number the derived Track counts up from (007). Session-only — owned by the
+// page, defaults to 1 (the first row is track 1, matching the prior always-1-based behavior).
+const startTrack = defineModel<number>('startTrack', { default: 1 })
 const { t, locale } = useI18n()
 
 /** Format the queue total in the active locale; sub-cent estimates keep up to 4 decimals. */
@@ -47,6 +50,19 @@ const totalLabel = computed(() =>
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-1.5">
+        <span id="start-track-label" class="text-sm text-muted whitespace-nowrap">
+          {{ t('generateNext.actionBar.startTrack') }}
+        </span>
+        <UInputNumber
+          v-model="startTrack"
+          data-test="start-track-input"
+          :min="1"
+          :aria-label="t('generateNext.actionBar.startTrack')"
+          aria-labelledby="start-track-label"
+          class="w-24"
+        />
+      </div>
       <UButton
         data-test="action-save-queue"
         color="neutral"

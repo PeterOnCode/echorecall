@@ -409,6 +409,7 @@
     },
     "actionBar": {
       "summary": "A sorban",
+      "startTrack": "Első sorszám",
       "saveQueue": "Sor mentése",
       "loadQueue": "Sor betöltése",
       "uploadTxt": ".txt feltöltése",

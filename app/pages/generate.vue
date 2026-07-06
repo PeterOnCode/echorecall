@@ -43,6 +43,11 @@ const { voices, generating, progress, loadVoices, generateAll, requestCancel, re
 const { exportQueue, importQueue } = useQueueFile()
 const { t } = useI18n()
 
+// The first track number the derived Track counts up from (session-only, defaults to 1). Set
+// in the action bar; passed to stampDerivedMetadata so row 1 gets this number and later rows
+// increment from it. Not persisted — a fresh session starts back at 1.
+const startTrack = ref(1)
+
 // Configure Visible Fields modal state (007): the applied set persists via useViewPreferences,
 // which drives both the form's rendered fields and the queue's metadata projection.
 const metadataFieldsOpen = ref(false)
@@ -147,7 +152,7 @@ async function onGenerate() {
   const target = generateTarget.value
   applyMetadataToPending(target)
   stampRecordingDates(target)
-  stampDerivedMetadata(target)
+  stampDerivedMetadata(target, startTrack.value)
   reset()
   progressOpen.value = true
   await generateAll(target, speed.value, removeItem)
@@ -244,6 +249,7 @@ async function onTxtFileChosen(event: Event) {
     <!-- Generation action bar + pending-queue panel -->
     <section data-test="gen-action-bar-region" class="flex flex-col gap-3">
       <GenerationActionBar
+        v-model:start-track="startTrack"
         :queue-count="items.length"
         :busy="generating"
         :total-usd="queueCost.totalUsd"

@@ -409,6 +409,7 @@
     },
     "actionBar": {
       "summary": "In queue",
+      "startTrack": "First track #",
       "saveQueue": "Save queue",
       "loadQueue": "Load queue",
       "uploadTxt": "Upload .txt",

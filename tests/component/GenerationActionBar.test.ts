@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import GenerationActionBar from '~/components/generate/GenerationActionBar.vue'
 
@@ -65,5 +66,22 @@ describe('GenerationActionBar', () => {
       props: { queueCount: 2, totalUsd: 0, unavailableCount: 2 },
     })
     expect((wrapper.find('[data-test="action-generate"]').element as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  // Start-track control: sets the first track number the derived Track counts up from.
+  it('renders the start-track input', async () => {
+    const wrapper = await mountSuspended(GenerationActionBar, { props: { queueCount: 2 } })
+    expect(wrapper.find('[data-test="start-track-input"]').exists()).toBe(true)
+  })
+
+  it('emits update:startTrack when the start-track value changes', async () => {
+    const wrapper = await mountSuspended(GenerationActionBar, {
+      props: { queueCount: 2, startTrack: 1 },
+    })
+    const input = wrapper.find('[data-test="start-track-input"]')
+    await input.setValue('8')
+    await input.trigger('blur')
+    await flushPromises()
+    expect(wrapper.emitted('update:startTrack')?.at(-1)).toEqual([8])
   })
 })

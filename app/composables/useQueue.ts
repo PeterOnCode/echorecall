@@ -371,19 +371,21 @@ export function useQueue(options?: UseQueueOptions) {
    *
    * - **Title** — the first 60 characters of the row's text, ellipsised when longer. Filled only
    *   when the row has no title, so a title carried in from an imported queue survives.
-   * - **Track** — the row's 1-based position in the full queue (what the QueuePanel shows),
-   *   always refreshed so it matches the current order.
+   * - **Track** — the row's position in the full queue (what the QueuePanel shows) offset by
+   *   `startTrack` (the first track number configured in the action bar, default 1), always
+   *   refreshed so it matches the current order. The first row gets `startTrack`, the next
+   *   `startTrack + 1`, and so on.
    *
    * Runs AFTER {@link applyMetadataToPending} / {@link stampRecordingDates} so the projection
    * (which never touches title/track) can't drop the derived values.
    */
-  function stampDerivedMetadata(target: QueueItem[] = items.value): void {
+  function stampDerivedMetadata(target: QueueItem[] = items.value, startTrack = 1): void {
     for (const item of target) {
       if (item.status === 'done') continue
       const next = cloneMetadata(item.metadata)
       if (next.title === undefined || next.title === '') next.title = deriveTitle(item.text)
       const position = items.value.indexOf(item)
-      if (position >= 0) next.track = String(position + 1)
+      if (position >= 0) next.track = String(position + startTrack)
       item.metadata = next
     }
   }
@@ -532,11 +534,14 @@ export function useQueue(options?: UseQueueOptions) {
 }
 
 /**
- * Derive a row's title from its text (007): the first 60 characters, with an ellipsis appended
- * when the text is longer than 60. Text of 60 characters or fewer is used as-is.
+ * Derive a row's title from its text (007): chopped at the first line break (the script
+ * textarea allows multi-line text, but a Title tag should hold only the first line — the rest
+ * is discarded, not joined in), then the first 120 characters of that line, with an ellipsis
+ * appended when longer. A first line of 120 characters or fewer is used as-is.
  */
 function deriveTitle(text: string): string {
-  return text.length > 60 ? `${text.slice(0, 60)}…` : text
+  const firstLine = text.split('\n')[0]!.trim()
+  return firstLine.length > 120 ? `${firstLine.slice(0, 120)}…` : firstLine
 }
 
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
