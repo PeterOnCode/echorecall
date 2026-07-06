@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
+import Sortable from 'sortablejs'
 import QueuePanel from '~/components/generate/QueuePanel.vue'
 import type { QueueCost, QueueItem } from '~/composables/useQueue'
 import type { CostEstimate } from '#core/client'
@@ -122,5 +124,44 @@ describe('QueuePanel selection + bulk actions', () => {
     const wrapper = await mountSuspended(QueuePanel, { props: { items: [] } })
     expect(wrapper.find('[data-test="queue-select-all"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="queue-clear"]').exists()).toBe(false)
+  })
+})
+
+// Drag-and-drop reordering: the table is a UTable wired to sortablejs (useSortable). Each row's
+// text cell is the drag handle; completing a drag emits `reorder` with the new clientId order so
+// the page can reorder the queue (which renumbers the derived Track).
+describe('QueuePanel drag-and-drop reorder', () => {
+  const items = [item('a', 'first'), item('b', 'second'), item('c', 'third')]
+
+  it('renders a drag handle on every row', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    expect(wrapper.findAll('.queue-drag-handle')).toHaveLength(3)
+  })
+
+  it('initialises a sortable instance on the table body', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await flushPromises()
+    const tbody = wrapper.find('tbody').element as HTMLElement
+    expect(Sortable.get(tbody)).toBeTruthy()
+  })
+
+  it('emits reorder with the new clientId order when a drag completes', async () => {
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await flushPromises()
+    const tbody = wrapper.find('tbody').element as HTMLElement
+    const sortable = Sortable.get(tbody)!
+    const rowEls = wrapper.findAll('tbody tr')
+    // Simulate sortablejs moving the third row (c) to the top: fire the merged onUpdate the
+    // same way a real drop would, with the dragged <tr> and its container.
+    sortable.options.onUpdate!({
+      oldIndex: 2,
+      newIndex: 0,
+      item: rowEls[2]!.element,
+      from: tbody,
+    } as unknown as Sortable.SortableEvent)
+    await flushPromises()
+    const emitted = wrapper.emitted('reorder')
+    expect(emitted).toBeTruthy()
+    expect(emitted!.at(-1)![0]).toEqual(['c', 'a', 'b'])
   })
 })

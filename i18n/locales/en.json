@@ -422,7 +422,13 @@
       "selectRow": "Select item",
       "selectedCount": "{count} selected",
       "deleteSelected": "Delete selected ({count})",
-      "clear": "Clear queue"
+      "clear": "Clear queue",
+      "dragHandle": "Drag to reorder",
+      "columns": {
+        "text": "Script",
+        "cost": "Cost",
+        "status": "Status"
+      }
     },
     "upload": {
       "tooLarge": "That file is too large."

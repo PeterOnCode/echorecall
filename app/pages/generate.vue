@@ -30,6 +30,7 @@ const {
   removeMany,
   toggleChecked,
   toggleAll,
+  reorder,
   clear: clearQueue,
   applyMetadataToPending,
   stampRecordingDates,
@@ -267,6 +268,7 @@ async function onTxtFileChosen(event: Event) {
         @toggle="toggleChecked"
         @toggle-all="toggleAll(items)"
         @delete-selected="onDeleteSelected"
+        @reorder="reorder"
         @clear="clearQueue"
       />
       <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">

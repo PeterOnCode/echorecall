@@ -307,6 +307,29 @@ export function useQueue(options?: UseQueueOptions) {
   }
 
   /**
+   * Reorder the queue to match `orderedClientIds` — the new row order produced by a
+   * drag-and-drop in the QueuePanel (007). The same row objects are kept (identity
+   * preserved), only their order changes, so per-row status/selection/edits survive.
+   * Robust to a partial or stale list: unknown ids are skipped, and any queue item
+   * absent from the list keeps its relative order appended after the named ones (so a
+   * concurrent add can never drop a row). Since the derived Track is the row's queue
+   * position, generating after a reorder renumbers the tracks to the new order.
+   */
+  function reorder(orderedClientIds: string[]): void {
+    const byId = new Map(items.value.map((i) => [i.clientId, i]))
+    const next: QueueItem[] = []
+    for (const id of orderedClientIds) {
+      const item = byId.get(id)
+      if (item) {
+        next.push(item)
+        byId.delete(id)
+      }
+    }
+    for (const item of items.value) if (byId.has(item.clientId)) next.push(item)
+    items.value = next
+  }
+
+  /**
    * Seed the shared form-level metadata with deployment-provided defaults (US10 /
    * FR-048). Title is never defaulted, so it is stripped even if present. New rows
    * clone this metadata in {@link makeItem}, so the defaults reach both the form and
@@ -525,6 +548,7 @@ export function useQueue(options?: UseQueueOptions) {
     toggleChecked,
     toggleAll,
     updateItem,
+    reorder,
     applyMetadataToPending,
     stampRecordingDates,
     stampDerivedMetadata,

@@ -422,7 +422,13 @@
       "selectRow": "Elem kijelölése",
       "selectedCount": "{count} kijelölve",
       "deleteSelected": "Kijelöltek törlése ({count})",
-      "clear": "Sor törlése"
+      "clear": "Sor törlése",
+      "dragHandle": "Húzd az átrendezéshez",
+      "columns": {
+        "text": "Szöveg",
+        "cost": "Költség",
+        "status": "Állapot"
+      }
     },
     "upload": {
       "tooLarge": "Ez a fájl túl nagy."
