@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { defineEventHandler, readBody } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GeneratePage from '~/pages/index.vue'
+import GeneratePage from '~/pages/generate.vue'
 
 // Component coverage for US10 (FR-048): the Generate metadata form pre-fills non-title
 // fields from deployment defaults (GET /api/settings/defaults), the defaults flow onto

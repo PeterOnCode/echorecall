@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GenerateNextPage from '~/pages/index.vue'
+import GenerateNextPage from '~/pages/generate.vue'
 
 // 007 · Configure Visible Fields — page wiring. The Generate page owns the metadata field
 // visibility (useViewPreferences) and passes it to both the MetadataFields form and the

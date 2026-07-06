@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
-import GenerateNextPage from '~/pages/index.vue'
+import GenerateNextPage from '~/pages/generate.vue'
 import GenerationSettingsPanel from '~/components/generate/GenerationSettingsPanel.vue'
 
 // 007 · US3 (T028 / G-DEFAULTS, FR-012/FR-013): the Generate page resolves each of
