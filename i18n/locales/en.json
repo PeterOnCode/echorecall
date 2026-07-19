@@ -56,6 +56,15 @@
       "skipped": "Some tags aren’t supported by this format and were skipped: {fields}.",
       "skippedAll": "This format can’t carry tags, so the metadata was skipped."
     },
+    "metadataFields": {
+      "title": "Configure visible fields",
+      "configure": "Configure fields",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "reset": "Reset",
+      "cancel": "Cancel",
+      "apply": "Apply"
+    },
     "queue": {
       "empty": "No items yet — type text or upload a .txt to build your list.",
       "remove": "Remove item",
@@ -352,10 +361,101 @@
         "clear": "Could not clear the default tags. Please try again."
       }
     },
+    "generationDefaults": {
+      "title": "Default generation settings",
+      "description": "Set default Voice, Model, and Format for new generations. Your last-used value takes precedence.",
+      "saved": "Saved defaults apply when no recent choice exists.",
+      "noneSaved": "No defaults set — new generations use built-in fallbacks.",
+      "none": "(none)",
+      "fields": {
+        "voice": "Voice",
+        "model": "Model",
+        "format": "Format"
+      },
+      "reset": "Reset {field} to default",
+      "save": "Save defaults",
+      "clear": "Clear defaults",
+      "errors": {
+        "load": "Could not load the generation defaults.",
+        "save": "Could not save the generation defaults. Please try again.",
+        "clear": "Could not clear the generation defaults. Please try again."
+      }
+    },
     "modal": {
       "title": "Settings",
       "close": "Close",
       "open": "Settings"
+    }
+  },
+  "generateNext": {
+    "intro": {
+      "title": "Generate",
+      "subtitle": "Create recordings from text — build a queue, then generate."
+    },
+    "script": {
+      "title": "Script",
+      "badge": "Text",
+      "placeholder": "Enter the text to synthesize…",
+      "clear": "Clear",
+      "add": "Add to queue",
+      "empty": "Enter some text first.",
+      "tooLong": "This text is too long."
+    },
+    "settings": {
+      "voice": "Voice",
+      "model": "Model",
+      "format": "Format",
+      "reset": "Reset {field} to default"
+    },
+    "actionBar": {
+      "summary": "In queue",
+      "startTrack": "First track #",
+      "saveQueue": "Save queue",
+      "loadQueue": "Load queue",
+      "uploadTxt": "Upload .txt",
+      "generate": "Generate"
+    },
+    "queue": {
+      "empty": "The queue is empty. Add a script to get started.",
+      "remove": "Remove item",
+      "selectAll": "Select all items",
+      "selectRow": "Select item",
+      "selectedCount": "{count} selected",
+      "deleteSelected": "Delete selected ({count})",
+      "clear": "Clear queue",
+      "dragHandle": "Drag to reorder",
+      "columns": {
+        "text": "Script",
+        "cost": "Cost",
+        "status": "Status"
+      }
+    },
+    "upload": {
+      "tooLarge": "That file is too large."
+    },
+    "progress": {
+      "title": "Generating",
+      "current": "Generating {index} of {total}: {name}",
+      "succeeded": "Succeeded: {count}",
+      "failed": "Failed: {count}",
+      "failedItems": "Failed items",
+      "notGenerated": "Not generated: {count}",
+      "stop": "Stop generation",
+      "close": "Close",
+      "confirm": {
+        "message": "Stop after the current file finishes? Any remaining files will not be generated.",
+        "accept": "Stop generating",
+        "decline": "Keep going"
+      },
+      "summary": {
+        "completed": "Generation complete.",
+        "cancelled": "Generation stopped."
+      }
+    },
+    "cost": {
+      "unavailable": "Unavailable",
+      "total": "Est. cost: {amount}",
+      "unavailableNote": "+{count} unavailable"
     }
   }
 }

@@ -6,12 +6,12 @@ const route = useRoute()
 // (`:content="false"`) — each tab simply navigates to its page. Settings is no longer
 // a tab/route (005 · US7 / FR-017): it opens as a modal from the header gear.
 const tabs = computed(() => [
-  { label: t('common.tabs.generate'), icon: 'i-lucide-mic', value: '/' },
+  { label: t('common.tabs.generate'), icon: 'i-lucide-mic', value: '/generate' },
   { label: t('common.tabs.library'), icon: 'i-lucide-library', value: '/library' },
 ])
 
 const active = computed({
-  get: (): string => tabs.value.find((tab) => tab.value === route.path)?.value ?? '/',
+  get: (): string => tabs.value.find((tab) => tab.value === route.path)?.value ?? '/generate',
   set: (value: string | number) => {
     const path = String(value)
     if (path !== route.path) navigateTo(path)

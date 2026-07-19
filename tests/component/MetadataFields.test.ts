@@ -25,13 +25,6 @@ function lastModel(wrapper: Awaited<ReturnType<typeof mountWith>>): Metadata {
   return emitted[emitted.length - 1]![0] as Metadata
 }
 
-function isoForTomorrow(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
-
 // The recording date is a button-triggered popover; its calendar only mounts once
 // the popover opens. Mirror the proven LibrarySearchBar pattern: click the trigger,
 // flush, then locate the (teleported) UCalendar via this wrapper's component tree.
@@ -104,16 +97,18 @@ describe('MetadataFields recording-date picker (US1)', () => {
     expect(wrapper.find('[data-test="meta-recordedAt-trigger"]').exists()).toBe(true)
   })
 
-  it('defaults a newly created queue item’s recording date to tomorrow', async () => {
+  it('leaves a newly created queue item’s recording date unset (stamped at generation, US6)', async () => {
+    // 007 · US6 (FR-020): makeItem no longer pre-stamps a date; the recording date is
+    // stamped to today at generation time only when still empty (see the useQueue
+    // recordedAt spec). A freshly added row therefore has no recordedAt yet.
     const q = useQueue()
     const created = q.addItem('hello')!
-    const tomorrow = isoForTomorrow()
-    expect(created.metadata.recordedAt).toBe(tomorrow)
+    expect(created.metadata.recordedAt).toBeUndefined()
 
-    // The picker surfaces that default on the calendar.
+    // The picker surfaces no default date for an unset recordedAt.
     const wrapper = await mountWith(created.metadata)
     const cal = await openPicker(wrapper)
-    expect((cal.props('modelValue') as CalendarDate | undefined)?.toString()).toBe(tomorrow)
+    expect(cal.props('modelValue')).toBeUndefined()
   })
 
   it('maps a calendar selection back to a YYYY-MM-DD string', async () => {

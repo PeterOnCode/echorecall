@@ -1,3 +1,5 @@
+import { isKnownFormat, isKnownModel, isKnownVoice } from '#core/client'
+
 // Per-device client view preferences (005 · US3 / FR-012, research §R5, data-model
 // §4). The queue table's visible-column set is persisted in localStorage so a user's
 // layout choice survives reloads — no server, no schema. SSR-safe: when there is no
@@ -107,6 +109,32 @@ export interface InspectorFieldPref {
   visible: boolean
 }
 
+/**
+ * The metadata-field ids the shared MetadataFields form knows how to render (007). Each id is
+ * 1:1 with a {@link Metadata} key. The Generate page's *configurable* subset — the fields the
+ * Configure Visible Fields dialog toggles/reorders and that are saved onto queue rows — is the
+ * narrower {@link METADATA_FIELD_IDS} below: it EXCLUDES `title` and `track`, which are derived
+ * automatically at generation time (Title = first 60 chars of the text, Track = the row's
+ * 1-based queue position) rather than user-edited. `title`/`track` stay in this union because
+ * the same component still renders them for the Library / queue-row editors (no `fields` prop).
+ */
+export type MetadataFieldId =
+  | 'title'
+  | 'artist'
+  | 'album'
+  | 'genre'
+  | 'track'
+  | 'recordedAt'
+  | 'comment'
+  | 'languages'
+  | 'customText'
+  | 'customUrl'
+
+export interface MetadataFieldPref {
+  id: MetadataFieldId
+  visible: boolean
+}
+
 const LIBRARY_COLUMN_IDS: LibraryColumnId[] = [
   'title',
   'artist',
@@ -136,8 +164,64 @@ const INSPECTOR_FIELD_IDS: InspectorFieldId[] = [
   'bpm',
   'rating',
 ]
+// The Generate configurable set: `title` and `track` are intentionally absent — they are
+// derived at generation time (see useQueue.stampDerivedMetadata), so they are neither shown in
+// the metadata form nor listed in the Configure Visible Fields dialog.
+const METADATA_FIELD_IDS: MetadataFieldId[] = [
+  'artist',
+  'album',
+  'genre',
+  'recordedAt',
+  'comment',
+  'languages',
+  'customText',
+  'customUrl',
+]
 const LIBRARY_COLUMNS_KEY = 'echorecall:viewprefs:libraryColumns'
 const INSPECTOR_FIELDS_KEY = 'echorecall:viewprefs:inspectorFields'
+const METADATA_FIELDS_KEY = 'echorecall:viewprefs:metadataFields'
+
+// ---------------------------------------------------------------------------
+// 007 · US3 (G-DEFAULTS) — per-device "last-selected" generation settings.
+//
+// The Generate editor resolves each of Voice/Model/Format as last-selected → configured
+// default → built-in fallback (FR-012). The last-selected half lives here: a partial
+// `{ voiceId?, model?, format? }` persisted per-device in localStorage. A per-field reset
+// drops just that field so it falls back to the configured default (FR-013). Reads keep
+// only well-typed fields; SSR-safe fallback to {}. Speed is not remembered — synthesis
+// always runs at 1×.
+// ---------------------------------------------------------------------------
+
+/** The generation-settings fields that remember a last-selected value. */
+export type GenSettingField = 'voiceId' | 'model' | 'format'
+
+export interface GenSettingsPref {
+  voiceId?: string
+  model?: string
+  format?: string
+}
+
+const GEN_SETTINGS_KEY = 'echorecall:viewprefs:genSettings'
+
+/** Keep only catalog-valid values so stale client storage cannot override safe defaults. */
+function sanitizeGenSettings(input: unknown): GenSettingsPref {
+  if (!input || typeof input !== 'object') return {}
+  const src = input as Record<string, unknown>
+  const out: GenSettingsPref = {}
+  if (typeof src.voiceId === 'string' && isKnownVoice(src.voiceId)) out.voiceId = src.voiceId
+  if (typeof src.model === 'string' && isKnownModel(src.model)) out.model = src.model
+  if (typeof src.format === 'string' && isKnownFormat(src.format)) out.format = src.format
+  return out
+}
+
+function readGenSettings(): GenSettingsPref {
+  try {
+    const raw = storage()?.getItem(GEN_SETTINGS_KEY)
+    return sanitizeGenSettings(raw ? JSON.parse(raw) : undefined)
+  } catch {
+    return {}
+  }
+}
 
 /**
  * Coerce arbitrary stored/incoming input into a clean ordered visibility list:
@@ -228,6 +312,37 @@ export function useViewPreferences() {
     inspectorFields.value = sanitizeOrdered(undefined, INSPECTOR_FIELD_IDS)
   }
 
+  // 007 — ordered, toggleable Generate metadata fields (only visible fields are saved onto
+  // queue rows; see useQueue's metadata projection).
+  const metadataFields = ref<MetadataFieldPref[]>(readOrdered(METADATA_FIELDS_KEY, METADATA_FIELD_IDS))
+  watch(metadataFields, (v) => persistRaw(METADATA_FIELDS_KEY, v), { deep: true, flush: 'sync' })
+
+  /** Commit a (possibly reordered + retoggled) metadata field set; refuses to hide all. */
+  function setMetadataFields(next: MetadataFieldPref[]): void {
+    const clean = sanitizeOrdered(next, METADATA_FIELD_IDS)
+    if (!clean.some((f) => f.visible)) return
+    metadataFields.value = clean
+  }
+  function resetMetadataFields(): void {
+    metadataFields.value = sanitizeOrdered(undefined, METADATA_FIELD_IDS)
+  }
+
+  // 007 · US3 — last-selected generation settings (per-device).
+  const genSettings = ref<GenSettingsPref>(readGenSettings())
+  watch(genSettings, (v) => persistRaw(GEN_SETTINGS_KEY, v), { deep: true, flush: 'sync' })
+
+  /** Remember a field's last-selected value (called when the user changes a control). */
+  function setGenSetting<K extends GenSettingField>(field: K, value: GenSettingsPref[K]): void {
+    genSettings.value = { ...genSettings.value, [field]: value }
+  }
+
+  /** Forget a field's last-selected value so it falls back to the configured default. */
+  function resetGenSetting(field: GenSettingField): void {
+    genSettings.value = Object.fromEntries(
+      Object.entries(genSettings.value).filter(([key]) => key !== field),
+    ) as GenSettingsPref
+  }
+
   return {
     queueColumns,
     setColumn,
@@ -237,5 +352,11 @@ export function useViewPreferences() {
     inspectorFields,
     setInspectorFields,
     resetInspectorFields,
+    metadataFields,
+    setMetadataFields,
+    resetMetadataFields,
+    genSettings,
+    setGenSetting,
+    resetGenSetting,
   }
 }

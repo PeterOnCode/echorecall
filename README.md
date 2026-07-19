@@ -6,7 +6,7 @@ text, pick a voice and format, and generate a whole batch at once — every
 successful clip is saved so you can replay, retag, download, or delete it later
 without regenerating.
 
-- **Generation workspace** — a resizable two-pane dashboard (queue list + metadata editor): build a queue by typing a line or uploading a `.txt`, then search, filter, multi-select, and choose which columns to show. A header toolbar drives upload, previous/next, generate, and save/open of the queue as a local `.echoqueue.json` file. Generate targets the checked rows (else the whole queue), isolates per-item failures, removes the successes from the queue, and offers that run as one `.zip`.
+- **Generation workspace** — a single scrolling queue builder: type a script or upload a `.txt`, choose Voice/Model/Format and visible metadata fields, then select, reorder, bulk-delete, save/load, and generate pending rows. Generation targets checked rows (or all rows), reports per-item progress, cost, and failures, supports graceful cancellation, and removes successful rows while keeping failures for retry.
 - **Voices, models & formats** — choose a voice and model, and render to MP3, WAV, FLAC, Opus, AAC, or PCM.
 - **Standards-based metadata** — attach title, artist, album, genre, comment, languages, a recording date, and repeatable custom text/URL tags, written as ID3v2.4 / Vorbis comments where the format supports them.
 - **Persistent library** — every generation is stored (SQLite + on-disk audio under `data/`) and survives restarts; replay makes no new provider call. Files are saved with human-readable, title-slugged names under a `YYYY/MM/DD` folder.

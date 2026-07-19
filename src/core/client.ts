@@ -18,6 +18,9 @@ export {
 } from './tts/provider'
 export type { TtsProvider } from './tts/provider'
 export { MAX_INPUT_LENGTH, normalizeSpeed } from './tts/generate'
+// Per-item cost estimate (007 · US5): pure, browser-safe pricing for the Generate editor.
+export { MODEL_PRICING, estimateItemCost } from './tts/pricing'
+export type { CostEstimate } from './tts/pricing'
 
 // Naming rules (slug) — shared so the client preview matches the server result.
 export { slugify } from './naming/slug'

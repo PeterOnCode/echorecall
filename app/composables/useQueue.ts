@@ -1,8 +1,9 @@
-import type { Format, ListItem, Metadata, Model } from '#core/client'
-import { MAX_INPUT_LENGTH, formatInfo, parseUploadText } from '#core/client'
+import type { CostEstimate, Format, ListItem, Metadata, Model } from '#core/client'
+import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from '#core/client'
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
 import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
+import type { MetadataFieldId } from './useViewPreferences'
 
 export type ItemStatus = 'queued' | 'generating' | 'done' | 'failed'
 
@@ -30,6 +31,19 @@ export interface UploadSummary {
   added: number
   skippedBlank: number
   rejectedTooLong: number
+}
+
+/**
+ * Client-derived cost aggregate for the queue (007 · US5 / G-PRICING, FR-018/FR-019).
+ * `perItem` maps each row's clientId to its estimate (from `item.text.length` +
+ * `item.model`); `totalUsd` sums ONLY estimable amounts (an unavailable item is never
+ * counted as $0); `unavailableCount` drives the "+ N unavailable" note. Display-only —
+ * derived, never persisted, and never gates Generate.
+ */
+export interface QueueCost {
+  perItem: Map<string, CostEstimate>
+  totalUsd: number
+  unavailableCount: number
 }
 
 /** Fields a single queue row can be edited with (US3); each key is optional. */
@@ -73,12 +87,23 @@ export function isUntaggableFormat(format: Format): boolean {
   return formatInfo(format)?.taggable === 'none'
 }
 
+/** Options for {@link useQueue}. */
+export interface UseQueueOptions {
+  /**
+   * The metadata fields currently visible in the Configure Visible Fields dialog (007). Only
+   * these fields are written onto queue rows; a hidden configurable field is stripped from a
+   * row's saved metadata. Omitted keeps every field (the pre-feature behavior). Non-configurable
+   * keys (e.g. deployment default tags for fields not in the metadata form) always pass through.
+   */
+  visibleMetadataFields?: () => readonly MetadataFieldId[]
+}
+
 /**
  * Ephemeral batch queue (FR-001/010). Holds the per-row list plus the form-level
  * voice/model/format/speed applied to every row. Lives only in client state and
  * is never sent anywhere except, row by row, to the generate endpoint.
  */
-export function useQueue() {
+export function useQueue(options?: UseQueueOptions) {
   const items = ref<QueueItem[]>([])
   const voiceId = ref('')
   const model = ref<Model>('gpt-4o-mini-tts')
@@ -98,12 +123,66 @@ export function useQueue() {
   const searchTerm = ref('')
   const filters = ref<QueueFilters>({})
 
+  // The configurable metadata fields (mirrors useViewPreferences' METADATA_FIELD_IDS). Only
+  // the currently-visible subset is written onto a row; a hidden configurable field is dropped
+  // before the row's metadata is saved (007). Any key outside this list — e.g. deployment
+  // defaults for fields not in the metadata form, or the derived `title`/`track` — is always
+  // preserved. `title` and `track` are intentionally NOT configurable: they are derived at
+  // generation time by {@link stampDerivedMetadata}, so the projection must never strip them.
+  const configurableMetadataFields: MetadataFieldId[] = [
+    'artist', 'album', 'genre', 'recordedAt', 'comment', 'languages', 'customText', 'customUrl',
+  ]
+  const visibleMetadataFields = () => options?.visibleMetadataFields?.() ?? configurableMetadataFields
+  // A primitive derived from the visible set so the metadata watcher re-projects rows when the
+  // user shows/hides a field (not only when the form metadata itself changes).
+  const visibleMetadataKey = computed(() => [...visibleMetadataFields()].join(','))
+
+  /** Clone `m`, dropping any configurable field that is currently hidden (007). */
+  function projectMetadata(m: Metadata): Metadata {
+    const visible = new Set<string>(visibleMetadataFields())
+    const clone = cloneMetadata(m)
+    for (const key of configurableMetadataFields) {
+      if (!visible.has(key)) Reflect.deleteProperty(clone, key)
+    }
+    return clone
+  }
+
+  // The form-level Voice/Model/Format/Metadata are live batch settings: editing any of them
+  // rewrites that field on every row already in the queue — not just future rows — so the
+  // per-item + total cost recalculates immediately (a Model change is what re-prices a row).
+  // Since the redesigned Generate page has no per-row editor, the form is the only editor, so
+  // a form change is an explicit "apply to all". Already-generated (`done`) rows are left
+  // alone; metadata additionally skips rows edited individually (`metadataEdited`) so their
+  // per-row values survive. Speed is intentionally NOT written through — it is not stored per
+  // row and the cost estimate never depends on it (it applies only at generation time). An
+  // empty queue makes every watcher a no-op, so mount-time resolution and per-field reset
+  // (which both drive these refs) propagate harmlessly.
+  watch(voiceId, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.voiceId = v
+  })
+  watch(model, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.model = v
+  })
+  watch(format, (v) => {
+    for (const item of items.value) if (item.status !== 'done') item.format = v
+  })
+  // Re-projects on a form-metadata edit AND on a visibility change (showing a field re-adds its
+  // value from the form; hiding one drops it from every non-edited row).
+  watch(
+    [metadata, visibleMetadataKey],
+    () => {
+      for (const item of items.value) {
+        if (item.status !== 'done' && !item.metadataEdited) item.metadata = projectMetadata(metadata.value)
+      }
+    },
+    { deep: true },
+  )
+
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
-    // A new row's recording date defaults to tomorrow (FR-008/data-model §1), unless
-    // the shared form metadata already carries one. Stored as a `YYYY-MM-DD` string so
-    // it round-trips through the metadata editor's calendar picker and the queue file.
-    const itemMetadata = cloneMetadata(metadata.value)
-    if (itemMetadata.recordedAt === undefined) itemMetadata.recordedAt = tomorrowIso()
+    // A new row inherits only the visible fields of the shared form metadata (007); the
+    // recording date is NOT pre-stamped here (007 · US6 / FR-020). useGeneration fills it
+    // for each attempt and retains it only on success, which also keeps failed retries fresh.
+    const itemMetadata = projectMetadata(metadata.value)
     return {
       clientId: newClientId(),
       text,
@@ -227,6 +306,29 @@ export function useQueue() {
   }
 
   /**
+   * Reorder the queue to match `orderedClientIds` — the new row order produced by a
+   * drag-and-drop in the QueuePanel (007). The same row objects are kept (identity
+   * preserved), only their order changes, so per-row status/selection/edits survive.
+   * Robust to a partial or stale list: unknown ids are skipped, and any queue item
+   * absent from the list keeps its relative order appended after the named ones (so a
+   * concurrent add can never drop a row). Since the derived Track is the row's queue
+   * position, generating after a reorder renumbers the tracks to the new order.
+   */
+  function reorder(orderedClientIds: string[]): void {
+    const byId = new Map(items.value.map((i) => [i.clientId, i]))
+    const next: QueueItem[] = []
+    for (const id of orderedClientIds) {
+      const item = byId.get(id)
+      if (item) {
+        next.push(item)
+        byId.delete(id)
+      }
+    }
+    for (const item of items.value) if (byId.has(item.clientId)) next.push(item)
+    items.value = next
+  }
+
+  /**
    * Seed the shared form-level metadata with deployment-provided defaults (US10 /
    * FR-048). Title is never defaulted, so it is stripped even if present. New rows
    * clone this metadata in {@link makeItem}, so the defaults reach both the form and
@@ -259,7 +361,34 @@ export function useQueue() {
    */
   function applyMetadataToPending(target: QueueItem[] = items.value): void {
     for (const item of target) {
-      if (item.status !== 'done' && !item.metadataEdited) item.metadata = cloneMetadata(metadata.value)
+      if (item.status !== 'done' && !item.metadataEdited) item.metadata = projectMetadata(metadata.value)
+    }
+  }
+
+  /**
+   * Stamp the derived Title + Track onto each target row right before generation (007). Neither
+   * is user-editable on Generate (both are removed from the metadata form + Configure Visible
+   * Fields dialog); they are derived here so every generated recording carries a sensible title
+   * and its queue position as a track number:
+   *
+   * - **Title** — the first 120 characters of the row's text, ellipsised when longer. Filled only
+   *   when the row has no title, so a title carried in from an imported queue survives.
+   * - **Track** — the row's position in the full queue (what the QueuePanel shows) offset by
+   *   `startTrack` (the first track number configured in the action bar, default 1), always
+   *   refreshed so it matches the current order. The first row gets `startTrack`, the next
+   *   `startTrack + 1`, and so on.
+   *
+   * Runs AFTER {@link applyMetadataToPending} so the projection (which never touches
+   * title/track) can't drop the derived values.
+   */
+  function stampDerivedMetadata(target: QueueItem[] = items.value, startTrack = 1): void {
+    for (const item of target) {
+      if (item.status === 'done') continue
+      const next = cloneMetadata(item.metadata)
+      if (next.title === undefined || next.title === '') next.title = deriveTitle(item.text)
+      const position = items.value.indexOf(item)
+      if (position >= 0) next.track = String(position + startTrack)
+      item.metadata = next
     }
   }
 
@@ -296,6 +425,23 @@ export function useQueue() {
       ? items.value.filter((i) => checkedIds.value.has(i.clientId))
       : [...items.value],
   )
+
+  // Per-item + total cost estimate over the whole queue (US5 / FR-018/FR-019). Each row
+  // is priced by its own model against its text (chars for the character-priced models,
+  // spoken duration for gpt-4o-mini-tts); any unavailable (unknown-model) row is counted
+  // separately and excluded from the total, never treated as $0.
+  const queueCost = computed<QueueCost>(() => {
+    const perItem = new Map<string, CostEstimate>()
+    let totalUsd = 0
+    let unavailableCount = 0
+    for (const item of items.value) {
+      const estimate = estimateItemCost(item.model, item.text)
+      perItem.set(item.clientId, estimate)
+      if (estimate === 'unavailable') unavailableCount++
+      else totalUsd += estimate.amountUsd
+    }
+    return { perItem, totalUsd, unavailableCount }
+  })
 
   // Active-selection navigation for the toolbar prev/next (FR-005), over the
   // visible rows; disabled at the boundaries.
@@ -343,6 +489,7 @@ export function useQueue() {
       model: fileItem.model,
       format: fileItem.format,
       metadata: cloneMetadata(fileItem.metadata),
+      metadataEdited: Object.keys(fileItem.metadata).length > 0,
       status: 'queued',
       source: fileItem.source,
       ...(fileItem.instructions !== undefined ? { instructions: fileItem.instructions } : {}),
@@ -365,6 +512,7 @@ export function useQueue() {
     filters,
     visibleItems,
     generateTarget,
+    queueCost,
     activeIndex,
     hasPrev,
     hasNext,
@@ -380,10 +528,23 @@ export function useQueue() {
     toggleChecked,
     toggleAll,
     updateItem,
+    reorder,
     applyMetadataToPending,
+    stampDerivedMetadata,
     setDefaults,
     clear,
   }
+}
+
+/**
+ * Derive a row's title from its text (007): chopped at the first line break (the script
+ * textarea allows multi-line text, but a Title tag should hold only the first line — the rest
+ * is discarded, not joined in), then the first 120 characters of that line, with an ellipsis
+ * appended when longer. A first line of 120 characters or fewer is used as-is.
+ */
+function deriveTitle(text: string): string {
+  const firstLine = text.split('\n')[0]!.trim()
+  return firstLine.length > 120 ? `${firstLine.slice(0, 120)}…` : firstLine
 }
 
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
@@ -406,12 +567,4 @@ function newClientId(): string {
     const value = char === 'x' ? rand : (rand % 4) + 8
     return value.toString(16)
   })
-}
-
-/** Tomorrow as a local-day `YYYY-MM-DD` string (the recording-date default, FR-008). */
-function tomorrowIso(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }

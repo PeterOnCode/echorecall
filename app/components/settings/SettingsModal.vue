@@ -31,6 +31,7 @@ const { t } = useI18n()
         <LanguageSettings />
         <OpenAiKeySettings />
         <DefaultTagsSettings />
+        <GenerationDefaultsSettings />
       </div>
     </template>
   </UModal>
