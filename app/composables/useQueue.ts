@@ -371,7 +371,7 @@ export function useQueue(options?: UseQueueOptions) {
    * Fields dialog); they are derived here so every generated recording carries a sensible title
    * and its queue position as a track number:
    *
-   * - **Title** — the first 60 characters of the row's text, ellipsised when longer. Filled only
+   * - **Title** — the first 120 characters of the row's text, ellipsised when longer. Filled only
    *   when the row has no title, so a title carried in from an imported queue survives.
    * - **Track** — the row's position in the full queue (what the QueuePanel shows) offset by
    *   `startTrack` (the first track number configured in the action bar, default 1), always

@@ -1,3 +1,5 @@
+import type { Format, Model } from '#core/client'
+
 /**
  * The configured Voice/Model/Format defaults, mirrored client-side. Structurally matches
  * the server's `GenerationDefaults`; kept local so this browser composable never imports
@@ -5,15 +7,15 @@
  */
 export interface GenerationDefaults {
   voiceId?: string
-  model?: string
-  format?: string
+  model?: Model
+  format?: Format
 }
 
-/** Editable form state for the generation-defaults Settings section (all strings; '' = unset). */
+/** Editable form state for generation defaults; catalog ids are joined by '' as the unset sentinel. */
 export interface GenerationDefaultsForm {
   voiceId: string
-  model: string
-  format: string
+  model: Model | ''
+  format: Format | ''
 }
 
 export type GenerationDefaultField = 'voiceId' | 'model' | 'format'
