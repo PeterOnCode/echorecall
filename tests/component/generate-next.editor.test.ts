@@ -47,4 +47,39 @@ describe('generate-next editor wiring (US1)', () => {
     expect((box.element as HTMLTextAreaElement).value).toBe('')
     expect(wrapper.findAll('[data-test="queue-row"]')).toHaveLength(1)
   })
+
+  it('confirms before a loaded queue replaces existing rows', async () => {
+    const wrapper = await mountPage()
+    await wrapper.find('[data-test="add-text-input"]').setValue('keep me')
+    await wrapper.find('[data-test="add-text-submit"]').trigger('click')
+    await flushPromises()
+
+    const queueFile = new File([JSON.stringify({
+      schema: 'echorecall.queue',
+      version: 1,
+      items: [{
+        text: 'loaded row',
+        voiceId: 'alloy',
+        model: 'gpt-4o-mini-tts',
+        format: 'mp3',
+        metadata: {},
+        source: 'text',
+      }],
+    })], 'replacement.echoqueue.json', { type: 'application/json' })
+    const input = wrapper.find('[data-test="queue-file-input"]')
+    Object.defineProperty(input.element, 'files', { configurable: true, value: [queueFile] })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="queue-row"]').text()).toContain('keep me')
+    const dialog = document.body.querySelector('[data-test="confirm-dialog"]')
+    expect(dialog).not.toBeNull()
+
+    ;(document.body.querySelector('[data-test="confirm-ok"]') as HTMLButtonElement).click()
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-test="queue-row"]')).toHaveLength(1)
+    expect(wrapper.find('[data-test="queue-row"]').text()).toContain('loaded row')
+    wrapper.unmount()
+  })
 })

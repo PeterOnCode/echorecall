@@ -57,46 +57,67 @@ function onApplyMetadataFields(next: typeof metadataFields.value) {
 
 // 007 · US3 (G-DEFAULTS, FR-012/FR-013). Each of Voice/Model/Format resolves as
 // last-selected (client, `genSettings`) → configured default (server) → built-in fallback.
-// The configured half is fetched once on mount; the last-selected half persists on every
-// user change (guarded by `settingsReady` so the initial resolution isn't mistaken for a
-// user pick). A per-field reset forgets the last-selected value and restores the configured
-// default (or the built-in fallback when none is configured). Speed is not resolved here:
+// The configured half is fetched once on mount. Explicit update handlers persist user changes
+// and protect choices made while the defaults request is still pending from being overwritten
+// by initialization. A per-field reset forgets the last-selected value and restores the
+// configured default (or the built-in fallback when none is configured). Speed is not resolved here:
 // synthesis always runs at 1× (`speed` stays the queue's fixed default), so it has no
 // UI control and no defaults resolution.
 type ConfiguredDefaults = { voiceId?: string; model?: string; format?: string }
+type GenSettingField = keyof ConfiguredDefaults
 const configuredDefaults = ref<ConfiguredDefaults>({})
 const settingsReady = ref(false)
+const settingsChangedDuringLoad = new Set<GenSettingField>()
 
 const fallbackVoice = () => voices.value[0]?.id ?? ''
 
 function resolveSettings() {
   const ls = genSettings.value
   const cd = configuredDefaults.value
-  voiceId.value = ls.voiceId ?? cd.voiceId ?? fallbackVoice()
-  model.value = (ls.model ?? cd.model ?? 'gpt-4o-mini-tts') as Model
-  format.value = (ls.format ?? cd.format ?? 'mp3') as Format
+  if (!settingsChangedDuringLoad.has('voiceId')) {
+    voiceId.value = ls.voiceId ?? cd.voiceId ?? fallbackVoice()
+  }
+  if (!settingsChangedDuringLoad.has('model')) {
+    model.value = (ls.model ?? cd.model ?? 'gpt-4o-mini-tts') as Model
+  }
+  if (!settingsChangedDuringLoad.has('format')) {
+    format.value = (ls.format ?? cd.format ?? 'mp3') as Format
+  }
 }
 
-watch(voiceId, (v) => { if (settingsReady.value) setGenSetting('voiceId', v) })
-watch(model, (v) => { if (settingsReady.value) setGenSetting('model', v) })
-watch(format, (v) => { if (settingsReady.value) setGenSetting('format', v) })
+function onVoiceChanged(value: string) {
+  if (!settingsReady.value) settingsChangedDuringLoad.add('voiceId')
+  voiceId.value = value
+  setGenSetting('voiceId', value)
+}
+
+function onModelChanged(value: Model) {
+  if (!settingsReady.value) settingsChangedDuringLoad.add('model')
+  model.value = value
+  setGenSetting('model', value)
+}
+
+function onFormatChanged(value: Format) {
+  if (!settingsReady.value) settingsChangedDuringLoad.add('format')
+  format.value = value
+  setGenSetting('format', value)
+}
 
 /** Per-field reset (FR-013): forget the last-selected value, restore the configured default. */
-async function onResetSetting(field: 'voiceId' | 'model' | 'format') {
+function onResetSetting(field: GenSettingField) {
   resetGenSetting(field)
-  // Suppress the change-watcher so restoring the default isn't re-saved as last-selected.
-  settingsReady.value = false
+  if (!settingsReady.value) settingsChangedDuringLoad.delete(field)
   const cd = configuredDefaults.value
   if (field === 'voiceId') voiceId.value = cd.voiceId ?? fallbackVoice()
   else if (field === 'model') model.value = (cd.model ?? 'gpt-4o-mini-tts') as Model
   else format.value = (cd.format ?? 'mp3') as Format
-  await nextTick()
-  settingsReady.value = true
 }
 
 // Hidden inputs: `.json` saved-queue load (Load queue) and `.txt` batch (Upload .txt).
 const queueFileInput = ref<HTMLInputElement | null>(null)
 const txtFileInput = ref<HTMLInputElement | null>(null)
+const pendingDoc = ref<ReturnType<typeof serialize> | null>(null)
+const confirmReplace = ref(false)
 const importError = ref<string | null>(null)
 
 onMounted(async () => {
@@ -121,8 +142,8 @@ onMounted(async () => {
   } catch {
     // generation defaults optional
   }
-  // Resolve the four controls (last-selected → configured → fallback), then arm the
-  // change-watchers so subsequent user edits persist as last-selected.
+  // Resolve the three controls (last-selected → configured → fallback), preserving any
+  // explicit user choices made while these best-effort requests were pending.
   resolveSettings()
   await nextTick()
   settingsReady.value = true
@@ -194,7 +215,23 @@ async function onQueueFileChosen(event: Event) {
     return
   }
   importError.value = null
-  loadDocument(result.doc)
+  if (items.value.length > 0) {
+    pendingDoc.value = result.doc
+    confirmReplace.value = true
+  } else {
+    loadDocument(result.doc)
+  }
+}
+
+function onConfirmReplace() {
+  if (pendingDoc.value) loadDocument(pendingDoc.value)
+  pendingDoc.value = null
+  confirmReplace.value = false
+}
+
+function onCancelReplace() {
+  pendingDoc.value = null
+  confirmReplace.value = false
 }
 
 /** Read a picked `.txt` batch and append its parsed rows to the queue (FR-007). */
@@ -229,10 +266,13 @@ async function onTxtFileChosen(event: Event) {
       </div>
       <div data-test="gen-col-settings" class="flex flex-col gap-2">
         <GenerationSettingsPanel
-          v-model:voice-id="voiceId"
-          v-model:model="model"
-          v-model:format="format"
+          :voice-id="voiceId"
+          :model="model"
+          :format="format"
           :voices="voices"
+          @update:voice-id="onVoiceChanged"
+          @update:model="onModelChanged"
+          @update:format="onFormatChanged"
           @reset="onResetSetting"
         />
       </div>
@@ -292,6 +332,16 @@ async function onTxtFileChosen(event: Event) {
       class="hidden"
       @change="onTxtFileChosen"
     >
+
+    <ConfirmDialog
+      :open="confirmReplace"
+      :title="t('generate.queueFile.replaceTitle')"
+      :message="t('generate.queueFile.replaceMessage', { count: items.length })"
+      :confirm-label="t('generate.queueFile.replaceConfirm')"
+      :cancel-label="t('generate.queueFile.replaceCancel')"
+      @confirm="onConfirmReplace"
+      @cancel="onCancelReplace"
+    />
 
     <!-- Generation progress modal (US4 — teleports to body, so the inert root above
          never disables it). Opens on Generate; the modal's in-modal confirm drives a

@@ -20,7 +20,16 @@ registerEndpoint('/api/voices', () => ({ voices: VOICES }))
 registerEndpoint('/api/settings/defaults', () => ({ defaultTags: {} }))
 
 let configured: Record<string, unknown> = {}
-registerEndpoint('/api/settings/generation-defaults', () => ({ generationDefaults: configured }))
+let delayGenerationDefaults = false
+let releaseGenerationDefaults: (() => void) | undefined
+registerEndpoint('/api/settings/generation-defaults', async () => {
+  if (delayGenerationDefaults) {
+    await new Promise<void>((resolve) => {
+      releaseGenerationDefaults = resolve
+    })
+  }
+  return { generationDefaults: configured }
+})
 registerEndpoint('/api/generations', () => ({ generations: [], total: 0, page: 1, pageSize: 20 }))
 
 const GEN_KEY = 'echorecall:viewprefs:genSettings'
@@ -31,6 +40,8 @@ function panelOf(wrapper: Awaited<ReturnType<typeof mountSuspended>>) {
 
 beforeEach(() => {
   configured = {}
+  delayGenerationDefaults = false
+  releaseGenerationDefaults = undefined
   localStorage.clear()
 })
 
@@ -74,6 +85,32 @@ describe('generate-next generation-settings resolution (US3)', () => {
     panelOf(wrapper).vm.$emit('update:voiceId', 'nova')
     await flushPromises()
     expect(JSON.parse(localStorage.getItem(GEN_KEY)!)).toMatchObject({ voiceId: 'nova' })
+  })
+
+  it('preserves and persists settings changed while configured defaults load', async () => {
+    configured = { voiceId: 'sage', model: 'tts-1-hd', format: 'flac' }
+    delayGenerationDefaults = true
+    const wrapper = await mountSuspended(GenerateNextPage)
+    for (let i = 0; i < 4; i++) await flushPromises()
+    expect(releaseGenerationDefaults).toBeTypeOf('function')
+
+    const panel = panelOf(wrapper)
+    panel.vm.$emit('update:voiceId', 'nova')
+    panel.vm.$emit('update:model', 'tts-1')
+    panel.vm.$emit('update:format', 'wav')
+    await flushPromises()
+
+    releaseGenerationDefaults!()
+    for (let i = 0; i < 6; i++) await flushPromises()
+
+    expect(panel.props('voiceId')).toBe('nova')
+    expect(panel.props('model')).toBe('tts-1')
+    expect(panel.props('format')).toBe('wav')
+    expect(JSON.parse(localStorage.getItem(GEN_KEY)!)).toMatchObject({
+      voiceId: 'nova',
+      model: 'tts-1',
+      format: 'wav',
+    })
   })
 
   it('per-field reset restores the configured default and forgets the last-selected value', async () => {

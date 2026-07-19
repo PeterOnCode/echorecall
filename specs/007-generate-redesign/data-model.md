@@ -124,7 +124,7 @@ interface GenerationProgress {
   current: QueueItem | null     // the file currently generating (null between/after)
   succeeded: string[]           // generation ids
   failed: { clientId: string; error: string }[]
-  notGenerated: QueueItem[]     // target items neither done nor failed when the loop broke (cancel)
+  notGenerated: QueueItem[]     // non-done targets not reached in this run when cancellation broke the loop
   state: 'running' | 'completed' | 'cancelled'
 }
 
@@ -133,7 +133,7 @@ const cancelRequested: Ref<boolean>  // set by the confirm-then-stop flow; check
 
 - **State transitions**: `running` → (`completed` when loop finishes) | (`cancelled` when
   `cancelRequested` breaks the loop after the in-flight item finishes). `notGenerated` is populated only
-  on `cancelled`.
+  on `cancelled` and includes an unreached retry even when its status is `failed` from an earlier run.
 - **Modal ↔ run coupling (FR-014/FR-016)**: the modal opens on Generate, disables the page while
   `state==='running'`, and on close-request shows a confirm; confirming sets `cancelRequested`. The
   in-flight `generateItem` is awaited (finishes), then the loop breaks before the next item.

@@ -14,7 +14,8 @@ function extractApiError(e: unknown): string {
  * `state` follows `idle` (pre-run / after {@link useGeneration.reset}) → `running`
  * → (`completed` when the loop finishes) | (`cancelled` when a cancel request breaks
  * the loop after the in-flight file finishes). `notGenerated` is populated only on
- * `cancelled` — the target items neither generated nor failed when the loop broke.
+ * `cancelled` — the non-done target items not reached in the current run, including
+ * rows whose `failed` status came from an earlier attempt.
  */
 export interface GenerationProgress {
   /** Target items to process this run. */
@@ -184,7 +185,7 @@ export function useGeneration() {
         if (cancelRequested.value) {
           progress.value.notGenerated = target
             .slice(i + 1)
-            .filter((it) => it.status !== 'done' && it.status !== 'failed')
+            .filter((it) => it.status !== 'done')
           progress.value.current = null
           progress.value.state = 'cancelled'
           break

@@ -102,6 +102,26 @@ describe('generation progress — confirm-then-stop (US4 / FR-016/FR-017)', () =
     expect(q.items.value.map((i) => i.clientId)).toEqual([c.clientId])
   })
 
+  it('reports an unprocessed failed retry as not-generated after cancellation', async () => {
+    const q = useQueue()
+    q.addItem('a')
+    q.addItem('b')
+    const retry = q.addItem('retry')!
+    retry.status = 'failed'
+    retry.error = 'failed on an earlier run'
+    const gen = useGeneration()
+
+    onGenerating = (text) => {
+      if (text === 'b') gen.requestCancel()
+    }
+
+    await gen.generateAll(q.generateTarget.value, q.speed.value, q.removeItem)
+
+    expect(gen.progress.value.state).toBe('cancelled')
+    expect(gen.progress.value.notGenerated.map((item) => item.clientId)).toEqual([retry.clientId])
+    expect(q.items.value.map((item) => item.clientId)).toEqual([retry.clientId])
+  })
+
   it('does not cancel when the flag is never set (normal completion)', async () => {
     const q = useQueue()
     q.addItem('a')
