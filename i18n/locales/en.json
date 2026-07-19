@@ -438,6 +438,7 @@
       "current": "Generating {index} of {total}: {name}",
       "succeeded": "Succeeded: {count}",
       "failed": "Failed: {count}",
+      "failedItems": "Failed items",
       "notGenerated": "Not generated: {count}",
       "stop": "Stop generation",
       "close": "Close",

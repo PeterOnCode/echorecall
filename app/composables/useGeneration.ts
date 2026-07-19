@@ -26,7 +26,7 @@ export interface GenerationProgress {
   /** Saved generation ids of the successes so far. */
   succeeded: string[]
   /** Per-item failures (isolated — a failure never aborts the run, FR-015). */
-  failed: { clientId: string; error: string }[]
+  failed: { clientId: string; label: string; error: string }[]
   /** On cancel: target items left unprocessed when the loop broke (FR-017). */
   notGenerated: QueueItem[]
   state: 'idle' | 'running' | 'completed' | 'cancelled'
@@ -34,6 +34,17 @@ export interface GenerationProgress {
 
 function idleProgress(): GenerationProgress {
   return { total: 0, index: 0, current: null, succeeded: [], failed: [], notGenerated: [], state: 'idle' }
+}
+
+/** Today as a local calendar date for metadata written by a successful generation. */
+function todayIso(): string {
+  const date = new Date()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function itemLabel(item: QueueItem): string {
+  return item.sourceName ?? item.text
 }
 
 /**
@@ -67,6 +78,15 @@ export function useGeneration() {
     item.status = 'generating'
     item.error = undefined
     item.result = undefined // clear any stale result so it signals only this run's success
+    // FR-020: a blank date belongs to the successful generation attempt, not to the
+    // queue row or batch start. Restore the original metadata when the request fails so
+    // a retry on a later day receives that later day's date.
+    const originalMetadata = item.metadata
+    const recordedAt = originalMetadata.recordedAt
+    const stampedRecordingDate = recordedAt === undefined || recordedAt === ''
+    if (stampedRecordingDate) {
+      item.metadata = { ...originalMetadata, recordedAt: todayIso() }
+    }
     try {
       const entry = await $fetch<{ id: string; audioUrl?: string; skippedTags?: string[] }>(
         '/api/generations',
@@ -90,6 +110,7 @@ export function useGeneration() {
         skippedTags: entry.skippedTags,
       }
     } catch (e) {
+      if (stampedRecordingDate) item.metadata = originalMetadata
       item.status = 'failed'
       item.error = extractApiError(e)
     }
@@ -125,7 +146,7 @@ export function useGeneration() {
     generating.value = true
     cancelRequested.value = false
     const succeeded: string[] = []
-    const failed: { clientId: string; error: string }[] = []
+    const failed: { clientId: string; label: string; error: string }[] = []
     // Snapshot so removing successes from the queue can't disturb iteration or the
     // not-generated tail (the callers already pass a fresh `generateTarget` array).
     const target = [...items]
@@ -152,7 +173,11 @@ export function useGeneration() {
           progress.value.succeeded = [...succeeded]
           remove?.(item.clientId)
         } else {
-          failed.push({ clientId: item.clientId, error: item.error ?? 'unknown' })
+          failed.push({
+            clientId: item.clientId,
+            label: itemLabel(item),
+            error: item.error ?? 'unknown',
+          })
           progress.value.failed = [...failed]
         }
         // Graceful cancel: check AFTER the in-flight item settled, break before the next.

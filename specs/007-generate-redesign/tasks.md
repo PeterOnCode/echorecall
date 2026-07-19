@@ -2,6 +2,13 @@
 
 **Input**: Design documents from `/specs/007-generate-redesign/`
 
+> **Scope amendment (2026-07-19):** The authoritative implemented scope is recorded in
+> [spec.md](./spec.md#post-implementation-scope-amendment-2026-07-19-authoritative). In particular:
+> `/generate` is canonical (`/` redirects), the Library embed is withdrawn, the editor is two columns
+> plus a Metadata row, Speed is fixed at 1×, Title/Track are derived, metadata fields are configurable,
+> and the queue supports selection/bulk actions/reorder/first-track. Checked historical tasks below
+> describe work completed before those explicit reversals; they are not current acceptance claims.
+
 **Prerequisites**: [plan.md](./plan.md) (required), [spec.md](./spec.md) (user stories), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/ui-contracts.md](./contracts/ui-contracts.md)
 
 **Tests**: INCLUDED and **red-first** — Constitution v2.5.0 Principle II (Test-First) is NON-NEGOTIABLE, and the plan mandates red-first for every new/forked component and both new core modules. `wavesurfer.js` is **not** used by this feature (no waveform player), so no waveform mock is needed.
@@ -80,12 +87,12 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 
 ### Tests (red-first) for US2
 
-- [X] T015 [US2] Integration spec `tests/integration/generate-next.embed.spec.ts`: the embedded workspace renders `LibraryFilterBar`/`LibraryFileTable`/`TagInspector`/`LibraryStatusBar`; **asserts no `WaveformPlayer` is present**; a tag edit+Save goes through the shared `useLibrary`; a newly generated recording appears after a run (FR-008/FR-009/FR-010)
+- [ ] T015 [WITHDRAWN] Former embedded-workspace integration test; deleted after the 2026-07-05 scope reversal.
 
 ### Implementation for US2
 
-- [X] T016 [US2] Mount the 006 Library components in `app/pages/generate-next.vue`'s embedded-workspace region (`LibraryFilterBar`, `LibraryFileTable`, `LibraryColumnsDialog`, `BulkTagEditDialog`, `TagInspector`, `InspectorFieldsDialog`, `LibraryStatusBar`) wired to `useLibrary` + `useViewPreferences` + `useTagDrafts`, **explicitly excluding `WaveformPlayer.vue`** (FR-008/FR-009)
-- [X] T017 [US2] After a generation run completes, refresh `useLibrary` so newly generated recordings appear in the embedded table (FR-010) — makes T015 green
+- [ ] T016 [WITHDRAWN] Former embedded Library implementation; removed after the scope reversal.
+- [ ] T017 [WITHDRAWN] Former post-generation embedded refresh; no longer applicable.
 
 **Checkpoint**: US1 + US2 deliver the full P1 Generate surface (editor + live library workspace) at the parallel route.
 
@@ -190,8 +197,8 @@ Nuxt web app over a shared core: `app/` (Vue components, pages, composables), `s
 - [X] T046 [P] Accessibility sweep test `tests/component/generate-next.a11y.spec.ts`: every new control (script textarea + Clear + Add, four selects + resets, Save/Load/Upload/Generate, per-item remove, progress-modal confirm) is tab-reachable, Enter/Space-activatable, and ARIA-labelled (FR-023/SC-007) — caught+fixed a missing accessible name on the script textarea
 - [X] T047 Run `mise exec node@22.22.2 -- pnpm typecheck` and `… pnpm lint`; fix any issues, honoring the `~`-alias / composable-type-import / `runtimeConfig.public` / i18n-composer gotchas
 - [X] T048 **Cutover** (FR-002/SC-009): repoint the Generate nav target to the new surface, move `app/pages/generate-next.vue` into `app/pages/index.vue`, and DELETE the superseded 005 Generate components (`AddTextPanel.vue`, `GenerateForm.vue`, `GenerateToolbar.vue`, `QueueList.vue`, `QueueColumnsDialog.vue`, `QueueItemEditor.vue`, `UploadDropzone.vue` — all now unused) plus their now-dead tests; update any references so `/` renders the redesigned page and existing links resolve. Also fixed a real regression this surfaced: `AppHeader`'s Settings gear was hidden on `/` because the 005 toolbar had its own settings entry — the 007 action bar has none, so the gear is now always shown (updated `AppHeader.vue` + `AppHeader.test.ts`); ported `DefaultTags.test.ts` off the removed Title field.
-- [X] T049 Execute the [quickstart.md](./quickstart.md) validation scenarios against `pnpm dev` (localhost:3001). Live in-browser click-through was blocked by a Claude-in-Chrome extension pairing failure (zero connected browsers; pairing broadcast found nothing to switch to) — not retried further per the tool's own guidance against looping on a failing connection. Verified instead via the automated suite, which drives the same DOM interactions end-to-end: US1 build/save/load/upload (`generate-next.editor.test.ts`), US3 settings resolution (`generate-next.gensettings.test.ts`, `useViewPreferences.genSettings.spec.ts`), US4 progress/cancel (`generate-next.progress-cancel.test.ts`), US5 cost estimate (`useQueue.cost.spec.ts`, `pricing.spec.ts`), US6 recording date (`useQueue.recordedAt.spec.ts`), i18n/a11y (`i18n.generate-next.spec.ts`, `generate-next.a11y.test.ts`). US2 (embedded Library workspace) scenarios in quickstart.md are stale — that scope was reverted 2026-07-05 per user request (see Phase 4 note) — skipped. Not independently confirmed by eye in a real browser; flagged as an open gap.
-- [X] T050 Final green gate: `mise exec node@22.22.2 -- pnpm test`, `… pnpm test:component`, `… pnpm typecheck`, `… pnpm lint` all pass — 327 unit tests, 218 component tests, typecheck clean, lint clean
+- [ ] T049 Browser quickstart validation at `http://localhost:3102/generate`. Automated DOM coverage is green, including the 100-item queue limit, but an independent visual click-through remains required before this manual task can be checked.
+- [X] T050 Final green gate: `mise exec node@22.22.2 -- pnpm test`, `… pnpm test:component`, `… pnpm typecheck`, `… pnpm lint` all pass; rerun after every finding fix.
 
 ---
 

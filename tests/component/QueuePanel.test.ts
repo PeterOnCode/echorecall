@@ -9,7 +9,7 @@ import type { CostEstimate } from '#core/client'
 // 007 · US1 (T007 / FR-018 host): the compact pending-queue list — each row shows a text
 // preview + status + remove; an empty queue shows a placeholder. Replaces the 005
 // two-pane QueueList. US5 (T038): a per-item cost renders into queue-row-cost — a dollar
-// amount for estimable models, an "unavailable" label for the token-priced model.
+// amount for estimable models, or an "unavailable" label for an unpriced model.
 function item(clientId: string, text: string, status: QueueItem['status'] = 'queued'): QueueItem {
   return { clientId, text, voiceId: 'alloy', model: 'gpt-4o-mini-tts', format: 'mp3', metadata: {}, status, source: 'text' }
 }
@@ -65,6 +65,27 @@ describe('QueuePanel', () => {
     expect(rowCost.exists()).toBe(true)
     expect(rowCost.text().toLowerCase()).not.toMatch(/\$?0/) // not a dollar figure
     expect(rowCost.text().length).toBeGreaterThan(0)
+  })
+
+  it('renders and keeps controls responsive at the 100-item feature limit', async () => {
+    const items = Array.from({ length: 100 }, (_, index) =>
+      item(`item-${index}`, `Queue script ${index + 1}`),
+    )
+    const startedAt = performance.now()
+    const wrapper = await mountSuspended(QueuePanel, { props: { items } })
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-test="queue-row"]')).toHaveLength(100)
+    const checkboxes = wrapper.findAll('[data-test="queue-row-checkbox"]')
+    await checkboxes[99]!.trigger('click')
+    const removeButtons = wrapper.findAll('[data-test="remove-item"]')
+    await removeButtons[99]!.trigger('click')
+
+    expect(wrapper.emitted('toggle')?.at(-1)?.[0]).toBe('item-99')
+    expect(wrapper.emitted('remove')?.at(-1)?.[0]).toBe('item-99')
+    // A generous ceiling catches accidental quadratic/render-loop regressions without
+    // turning normal shared-runner variance into flakes.
+    expect(performance.now() - startedAt).toBeLessThan(5_000)
   })
 })
 

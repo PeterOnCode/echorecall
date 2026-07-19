@@ -8,6 +8,13 @@ client-side view/run state. Existing entities (`ListItem`/`QueueItem`, `Metadata
 `Format`, and the 006 library `Recording`) are **reused unchanged**. Types below live in the file
 noted; `[NEW]`/`[ADAPT]`/`[REUSE]` marks the change.
 
+> **Implemented-model amendment (2026-07-19):** `GenerationDefaults` and `GenSettingsPref` contain
+> only `voiceId`, `model`, and `format`; speed is fixed at 1×. Client preferences are validated
+> against the catalogs. `gpt-4o-mini-tts` uses the duration/text-token pricing descriptor implemented
+> in `src/core/tts/pricing.ts`. A blank `recordedAt` is temporarily stamped per request and restored
+> on failure, so only successful attempts retain their day. Historical shapes below are superseded
+> where they include Speed or token-priced-unavailable behavior.
+
 ---
 
 ## 1. Generation Settings Defaults (server, G-DEFAULTS) — `[NEW]`

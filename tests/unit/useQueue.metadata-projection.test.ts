@@ -7,8 +7,8 @@ import type { MetadataFieldId } from '../../app/composables/useViewPreferences'
 // onto queue rows. useQueue takes a `visibleMetadataFields` getter; a hidden configurable
 // field is dropped from a row's saved metadata (makeItem, the live watcher, and
 // applyMetadataToPending), while any non-configurable key (e.g. deployment defaults for a
-// field not in the metadata form) always passes through. Recording-date auto-stamping is
-// independent of visibility (still fills today at generation).
+// field not in the metadata form) always passes through. A hidden recording date remains
+// absent here so useGeneration can stamp it only for a successful attempt.
 //
 // useQueue relies on Nuxt auto-imports (ref/computed/watch); shim them onto globalThis, node env.
 const g = globalThis as unknown as Record<string, unknown>
@@ -28,13 +28,6 @@ const ALL: MetadataFieldId[] = [
   'customText',
   'customUrl',
 ]
-
-/** Today as a local-day YYYY-MM-DD string (matches the composable's todayIso). */
-function todayIso(): string {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
 
 describe('useQueue metadata projection (007 · Configure Visible Fields)', () => {
   it('saves only visible fields onto a newly-added row', () => {
@@ -89,7 +82,7 @@ describe('useQueue metadata projection (007 · Configure Visible Fields)', () =>
     expect(row.metadata.album).toBe('A')
   })
 
-  it('still auto-stamps today onto recordedAt even when the field is hidden', () => {
+  it('leaves recordedAt absent when the field is hidden for generation-time stamping', () => {
     const visible = ref<MetadataFieldId[]>(ALL.filter((f) => f !== 'recordedAt'))
     const q = useQueue({ visibleMetadataFields: () => visible.value })
     // A form recordedAt would be dropped by the projection (hidden)...
@@ -97,9 +90,8 @@ describe('useQueue metadata projection (007 · Configure Visible Fields)', () =>
     const row = q.addItem('hello')!
     expect(row.metadata.recordedAt).toBeUndefined()
 
-    // ...but generation-time stamping is independent of visibility and fills today.
-    q.stampRecordingDates(q.items.value)
-    expect(row.metadata.recordedAt).toBe(todayIso())
+    // Generation owns the success-only default; queue projection must not pre-stamp it.
+    expect(row.metadata.recordedAt).toBeUndefined()
   })
 
   it('with no option (default), saves every field — unchanged pre-feature behavior', () => {

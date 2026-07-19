@@ -4,9 +4,30 @@
 
 **Created**: 2026-07-04
 
-**Status**: Draft
+**Status**: Implemented (amended after interactive review)
 
 **Input**: User description: "@specs/specs-plan.md — Feature 007: Generate-tab redesign (Figma) + generation-flow enhancements. Rebuild the Generate tab to match its Figma 'Generate Tab — Nuxt UI' design as a single scrolling page (page intro → three-column generation editor → generation action bar → Library-style file table + Tag Editor inspector → status bar), replacing the 005 two-pane QueueList + metadata editor and reusing the 006 Library components. Layer in four generation-flow enhancements the design invites: persisted Voice/Model/Format/Speed settings defaults + last-selected, a generation progress modal with cancel, a per-item cost estimate + queue total, and recording-date-defaults-to-today. Built at a parallel route and swapped in once proven (006 precedent). Accent = the app's existing indigo primary, not the Figma kit's green."
+
+## Post-implementation scope amendment (2026-07-19, authoritative)
+
+Interactive review after the original 2026-07-04 draft approved these changes. They supersede
+conflicting text in the original stories, requirements, contracts, plan, research, and quickstart:
+
+- Generate is a focused queue builder at `/generate`; `/` redirects to it. Library remains at
+  `/library`; the embedded Library workspace, player, and embedded status bar are withdrawn.
+- The editor uses two top columns (Script and Generation settings) plus a full-width Metadata row.
+- Synthesis is fixed at 1×. Speed has no control, configured default, or last-selected preference.
+- Title and Track are derived at generation time. The remaining metadata fields are configurable
+  for visibility/order. Voice/Model/Format changes apply live to pending queue rows.
+- Queue rows support selection, selected-or-all generation, bulk delete, clear, and drag reorder;
+  the action bar configures the first derived track number.
+- `gpt-4o-mini-tts` uses an approximate duration/text-token estimate; only genuinely unknown
+  models are `unavailable`.
+- A blank recording date is stamped per attempt and retained only after success. Failed retries
+  remain blank and receive the date of their later successful attempt.
+
+The acceptance baseline is therefore the amended requirements below, not superseded historical
+wording retained in the original user-story narrative.
 
 ## Clarifications
 
@@ -150,43 +171,43 @@ When a user adds an item without setting a recording date, the recording date de
 **Parallel build & cutover**
 
 - **FR-001**: The redesigned Generate surface MUST be built at a parallel route (distinct from the existing Generate route) so the current Generate tab keeps working untouched while the new surface is verified.
-- **FR-002**: Once the redesigned surface is verified, the Generate navigation target MUST point at the new surface, the old Generate page/components MUST be removed, and the new surface MUST take over the canonical Generate route so existing links continue to work. (Cutover is a final, separable step.)
+- **FR-002**: Once verified, the old Generate page/components MUST be removed, `/generate` MUST render the redesigned surface, Generate navigation MUST target `/generate`, and `/` MUST redirect to it.
 
-**Three-column generation editor**
+**Responsive generation editor**
 
-- **FR-003**: The redesigned Generate surface MUST be a single scrolling page laid out as: page intro → three-column generation editor (Script entry, Generation settings, Metadata) → generation action bar → embedded Library-style workspace → status bar. The editor MUST NOT use a resizable split (replacing the 005 two-pane layout).
+- **FR-003**: The redesigned Generate surface MUST be a single scrolling page laid out as: page intro → two-column editor (Script entry and Generation settings) → full-width Metadata row → generation action bar → pending queue. It MUST NOT use a resizable split.
 - **FR-004**: The Script entry column MUST provide a titled panel (with a badge), a multi-line text area for the script, a Clear control that empties the text area without affecting the queue, a character hint reflecting the text length, and an "Add to queue" action that adds the current entry to the generation queue.
-- **FR-005**: The Generation settings column MUST provide selectors for Voice, Model, Format, and Speed.
-- **FR-006**: The Metadata column MUST provide fields for Title, Artist, Album, Genre, Language, and Recording date; these fields MUST be visible in the editor (not hidden behind a collapsed accordion by default).
+- **FR-005**: The Generation settings column MUST provide selectors for Voice, Model, and Format. Generation runs at a fixed 1× speed.
+- **FR-006**: The Metadata row MUST provide configurable visible fields for Artist, Album, Genre, Language, Recording date, Comment, and custom text/URL tags. Title and Track MUST be derived at generation time; Track MUST respect queue order and the configured first track number.
 - **FR-007**: The generation action bar MUST show a queue summary and an item-count badge that matches the number of queued items, and MUST provide Save queue, Load queue, an **Upload .txt batch** action, and Generate. Save/Load queue MUST reuse the existing queue save/load behavior, and Upload .txt batch MUST import a `.txt` batch file to populate the queue via the existing batch-upload path (`MAX_UPLOAD_BYTES`).
 
-**Embedded Library-style workspace (G-EMBED)**
+**Library separation (amends G-EMBED)**
 
-- **FR-008**: Below the editor, the page MUST embed the Feature 006 Library workspace — the filter bar, the multi-select file table with sortable and configurable (Configure Columns) columns, the Tag Editor (ID3v2.4) inspector two-pane with its show/hide toggle and Configure Visible Fields modal, and the status bar — as **fully-functional** controls (filter, sort, multi-select, tag inspect + edit + Save, bulk delete, bulk tag edit), not a read-only preview. The embed MUST NOT include the 006 waveform player (loop + zoom); the player remains exclusive to the Library tab.
-- **FR-009**: The embedded workspace MUST operate over the same recordings and the same edit/delete behavior as the Library tab (a single shared data source): a change made in the embedded workspace MUST be reflected on the Library tab and vice-versa. The 006 components MUST be **reused**, not reimplemented.
-- **FR-010**: Recordings produced by a generation run MUST appear in the embedded file table once the run completes.
+- **FR-008**: Generate MUST NOT embed the Library workspace or waveform player; generated recordings remain available through the separate `/library` surface.
+- **FR-009**: The pending queue MUST support per-row selection, selected-or-all generation, removal, bulk delete, clear, and drag-and-drop reorder.
+- **FR-010**: Voice, Model, Format, and form metadata changes MUST apply live to pending, non-individually-edited queue rows.
 
 **Persisted generation settings (G-DEFAULTS)**
 
-- **FR-011**: Each of Voice, Model, Format, and Speed MUST have a configurable default value, persisted alongside the existing Default Tags settings, and MUST remember the user's last-selected value per field.
+- **FR-011**: Each of Voice, Model, and Format MUST have a configurable default value persisted alongside Default Tags and MUST remember the user's last-selected value per field. Stored client preferences MUST be catalog-validated before use.
 - **FR-012**: On load, each field MUST resolve its value in the order: last-selected value, else configured default, else a built-in fallback. The last-selected value MUST take precedence over the configured default when both exist.
-- **FR-013**: Each field MUST offer a reset that restores it to its configured default. Configured defaults MUST persist across sessions; last-selected values MUST persist across sessions in client storage.
+- **FR-013**: Each Voice/Model/Format field MUST offer a reset that restores its configured default. Configured defaults and catalog-valid last-selected values MUST persist across sessions.
 
 **Generation progress modal + cancel (G-CANCEL)**
 
-- **FR-014**: Activating Generate over a non-empty queue MUST open a progress modal showing the file currently generating, a running per-file succeeded/failed tally, and which items failed; the rest of the page MUST be disabled while the modal is open.
+- **FR-014**: Activating Generate over a non-empty queue MUST open a progress modal showing the current file, running succeeded/failed tallies, and a labelled list of failed items with their errors; the rest of the page MUST be disabled while the modal is open.
 - **FR-015**: The run MUST remain sequential and continue past individual failures (a failed item is recorded and skipped, not fatal), reusing the existing generation behavior.
 - **FR-016**: Closing the modal (X / Esc / backdrop) MUST first ask for confirmation before cancelling. On confirm, the file currently generating MUST finish, the run MUST stop before the next item, already-generated files MUST be kept, and remaining items MUST be reported as not generated. On decline, the run MUST continue uninterrupted.
 - **FR-017**: When the run ends (completed or cancelled), the modal MUST show a summary of succeeded, failed, and (when cancelled) not-generated counts.
 
 **Per-item cost estimate + queue total**
 
-- **FR-018**: Before generation, each queued item using a model with known pricing MUST display an estimated cost derived from its model and text size, and the queue MUST display a total that sums only the estimable items. When any queued item is unavailable, the total MUST show an accompanying "+ N items unavailable" note so it is never mistaken for complete. For a model whose cost cannot be known before generation, the estimate MUST be shown as "unavailable" rather than fabricated, and MUST NOT be counted as an amount (not even $0) in the total.
+- **FR-018**: Before generation, each queued item using a model with known pricing MUST display an estimated cost derived from its model and text. Character-priced models use text length; `gpt-4o-mini-tts` uses an explicitly approximate duration/text-token estimate. The queue total MUST sum estimable items. A genuinely unknown model MUST show "unavailable", be excluded from the total, and add a "+ N items unavailable" note.
 - **FR-019**: The cost estimate MUST be informational only and MUST NOT block or gate Generate.
 
 **Recording date default**
 
-- **FR-020**: When an item has no recording date set, its recording date MUST default to the generation day (a date-only value) captured at generation time; a user-set recording date MUST never be overwritten. This replaces the current tomorrow default.
+- **FR-020**: When an item has no recording date, its date MUST be stamped for its individual generation attempt and retained only if that attempt succeeds. A failed attempt MUST restore the blank value so a later retry receives its successful generation day. A user-set date MUST never be overwritten.
 
 **Visual, accessibility & localization**
 
@@ -219,10 +240,10 @@ When a user adds an item without setting a recording date, the recording date de
 - **SC-003**: During a multi-item generation run, the user can see per-file progress and cancel; on a confirmed cancel, every already-generated file is retained and every remaining item is reported as not generated (no partial/ambiguous loss).
 - **SC-004**: Before generating, a user sees a per-item and total estimated cost for every item whose model has known pricing, and a clear "unavailable" indication for every item whose model cannot be estimated — with no fabricated amounts.
 - **SC-005**: A recording generated with a blank recording date is stored with the generation day as its recording date, and a recording generated with a user-set date keeps that date unchanged, in 100% of cases.
-- **SC-006**: The embedded Library workspace performs the same filter, sort, multi-select, tag-edit, bulk-delete, and bulk-tag-edit actions as the Library tab, over the same recordings, with edits visible identically on both surfaces (no divergence).
+- **SC-006**: The focused Generate queue and separate Library surface remain independently usable; successful generations are available from `/library` without embedding that workspace into Generate.
 - **SC-007**: 100% of new user-visible strings are available in both supported languages, and every new interactive control is operable by keyboard and exposed to assistive technologies — both verified by automated tests.
 - **SC-008**: The redesign introduces no regression in generation outcomes: for the same inputs and actions, the generated audio and its stored tags are identical to the pre-redesign Generate tab (apart from the intended recording-date default change).
-- **SC-009**: After cutover, the canonical Generate route renders the redesigned page and the old Generate page/components are gone, with existing Generate links still resolving.
+- **SC-009**: After cutover, `/generate` renders the redesigned page, `/` redirects to it, navigation targets it, and the old Generate components are gone.
 - **SC-010**: The redesigned surface shows the app's existing indigo accent and no green anywhere, and omits the Figma app-header Account/credits area.
 - **SC-011**: With a queue of up to 100 items, the editor, action bar, per-item cost rendering, and progress modal stay responsive (no perceptible lag when adding items, editing fields, or viewing the cost total).
 

@@ -1,66 +1,83 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, ref, watch } from 'vue'
+import { useGeneration } from '../../app/composables/useGeneration'
 import { useQueue } from '../../app/composables/useQueue'
 
-// 007 · US6 (T043 / FR-020): recording date defaults to the GENERATION day, not add time.
-// makeItem no longer pre-stamps a date (dropping the 005 tomorrowIso default that
-// applyMetadataToPending clobbered anyway); instead `stampRecordingDates` fills today's
-// local-day date on each target row that still has none, right before generation. A
-// user-set recordedAt is never overwritten. Resolves the 005 clobber.
-//
-// useQueue relies on Nuxt auto-imports (ref/computed); shim them onto globalThis, node env.
+// 007 · US6 / FR-020: a blank recording date is attached to the individual
+// successful generation attempt. Failed rows are restored to blank so a retry on a
+// later day gets that later date; explicit user dates are never overwritten.
 const g = globalThis as unknown as Record<string, unknown>
 g.ref = ref
 g.computed = computed
 g.watch = watch
 
-/** Today as a local-day YYYY-MM-DD string (matches the composable's todayIso). */
-function todayIso(): string {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
+let shouldFail = false
+let requestDates: Array<string | undefined> = []
 
-describe('useQueue recording-date default → today (US6)', () => {
-  it('makeItem no longer stamps a default recordedAt', () => {
-    const q = useQueue()
-    const a = q.addItem('a')!
-    expect(a.metadata.recordedAt).toBeUndefined()
+beforeEach(() => {
+  shouldFail = false
+  requestDates = []
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 6, 19, 12, 0, 0))
+  g.$fetch = vi.fn(async (_url: string, options: { body: { metadata: { recordedAt?: string } } }) => {
+    requestDates.push(options.body.metadata.recordedAt)
+    if (shouldFail) throw { data: { error: { message: 'generation failed' } } }
+    return { id: 'generated-id', audioUrl: '/audio' }
+  })
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  delete g.$fetch
+})
+
+describe('recording-date default at successful generation time', () => {
+  it('does not stamp a queue item when it is added', () => {
+    const queue = useQueue()
+    expect(queue.addItem('a')!.metadata.recordedAt).toBeUndefined()
   })
 
-  it('stamps today only on rows whose recordedAt is empty; never overwrites a user date', () => {
-    const q = useQueue()
-    const a = q.addItem('a')!
-    const b = q.addItem('b')!
-    q.updateItem(b.clientId, { metadata: { recordedAt: '2020-01-01' } })
+  it('stamps a blank date for a successful attempt and preserves an explicit date', async () => {
+    const queue = useQueue()
+    const blank = queue.addItem('blank')!
+    const explicit = queue.addItem('explicit')!
+    queue.updateItem(explicit.clientId, { metadata: { recordedAt: '2020-01-01' } })
+    const generation = useGeneration()
 
-    q.stampRecordingDates(q.items.value)
+    await generation.generateAll(queue.items.value, queue.speed.value)
 
-    expect(a.metadata.recordedAt).toBe(todayIso())
-    expect(b.metadata.recordedAt).toBe('2020-01-01')
+    expect(requestDates).toEqual(['2026-07-19', '2020-01-01'])
+    expect(blank.metadata.recordedAt).toBe('2026-07-19')
+    expect(explicit.metadata.recordedAt).toBe('2020-01-01')
   })
 
-  it('treats an empty-string recordedAt as unset', () => {
-    const q = useQueue()
-    q.metadata.value = { recordedAt: '' }
-    const a = q.addItem('a')!
-    expect(a.metadata.recordedAt).toBe('')
+  it('restores a blank date after failure and uses the retry day after success', async () => {
+    const queue = useQueue()
+    const item = queue.addItem('retry me')!
+    const generation = useGeneration()
 
-    q.stampRecordingDates([a])
-    expect(a.metadata.recordedAt).toBe(todayIso())
+    shouldFail = true
+    await generation.generateAll([item], queue.speed.value)
+    expect(requestDates).toEqual(['2026-07-19'])
+    expect(item.metadata.recordedAt).toBeUndefined()
+
+    shouldFail = false
+    vi.setSystemTime(new Date(2026, 6, 20, 9, 0, 0))
+    await generation.generateAll([item], queue.speed.value)
+
+    expect(requestDates).toEqual(['2026-07-19', '2026-07-20'])
+    expect(item.metadata.recordedAt).toBe('2026-07-20')
   })
 
-  it('stamps each row in a multi-item run independently', () => {
-    const q = useQueue()
-    const a = q.addItem('a')!
-    const b = q.addItem('b')!
-    q.updateItem(b.clientId, { metadata: { recordedAt: '2019-05-05' } })
-    const c = q.addItem('c')!
+  it('restores an empty-string date exactly when an attempt fails', async () => {
+    const queue = useQueue()
+    queue.metadata.value = { recordedAt: '' }
+    const item = queue.addItem('retry me')!
+    const generation = useGeneration()
+    shouldFail = true
 
-    q.stampRecordingDates(q.items.value)
+    await generation.generateAll([item], queue.speed.value)
 
-    expect(a.metadata.recordedAt).toBe(todayIso())
-    expect(b.metadata.recordedAt).toBe('2019-05-05')
-    expect(c.metadata.recordedAt).toBe(todayIso())
+    expect(item.metadata.recordedAt).toBe('')
   })
 })

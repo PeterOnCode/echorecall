@@ -438,6 +438,7 @@
       "current": "Generálás: {index}/{total}: {name}",
       "succeeded": "Sikeres: {count}",
       "failed": "Sikertelen: {count}",
+      "failedItems": "Sikertelen tételek",
       "notGenerated": "Nem generált: {count}",
       "stop": "Generálás leállítása",
       "close": "Bezárás",

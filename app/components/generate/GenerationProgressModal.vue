@@ -86,6 +86,25 @@ watch(isRunning, (running) => {
           {{ t('generateNext.progress.title') }}
         </h3>
 
+        <section
+          v-if="progress.failed.length > 0"
+          data-test="progress-failed-items"
+          class="rounded-md border border-error/30 bg-error/5 p-3"
+          :aria-label="t('generateNext.progress.failedItems')"
+        >
+          <p class="mb-2 text-sm font-medium">{{ t('generateNext.progress.failedItems') }}</p>
+          <ul class="flex list-disc flex-col gap-1 ps-5 text-sm">
+            <li
+              v-for="failure in progress.failed"
+              :key="failure.clientId"
+              data-test="progress-failed-item"
+            >
+              <span class="font-medium break-words">{{ failure.label }}</span>
+              <span class="text-muted"> — {{ failure.error }}</span>
+            </li>
+          </ul>
+        </section>
+
         <!-- Running: current file + live tally -->
         <template v-if="isRunning">
           <p data-test="progress-current" class="text-sm text-muted">

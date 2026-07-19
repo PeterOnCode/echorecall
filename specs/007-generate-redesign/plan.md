@@ -4,6 +4,15 @@
 
 **Input**: Feature specification from `specs/007-generate-redesign/spec.md`
 
+> **Implemented-plan amendment (2026-07-19):** The post-implementation amendment in
+> [spec.md](./spec.md) is authoritative. The shipped page is a focused queue builder at `/generate`
+> (`/` redirects), with two top editor columns plus a full-width configurable Metadata row and no
+> embedded Library. Speed is fixed at 1× and is absent from defaults/preferences. Title/Track are
+> derived; queue selection, bulk actions, reorder, and first-track configuration were added.
+> `gpt-4o-mini-tts` uses an approximate duration/token estimate. Recording dates are retained only
+> after successful per-item attempts. Historical design detail below documents the original plan
+> and is superseded wherever it conflicts with this amendment.
+
 ## Summary
 
 Rebuild the **Generate** surface to match the Figma **"Generate Tab — Nuxt UI"** design — the same

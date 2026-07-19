@@ -79,6 +79,17 @@ describe('useViewPreferences — genSettings last-selected', () => {
     expect(genSettings.value).toEqual({ voiceId: 'sage' })
   })
 
+  it('drops obsolete string ids so they cannot override configured defaults', () => {
+    ;(g.localStorage as MemoryStorage).setItem(
+      KEY,
+      JSON.stringify({ voiceId: 'retired-voice', model: 'tts-9', format: 'ogg' }),
+    )
+
+    const { genSettings } = useViewPreferences()
+
+    expect(genSettings.value).toEqual({})
+  })
+
   it('falls back to {} when localStorage is unavailable (SSR) and holds a value in-memory', () => {
     delete g.localStorage
     const { genSettings, setGenSetting } = useViewPreferences()

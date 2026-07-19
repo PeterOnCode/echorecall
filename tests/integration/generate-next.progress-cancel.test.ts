@@ -66,7 +66,11 @@ describe('generation progress — full run (US4)', () => {
     const p = gen.progress.value
     expect(p.state).toBe('completed')
     expect(p.succeeded).toEqual(['id-a', 'id-c'])
-    expect(p.failed).toEqual([{ clientId: boom.clientId, error: 'boom failed' }])
+    expect(p.failed).toEqual([{
+      clientId: boom.clientId,
+      label: 'boom',
+      error: 'boom failed',
+    }])
     expect(p.notGenerated).toEqual([])
   })
 })

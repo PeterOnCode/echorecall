@@ -180,9 +180,8 @@ export function useQueue(options?: UseQueueOptions) {
 
   function makeItem(text: string, source: QueueItem['source'], sourceName?: string): QueueItem {
     // A new row inherits only the visible fields of the shared form metadata (007); the
-    // recording date is NOT pre-stamped here (007 · US6 / FR-020). It is filled with today's
-    // date at generation time via {@link stampRecordingDates}, only when still empty — which
-    // resolves the 005 clobber where applyMetadataToPending overwrote an add-time default.
+    // recording date is NOT pre-stamped here (007 · US6 / FR-020). useGeneration fills it
+    // for each attempt and retains it only on success, which also keeps failed retries fresh.
     const itemMetadata = projectMetadata(metadata.value)
     return {
       clientId: newClientId(),
@@ -367,26 +366,6 @@ export function useQueue(options?: UseQueueOptions) {
   }
 
   /**
-   * Stamp today's date (local-day `YYYY-MM-DD`) as the recording date on every target
-   * row that still has none, right before generation (007 · US6 / FR-020). A user-set
-   * `recordedAt` (any non-empty value) is never overwritten. Runs AFTER
-   * {@link applyMetadataToPending} so it also covers rows that just took the shared
-   * form's (date-less) metadata. Resolves the 005 clobber: makeItem no longer pre-stamps
-   * a date, so the value the user sees on saved recordings is the day they generated.
-   */
-  function stampRecordingDates(target: QueueItem[] = items.value): void {
-    const today = todayIso()
-    for (const item of target) {
-      const current = item.metadata?.recordedAt
-      if (current === undefined || current === '') {
-        const next = cloneMetadata(item.metadata)
-        next.recordedAt = today
-        item.metadata = next
-      }
-    }
-  }
-
-  /**
    * Stamp the derived Title + Track onto each target row right before generation (007). Neither
    * is user-editable on Generate (both are removed from the metadata form + Configure Visible
    * Fields dialog); they are derived here so every generated recording carries a sensible title
@@ -399,8 +378,8 @@ export function useQueue(options?: UseQueueOptions) {
    *   refreshed so it matches the current order. The first row gets `startTrack`, the next
    *   `startTrack + 1`, and so on.
    *
-   * Runs AFTER {@link applyMetadataToPending} / {@link stampRecordingDates} so the projection
-   * (which never touches title/track) can't drop the derived values.
+   * Runs AFTER {@link applyMetadataToPending} so the projection (which never touches
+   * title/track) can't drop the derived values.
    */
   function stampDerivedMetadata(target: QueueItem[] = items.value, startTrack = 1): void {
     for (const item of target) {
@@ -551,7 +530,6 @@ export function useQueue(options?: UseQueueOptions) {
     updateItem,
     reorder,
     applyMetadataToPending,
-    stampRecordingDates,
     stampDerivedMetadata,
     setDefaults,
     clear,
@@ -589,11 +567,4 @@ function newClientId(): string {
     const value = char === 'x' ? rand : (rand % 4) + 8
     return value.toString(16)
   })
-}
-
-/** Today as a local-day `YYYY-MM-DD` string (the generation-time recording date, FR-020). */
-function todayIso(): string {
-  const d = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }

@@ -11,6 +11,14 @@ ARIA-labelled (FR-023). The accent is the app's `indigo` primary (FR-021). The e
 components keep their existing contracts (see `specs/006-library-redesign/contracts/ui-contracts.md`) —
 **reused unchanged, no waveform player** (FR-008).
 
+> **Implemented-contract amendment (2026-07-19):** The canonical component contracts have three
+> generation settings (`voiceId`, `model`, `format`), fixed 1× speed, a two-column editor plus
+> full-width configurable Metadata row, and a focused `QueuePanel` with selection/bulk actions/reorder.
+> The Library embed contracts are withdrawn. Title/Track are derived and first Track is configured
+> in the action bar. Progress failures include `{ clientId, label, error }` and render as a list.
+> `gpt-4o-mini-tts` returns an approximate amount rather than `unavailable`. Conflicting historical
+> tables below are superseded by this amendment and the current component types/tests.
+
 ---
 
 ## A. Server route contract — G-DEFAULTS (`/api/settings/generation-defaults`)

@@ -41,7 +41,7 @@ function runningProgress(): GenerationProgress {
     index: 1,
     current: item('Hello there world'),
     succeeded: ['id-a'],
-    failed: [{ clientId: 'b', error: 'boom' }],
+    failed: [{ clientId: 'b', label: 'Broken script', error: 'boom' }],
     notGenerated: [],
     state: 'running',
   }
@@ -53,7 +53,7 @@ function finishedProgress(state: 'completed' | 'cancelled'): GenerationProgress 
     index: 2,
     current: null,
     succeeded: ['id-a', 'id-b'],
-    failed: [{ clientId: 'c', error: 'boom' }],
+    failed: [{ clientId: 'c', label: 'Failed upload.txt', error: 'boom' }],
     notGenerated: state === 'cancelled' ? [item('leftover')] : [],
     state,
   }
@@ -84,6 +84,8 @@ describe('GenerationProgressModal (running)', () => {
     expect(inBody('progress-current')?.textContent).toContain('Hello there world')
     expect(inBody('progress-succeeded')?.textContent).toContain('1')
     expect(inBody('progress-failed')?.textContent).toContain('1')
+    expect(inBody('progress-failed-items')?.textContent).toContain('Broken script')
+    expect(inBody('progress-failed-items')?.textContent).toContain('boom')
     // No end-summary while running.
     expect(inBody('progress-summary')).toBeNull()
     wrapper.unmount()
@@ -147,6 +149,7 @@ describe('GenerationProgressModal (finished)', () => {
     expect(inBody('progress-summary')).not.toBeNull()
     expect(inBody('progress-succeeded')?.textContent).toContain('2')
     expect(inBody('progress-failed')?.textContent).toContain('1')
+    expect(inBody('progress-failed-items')?.textContent).toContain('Failed upload.txt')
 
     await button(wrapper, 'progress-close').trigger('click')
     expect(wrapper.emitted('done')).toBeTruthy()

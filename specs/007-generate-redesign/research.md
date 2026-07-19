@@ -7,6 +7,13 @@ G-CANCEL, no-embed-player, Upload-.txt button, cost-total note, 100-item scale).
 the **implementation decisions** that flow from them, each grounded in the current codebase. No open
 `NEEDS CLARIFICATION` remains.
 
+> **Implemented-decision amendment (2026-07-19):** Subsequent interactive review replaced R1/R2's
+> final route/layout with `/generate` (`/` redirect), two top columns plus a full-width Metadata row,
+> and a focused pending queue with no embedded Library. Speed is fixed at 1× and removed from R4/R5.
+> Title/Track are derived; metadata visibility, queue selection/bulk actions/reorder/first-track were
+> added. `gpt-4o-mini-tts` is approximately estimable. Recording dates are retained only on success.
+> These decisions supersede conflicting historical alternatives below.
+
 ---
 
 ## R1 — Parallel route + cutover (FR-001/FR-002)
