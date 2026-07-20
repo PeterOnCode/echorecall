@@ -1,31 +1,38 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 2.4.0 → 2.5.0
-Bump rationale: MINOR — the Technology Stack gains a new approved entry: an
-  audio-visualization / waveform library (`wavesurfer.js` with its regions and zoom
-  plugins) for the web UI, permitting client-side waveform display, zoom, and
-  loop-region playback. This expands the stack list without adding, removing, or
-  redefining any core principle — MINOR, consistent with how the 2.3.0→2.4.0 stack
-  change was classified. Requested by feature 005-dashboard-redesign (US6 / FR-016),
-  whose plan flagged the new dependency as outside the prior stack list.
+Version change: 2.5.0 → 2.6.0
+Bump rationale: MINOR — the Technology Stack gains a new approved entry for
+  structured-data parsing: the `yaml` package in the shared core. This permits
+  standards-compliant YAML 1.2 parsing and JSON duplicate-property preflight for
+  untrusted batch documents while requiring strict duplicate-key checks and rejection
+  of custom tags, anchors, and aliases. It expands the approved stack without adding,
+  removing, or redefining a core principle. Requested by feature 008-batch-import,
+  whose plan identified the dependency as a pre-implementation governance gate.
 Modified principles: none — all five core principles unchanged.
 Modified sections:
-  - Technology Stack: ADDED an "Audio visualization (web UI)" entry permitting
-    `wavesurfer.js` (+ regions/zoom plugins) for waveform display, zoom, and
-    loop-region playback. Scoped to the web adapter (`app/`): it MUST NOT be imported
-    by `src/core/` or the CLI (Principle IV), and MUST be used only for display and
-    playback — never to modify, trim, transcode, or export audio.
+  - Technology Stack: ADDED a "Structured-data parsing (shared core)" entry permitting
+    direct `yaml` use in `src/core/` for YAML 1.2 parsing and source-aware syntax
+    validation, including JSON duplicate-property preflight. Untrusted input MUST use
+    strict parsing and reject duplicate keys/properties, custom tags, anchors, and
+    aliases unless a future constitution amendment explicitly broadens that policy.
 Added sections: none (new bullet within existing Technology Stack section).
 Removed sections: none.
 Templates requiring updates:
   ✅ plan-template.md   — technology-agnostic; Constitution Check derived at plan time; no change
   ✅ spec-template.md   — technology-agnostic; no change required
   ✅ tasks-template.md  — generic scaffold; no change required
-  (verified 2026-06-22: no template hardcodes the technology-stack list)
+  ✅ templates/commands — directory absent; no command templates to update
+  (verified 2026-07-19: no template hardcodes the technology-stack list)
+Active feature artifacts:
+  ✅ specs/008-batch-import/plan.md — governance gate updated to approved
+  ✅ specs/008-batch-import/research.md — dependency approval recorded
+  ✅ specs/008-batch-import/quickstart.md — obsolete amendment prerequisite removed
 Runtime docs:
-  ✅ no runtime-doc change required — the waveform library is introduced by feature
-    005's implementation; README/runtime docs update WHEN 005 ships, not before.
+  ✅ AGENTS.md remains aligned — core/adapters/testing rules are unchanged
+  ✅ CLAUDE.md already points to the active Feature 008 plan
+  ✅ README.md update deferred until Feature 008 ships; it describes the current
+    runtime and MUST NOT claim an unimplemented dependency or import workflow
 Follow-up TODOs:
   - TODO(test-http-mocking): unchanged — confirm fetch interception (MSW /
     @mswjs/interceptors vs nock) before the first HTTP CLI test.
@@ -119,6 +126,13 @@ impulses. This principle keeps the build focused and the codebase auditable.
   adapter (`app/`), MUST NOT be imported by `src/core/` or the CLI (Principle IV), and
   MUST be used solely to display and play audio — never to modify, trim, transcode, or
   export it.
+- **Structured-data parsing (shared core)**: `yaml` MAY be used as a direct dependency
+  in the framework-independent shared core for standards-compliant YAML 1.2 parsing,
+  source-aware syntax validation, and JSON duplicate-property preflight. Parsing
+  untrusted documents MUST enable strict duplicate-key/property checks and MUST reject
+  custom tags, anchors, and aliases unless a future constitution amendment explicitly
+  approves broader semantics. Serialization-specific rules and normalization MUST remain
+  in `src/core/`; web and CLI code MUST remain thin file/input adapters (Principle IV).
 - **Runtime**: Node.js LTS for both the Nuxt web app / Nitro server and the CLI
 - **CLI command parser**: cac (commander is an acceptable alternative)
 - **CLI styling**: chalk
@@ -175,4 +189,4 @@ All PRs and reviews MUST verify compliance with the five core principles. Any
 deviation requires a Complexity Tracking entry in `plan.md` with explicit
 justification.
 
-**Version**: 2.5.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-22
+**Version**: 2.6.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-07-19
