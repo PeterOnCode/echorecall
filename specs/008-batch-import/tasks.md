@@ -158,12 +158,12 @@
 
 **Purpose**: Remove obsolete `.txt`-only language, prove localization/accessibility parity, and execute the automated, timed, and manual validation gates.
 
-- [ ] T057 [P] [US3] Remove obsolete `.txt`-only identifiers/comments and align public batch exports without changing saved-queue behavior in `src/core/batch/parse-upload.ts`, `src/core/client.ts`, `app/components/generate/GenerationActionBar.vue`, and `app/pages/generate.vue`
-- [ ] T058 [P] [US2] Extend feature-specific English/Hungarian parity assertions for every new batch-import key in `tests/unit/i18n.generate-next.test.ts`
-- [ ] T059 [US4] Run `pnpm test`, `pnpm test:component`, `pnpm typecheck`, and `pnpm lint`, fixing only Feature 008 regressions under `src/core/batch/`, `app/components/generate/`, `app/composables/`, `app/pages/generate.vue`, `tests/`, and `i18n/locales/`
-- [ ] T060 [US1] Execute the SC-001 timed acceptance walkthrough on the ready-made valid 100-item YAML fixture, measuring from **Import batch** activation through totals review, item 1/item 100 resolved-setting inspection, confirmation, and success announcement; verify completion under 2 minutes and record the elapsed time in `specs/008-batch-import/quickstart.md`
-- [ ] T061 [US3] Execute the SC-009 performance matrix on the specified reference desktop using one valid 100-candidate fixture per accepted extension and one representative blocking-error fixture per structured format, measure five consecutive runs per fixture from completed file selection to preview/actionable error, verify every run is at most 3 seconds, and record fixture/run/elapsed-time evidence in `specs/008-batch-import/quickstart.md`
-- [ ] T062 [US4] Execute every remaining manual scenario and the no-live-network checks from `specs/008-batch-import/quickstart.md`, then record final outcomes in `specs/008-batch-import/quickstart.md`
+- [X] T057 [P] [US3] Remove obsolete `.txt`-only identifiers/comments and align public batch exports without changing saved-queue behavior in `src/core/batch/parse-upload.ts`, `src/core/client.ts`, `app/components/generate/GenerationActionBar.vue`, and `app/pages/generate.vue`
+- [X] T058 [P] [US2] Extend feature-specific English/Hungarian parity assertions for every new batch-import key in `tests/unit/i18n.generate-next.test.ts`
+- [X] T059 [US4] Run `pnpm test`, `pnpm test:component`, `pnpm typecheck`, and `pnpm lint`, fixing only Feature 008 regressions under `src/core/batch/`, `app/components/generate/`, `app/composables/`, `app/pages/generate.vue`, `tests/`, and `i18n/locales/`
+- [X] T060 [US1] Execute the SC-001 timed acceptance walkthrough on the ready-made valid 100-item YAML fixture, measuring from **Import batch** activation through totals review, item 1/item 100 resolved-setting inspection, confirmation, and success announcement; verify completion under 2 minutes and record the elapsed time in `specs/008-batch-import/quickstart.md`
+- [X] T061 [US3] Execute the SC-009 performance matrix on the specified reference desktop using one valid 100-candidate fixture per accepted extension and one representative blocking-error fixture per structured format, measure five consecutive runs per fixture from completed file selection to preview/actionable error, verify every run is at most 3 seconds, and record fixture/run/elapsed-time evidence in `specs/008-batch-import/quickstart.md`
+- [X] T062 [US4] Execute every remaining manual scenario and the no-live-network checks from `specs/008-batch-import/quickstart.md`, then record final outcomes in `specs/008-batch-import/quickstart.md`
 
 ---
 

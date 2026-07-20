@@ -392,8 +392,8 @@ function onCancelBatchImport() {
       </p>
     </section>
 
-    <!-- Hidden file inputs (display:none keeps them out of the tab order / a11y tree;
-         the action-bar buttons are the accessible triggers). -->
+    <!-- Hidden saved-queue and unified batch inputs (display:none keeps them out of the
+         tab order / a11y tree; the action-bar buttons are the accessible triggers). -->
     <input
       ref="queueFileInput"
       data-test="queue-file-input"

@@ -56,6 +56,6 @@ export { parseText } from './batch/parse-text'
 export { parseYaml } from './batch/parse-yaml'
 export type { ParseYamlResult } from './batch/parse-yaml'
 
-// .txt batch parsing — pure, reused client-side so the upload is never persisted.
+// Legacy line-import summary; unified callers should use parseBatch/parseText above.
 export { parseUploadText } from './batch/parse-upload'
 export type { ParsedUpload } from './batch/parse-upload'

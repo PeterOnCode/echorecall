@@ -283,3 +283,41 @@ the approved tests.
 - `pnpm test:component`: 41 files, 252 assertions passed.
 - `pnpm typecheck`: passed.
 - `pnpm lint`: passed.
+
+### Phase 7 automated verification — 2026-07-20
+
+- Removed obsolete text-only framing while retaining the documented legacy line-import wrapper.
+- Added an exact non-empty English/Hungarian guard for all 45 Feature 008 copy leaves.
+- Focused compatibility/localization run: 3 files, 16 assertions passed.
+- `pnpm test`: 59 files, 380 assertions passed.
+- `pnpm test:component`: 41 files, 252 assertions passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+- SC-001 passed in ChatGPT Atlas on the reference desktop using
+  `tests/fixtures/batch-import/valid-100.yaml`: the complete walkthrough took 44.792 seconds.
+  The preview reported 100 valid and 0 rejected candidates; items 1 and 100 both resolved to
+  voice `alloy`, model `gpt-4o-mini-tts`, and format `mp3`; confirmation announced
+  `100 imported, 0 rejected`.
+- SC-009 passed in ChatGPT Atlas. Five consecutive selection-to-result measurements (milliseconds)
+  were: `valid-100.txt` 1573/1563/1564/2095/2140; `valid-100.yaml`
+  2034/2083/2021/2062/2113; `valid-100.yml` 2289/1985/1996/1989/2010;
+  `valid-100.json` 2037/2024/1591/1574/1569; `blocking-error.yaml`
+  1660/1909/1668/1659/1676; and `blocking-error.json` 1658/1656/1652/1656/1672.
+  Every preview or actionable blocking error appeared within the required 3000 ms.
+- Remaining Atlas scenarios passed: the canonical example preserved order/multiline text and
+  resolved `nova`/`alloy` overrides before appending both rows; the mixed fixture showed all three
+  candidates and appended exactly 1 valid row while announcing 2 rejections; plain text preserved
+  line 1/3 locations, counted one internal blank, and rejected the 4097-character line.
+- The 205-item fixture rendered pages of 100/100/5 (`1 / 3` through `3 / 3`), exposed item 205,
+  and appended all 205 rows. A row typed while batch work was in progress remained in place when
+  the canonical batch appended. Loading `saved-queue.json` separately displayed a replacement
+  warning for all 309 current rows and, after confirmation, replaced them with exactly its one
+  saved row.
+- Blocking-error checks for duplicate YAML keys, YAML custom tags, wrong schema, duplicate JSON
+  properties, and trailing-comma JSON all produced localized actionable errors without changing
+  the 306-row queue. The focused parser/preview/regression suites cover the remaining anchor,
+  alias, multi-document, defaults, extension, and size boundaries and passed 43/43 assertions.
+- YAML/JSON equivalence, resolved metadata/null clearing, cancellation, selection preservation,
+  accessibility/status behavior, and saved-queue separation remained covered by the focused
+  component suites, which passed 36/36 assertions. These default suites use mocked ports and made
+  no live TTS, tagger, or other external-network calls; Atlas accessed only `localhost:3102`.

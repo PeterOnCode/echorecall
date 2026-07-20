@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // 007 · US1 (FR-007): the generation action bar — a queue summary + count badge and
-// Save queue / Load queue / Import batch / Generate. Generate is disabled when the
-// queue is empty or a run is in flight. `totalUsd`/`unavailableCount` come from the
-// per-item cost estimate (US5): the queue total + a "+N unavailable" note (display-only).
+// Save queue / Load queue / Import batch / example + guide discovery / Generate.
+// Generate is disabled when the queue is empty or a run is in flight.
+// `totalUsd`/`unavailableCount` come from the per-item cost estimate (US5): the
+// queue total + a "+N unavailable" note (display-only).
 const props = withDefaults(
   defineProps<{
     queueCount: number

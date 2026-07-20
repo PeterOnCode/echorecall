@@ -1,6 +1,6 @@
 import { parseText } from './parse-text'
 
-/** Result of parsing an uploaded `.txt` batch into queue items. */
+/** Legacy immediate-append summary retained for existing line-import callers. */
 export interface ParsedUpload {
   /** One entry per valid, trimmed, non-blank line, in file order. */
   items: { text: string }[]
@@ -10,11 +10,9 @@ export interface ParsedUpload {
 }
 
 /**
- * Parse the raw text of an uploaded `.txt` into one queue item per valid line
- * (FR-001..005). Pure and side-effect-free so the upload is parsed in-place and
- * never persisted. Blank/whitespace-only lines are skipped; lines longer than the
- * input cap are rejected; the counts drive the "added / skipped / rejected"
- * summary. A wholly empty (or whitespace-only) document yields zero of each.
+ * Compatibility wrapper over the unified text preview parser. New import adapters
+ * should call `parseBatch({ format: 'text' })`; this shape remains for older queue
+ * callers that expect an immediate valid-line summary.
  */
 export function parseUploadText(content: string): ParsedUpload {
   const result = parseText(content, {

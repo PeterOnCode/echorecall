@@ -1,0 +1,7 @@
+schema: echorecall.batch
+version: 1
+items:
+  - text: Valid item
+  - text: ""
+  - text: Invalid item
+    unknown: rejected
