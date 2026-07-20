@@ -30,8 +30,8 @@
 
 **⚠️ CRITICAL**: Complete this phase before any user-story implementation.
 
-- [ ] T002 [US1] Define compile-time-only `BatchDocumentV1`, defaults/items, metadata patches, base/resolved inputs, source locations, issue/error unions, candidates, previews, and parse results in `src/core/batch/contract.ts` under the documented non-behavioral TDD exemption
-- [ ] T003 [US1] Export only the compile-time batch contract types and shared 5 MiB constant through `src/core/client.ts` and align its ownership comment in `src/core/tts/provider.ts` under the documented non-behavioral TDD exemption
+- [X] T002 [US1] Define compile-time-only `BatchDocumentV1`, defaults/items, metadata patches, base/resolved inputs, source locations, issue/error unions, candidates, previews, and parse results in `src/core/batch/contract.ts` under the documented non-behavioral TDD exemption
+- [X] T003 [US1] Export only the compile-time batch contract types and shared 5 MiB constant through `src/core/client.ts` and align its ownership comment in `src/core/tts/provider.ts` under the documented non-behavioral TDD exemption
 
 **Checkpoint**: Raw input can be represented only as `unknown`, and invalid candidates cannot expose a typed `ResolvedQueueInput`.
 
