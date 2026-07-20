@@ -413,6 +413,8 @@
       "saveQueue": "Save queue",
       "loadQueue": "Load queue",
       "importBatch": "Import batch",
+      "downloadBatchExample": "Download YAML example",
+      "batchDocumentation": "Batch format guide",
       "generate": "Generate"
     },
     "batchImport": {

@@ -15,6 +15,8 @@ export type BatchImportState =
   | { status: 'imported'; filename: string; added: number; rejected: number }
   | { status: 'cancelled' }
 
+export const BATCH_EXAMPLE_FILENAME = 'echorecall-batch-v1.yaml'
+
 /** Browser file adapter around the pure batch parser. */
 export function useBatchImport() {
   const state = ref<BatchImportState>({ status: 'idle' })
@@ -76,5 +78,24 @@ export function useBatchImport() {
     }
   }
 
-  return { state, preview, error, selectBatchFile, cancelBatchImport, confirmedInputs, finishBatchImport }
+  /** Download the versioned static example without touching import or queue state. */
+  function downloadBatchExample(): void {
+    const link = document.createElement('a')
+    link.href = `/examples/${BATCH_EXAMPLE_FILENAME}`
+    link.download = BATCH_EXAMPLE_FILENAME
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
+
+  return {
+    state,
+    preview,
+    error,
+    selectBatchFile,
+    cancelBatchImport,
+    confirmedInputs,
+    finishBatchImport,
+    downloadBatchExample,
+  }
 }

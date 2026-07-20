@@ -16,7 +16,7 @@ afterEach(async () => {
 // and Save queue / Load queue / Import batch / Generate. Generate is disabled when
 // the queue is empty or a run is in flight. Cost total (US5) fills the optional props.
 describe('GenerationActionBar', () => {
-  it('renders the bar, count badge and four actions', async () => {
+  it('renders the bar, count badge and batch discovery actions', async () => {
     const wrapper = await mountSuspended(GenerationActionBar, { props: { queueCount: 3 } })
     for (const id of [
       'action-bar',
@@ -24,6 +24,8 @@ describe('GenerationActionBar', () => {
       'action-save-queue',
       'action-load-queue',
       'action-import-batch',
+      'action-download-batch-example',
+      'action-batch-documentation',
       'action-generate',
     ]) {
       expect(wrapper.find(`[data-test="${id}"]`).exists(), id).toBe(true)
@@ -53,11 +55,25 @@ describe('GenerationActionBar', () => {
     await wrapper.find('[data-test="action-save-queue"]').trigger('click')
     await wrapper.find('[data-test="action-load-queue"]').trigger('click')
     await wrapper.find('[data-test="action-import-batch"]').trigger('click')
+    await wrapper.find('[data-test="action-download-batch-example"]').trigger('click')
     await wrapper.find('[data-test="action-generate"]').trigger('click')
     expect(wrapper.emitted('save-queue')).toBeTruthy()
     expect(wrapper.emitted('load-queue')).toBeTruthy()
     expect(wrapper.emitted('import-batch')).toBeTruthy()
+    expect(wrapper.emitted('download-batch-example')).toBeTruthy()
     expect(wrapper.emitted('generate')).toBeTruthy()
+  })
+
+  it('offers keyboard-native access to the YAML example and author guide', async () => {
+    const wrapper = await mountSuspended(GenerationActionBar, { props: { queueCount: 0 } })
+    const download = wrapper.get('[data-test="action-download-batch-example"]')
+    const documentation = wrapper.get('[data-test="action-batch-documentation"]')
+
+    expect(download.element.tagName).toBe('BUTTON')
+    expect(download.text()).toContain('Download YAML example')
+    expect(documentation.element.tagName).toBe('A')
+    expect(documentation.text()).toContain('Batch format guide')
+    expect(documentation.attributes('href')).toContain('docs/batch-import.md')
   })
 
   // US5 (T038 / FR-018/FR-019): the queue total cost + "+N unavailable" note.

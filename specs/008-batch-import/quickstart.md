@@ -261,3 +261,25 @@ the approved tests.
 - `pnpm test:component`: 41 files, 250 assertions passed.
 - `pnpm typecheck`: passed.
 - `pnpm lint`: passed.
+
+### Phase 6 approved red checkpoint — 2026-07-20
+
+- User/reviewer explicitly approved T046–T048 before test execution.
+- Focused unit run: 2 files, 3 expected failures because the canonical example and author guide
+  did not yet exist.
+- Focused component run: 2 files, 4 expected failures and 17 passes. The action bar did not yet
+  expose the example download or documentation link, and the page had no download wiring.
+
+This is the required US4 red checkpoint. T050–T055 may now implement only the behavior covered by
+the approved tests.
+
+### Phase 6 green verification — 2026-07-20
+
+- US4 focused core/documentation tests: 2 files, 3 assertions passed.
+- US4 focused component tests: 2 files, 21 assertions passed.
+- The downloadable `echorecall-batch-v1.yaml` example round-tripped through the real parser with
+  two ordered candidates, and the documented equivalent JSON parsed through the same contract.
+- `pnpm test`: 59 files, 379 assertions passed.
+- `pnpm test:component`: 41 files, 252 assertions passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.

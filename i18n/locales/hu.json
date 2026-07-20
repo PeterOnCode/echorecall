@@ -413,6 +413,8 @@
       "saveQueue": "Sor mentése",
       "loadQueue": "Sor betöltése",
       "importBatch": "Köteg importálása",
+      "downloadBatchExample": "YAML-példa letöltése",
+      "batchDocumentation": "Kötegformátum útmutató",
       "generate": "Generálás"
     },
     "batchImport": {

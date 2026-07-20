@@ -358,3 +358,24 @@ describe('Generate page – JSON and text batch import (008 · US3)', () => {
     wrapper.unmount()
   })
 })
+
+describe('Generate page – downloadable batch example (008 · US4)', () => {
+  it('downloads the exact YAML example filename without mutating the queue', async () => {
+    const wrapper = await mountPage()
+    wrapper.getComponent(ScriptEntryPanel).vm.$emit('add', 'Existing row')
+    await settle()
+
+    let downloaded: { filename: string; href: string } | undefined
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      downloaded = { filename: this.download, href: this.href }
+    })
+    await wrapper.get('[data-test="action-download-batch-example"]').trigger('click')
+    await settle()
+
+    expect(downloaded).toMatchObject({ filename: 'echorecall-batch-v1.yaml' })
+    expect(downloaded?.href).toContain('/examples/echorecall-batch-v1.yaml')
+    expect(queueItems(wrapper).map((item) => item.text)).toEqual(['Existing row'])
+    expect(document.body.querySelector('[data-test="batch-import-preview-dialog"]')).toBeNull()
+    wrapper.unmount()
+  })
+})

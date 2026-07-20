@@ -12,7 +12,13 @@ const props = withDefaults(
   }>(),
   { busy: false, totalUsd: 0, unavailableCount: 0 },
 )
-const emit = defineEmits<{ 'save-queue': []; 'load-queue': []; 'import-batch': []; generate: [] }>()
+const emit = defineEmits<{
+  'save-queue': []
+  'load-queue': []
+  'import-batch': []
+  'download-batch-example': []
+  generate: []
+}>()
 // The first track number the derived Track counts up from (007). Session-only — owned by the
 // page, defaults to 1 (the first row is track 1, matching the prior always-1-based behavior).
 const startTrack = defineModel<number>('startTrack', { default: 1 })
@@ -89,6 +95,25 @@ const totalLabel = computed(() =>
         @click="emit('import-batch')"
       >
         {{ t('generateNext.actionBar.importBatch') }}
+      </UButton>
+      <UButton
+        data-test="action-download-batch-example"
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-file-down"
+        @click="emit('download-batch-example')"
+      >
+        {{ t('generateNext.actionBar.downloadBatchExample') }}
+      </UButton>
+      <UButton
+        data-test="action-batch-documentation"
+        to="https://github.com/PeterOnCode/echorecall/blob/main/docs/batch-import.md"
+        target="_blank"
+        color="neutral"
+        variant="ghost"
+        icon="i-lucide-book-open"
+      >
+        {{ t('generateNext.actionBar.batchDocumentation') }}
       </UButton>
       <UButton
         data-test="action-generate"

@@ -135,20 +135,20 @@
 
 ### Tests for User Story 4 — write and verify red first
 
-- [ ] T046 [P] [US4] Write failing tests that load the shipped YAML example, parse it through the real core, and assert defaults, two ordered candidates, multiline text, overrides, metadata, and null clearing in `tests/unit/batch-example.test.ts`
-- [ ] T047 [P] [US4] Write failing action-bar/page tests for a keyboard-accessible YAML example download with the exact `echorecall-batch-v1.yaml` filename and no queue mutation in `tests/component/GenerationActionBar.test.ts` and `tests/component/generate-next.batch-import.test.ts`
-- [ ] T048 [P] [US4] Write a failing documentation contract test that verifies every canonical field/rule heading plus the equivalent JSON example in `tests/unit/batch-documentation.test.ts`
-- [ ] T049 [US4] Obtain explicit user/reviewer approval for the US4 tests from T046–T048, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
+- [X] T046 [P] [US4] Write failing tests that load the shipped YAML example, parse it through the real core, and assert defaults, two ordered candidates, multiline text, overrides, metadata, and null clearing in `tests/unit/batch-example.test.ts`
+- [X] T047 [P] [US4] Write failing action-bar/page tests for a keyboard-accessible YAML example download with the exact `echorecall-batch-v1.yaml` filename and no queue mutation in `tests/component/GenerationActionBar.test.ts` and `tests/component/generate-next.batch-import.test.ts`
+- [X] T048 [P] [US4] Write a failing documentation contract test that verifies every canonical field/rule heading plus the equivalent JSON example in `tests/unit/batch-documentation.test.ts`
+- [X] T049 [US4] Obtain explicit user/reviewer approval for the US4 tests from T046–T048, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
 
 ### Implementation for User Story 4
 
-- [ ] T050 [P] [US4] Add the canonical downloadable YAML example in `public/examples/echorecall-batch-v1.yaml`
-- [ ] T051 [P] [US4] Write the complete author guide with field tables, precedence, missing/null/array semantics, validation/safety rules, Track derivation, and equivalent JSON in `docs/batch-import.md`
-- [ ] T052 [US4] Add the discoverable example-download control/event to `app/components/generate/GenerationActionBar.vue`
-- [ ] T053 [US4] Implement the example download wiring without queue mutation in `app/composables/useBatchImport.ts` and `app/pages/generate.vue`
-- [ ] T054 [US4] Add matching English/Hungarian example-download and documentation-link copy in `i18n/locales/en.json` and `i18n/locales/hu.json`
-- [ ] T055 [US4] Update current feature, Stack, project layout, and documentation references for shipped batch import in `README.md`
-- [ ] T056 [US4] Run the US4-focused suites until green and verify the downloaded example round-trips through the real parser in `tests/unit/batch-example.test.ts`, `tests/unit/batch-documentation.test.ts`, `tests/component/GenerationActionBar.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
+- [X] T050 [P] [US4] Add the canonical downloadable YAML example in `public/examples/echorecall-batch-v1.yaml`
+- [X] T051 [P] [US4] Write the complete author guide with field tables, precedence, missing/null/array semantics, validation/safety rules, Track derivation, and equivalent JSON in `docs/batch-import.md`
+- [X] T052 [US4] Add the discoverable example-download control/event to `app/components/generate/GenerationActionBar.vue`
+- [X] T053 [US4] Implement the example download wiring without queue mutation in `app/composables/useBatchImport.ts` and `app/pages/generate.vue`
+- [X] T054 [US4] Add matching English/Hungarian example-download and documentation-link copy in `i18n/locales/en.json` and `i18n/locales/hu.json`
+- [X] T055 [US4] Update current feature, Stack, project layout, and documentation references for shipped batch import in `README.md`
+- [X] T056 [US4] Run the US4-focused suites until green and verify the downloaded example round-trips through the real parser in `tests/unit/batch-example.test.ts`, `tests/unit/batch-documentation.test.ts`, `tests/component/GenerationActionBar.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
 
 **Checkpoint**: A first-time user can discover, download, understand, and successfully preview the canonical format without assistance.
 

@@ -1,0 +1,26 @@
+schema: echorecall.batch
+version: 1
+
+defaults:
+  voiceId: nova
+  model: gpt-4o-mini-tts
+  format: mp3
+  instructions: Speak clearly
+  metadata:
+    artist: EchoRecall
+    album: Example batch
+    languages:
+      - eng
+
+items:
+  - text: |-
+      The first queue item can contain
+      multiple lines of text.
+
+  - text: The second queue item.
+    voiceId: alloy
+    instructions: null
+    metadata:
+      title: Custom title
+      track: "2"
+      artist: null

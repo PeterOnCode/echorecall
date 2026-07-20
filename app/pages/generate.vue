@@ -48,6 +48,7 @@ const {
   cancelBatchImport,
   confirmedInputs,
   finishBatchImport,
+  downloadBatchExample,
 } = useBatchImport()
 const { t } = useI18n()
 const batchStatusMessage = computed(() => {
@@ -343,6 +344,7 @@ function onCancelBatchImport() {
         @save-queue="onSaveQueue"
         @load-queue="onLoadQueue"
         @import-batch="onImportBatch"
+        @download-batch-example="downloadBatchExample"
         @generate="onGenerate"
       />
       <QueuePanel
