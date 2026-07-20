@@ -107,21 +107,21 @@
 
 ### Tests for User Story 3 — write and verify red first
 
-- [ ] T034 [P] [US3] Write failing JSON strict-grammar, duplicate/escaped-equivalent property, YAML/JSON equivalence, order, schema/version, and malformed-input tests in `tests/unit/batch-json.test.ts`
-- [ ] T035 [P] [US3] Rewrite failing text parser tests for original one-based line numbers, CRLF/LF, trimming, internal blanks, conventional trailing newline, whitespace-only compatibility, oversized visible candidates, duplicates, order, and preview counts in `tests/unit/parse-upload.test.ts`
-- [ ] T036 [P] [US3] Extend failing page tests for `.txt`, `.yaml`, `.yml`, and `.json` acceptance, format dispatch, JSON/text previews, source filenames, and valid-only confirmation in `tests/component/generate-next.batch-import.test.ts`
-- [ ] T037 [P] [US3] Write failing regression tests proving `echorecall.batch` JSON appends while existing `echorecall.queue` JSON Load queue still replaces through its existing confirmation path in `tests/integration/batch-import-regression.test.ts`
-- [ ] T038 [US3] Obtain explicit user/reviewer approval for the US3 tests from T034–T037, then run the approved focused unit, component, and integration tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
+- [X] T034 [P] [US3] Write failing JSON strict-grammar, duplicate/escaped-equivalent property, YAML/JSON equivalence, order, schema/version, and malformed-input tests in `tests/unit/batch-json.test.ts`
+- [X] T035 [P] [US3] Rewrite failing text parser tests for original one-based line numbers, CRLF/LF, trimming, internal blanks, conventional trailing newline, whitespace-only compatibility, oversized visible candidates, duplicates, order, and preview counts in `tests/unit/parse-upload.test.ts`
+- [X] T036 [P] [US3] Extend failing page tests for `.txt`, `.yaml`, `.yml`, and `.json` acceptance, format dispatch, JSON/text previews, source filenames, and valid-only confirmation in `tests/component/generate-next.batch-import.test.ts`
+- [X] T037 [P] [US3] Write failing regression tests proving `echorecall.batch` JSON appends while existing `echorecall.queue` JSON Load queue still replaces through its existing confirmation path in `tests/integration/batch-import-regression.test.ts`
+- [X] T038 [US3] Obtain explicit user/reviewer approval for the US3 tests from T034–T037, then run the approved focused unit, component, and integration tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Implement decoded duplicate-property preflight with the `yaml` Document AST parser configured in `schema: 'json'` mode—not JSON Schema validation—followed by native strict `JSON.parse` and typed blocking errors in `src/core/batch/parse-json.ts`
-- [ ] T040 [US3] Implement line-aware text preview candidates and preserve shipped blank/trailing-newline conventions in `src/core/batch/parse-text.ts`
-- [ ] T041 [US3] Retain a compatibility `parseUploadText` export or migrate its callers while routing text through the unified preview contract in `src/core/batch/parse-upload.ts` and `src/core/client.ts`
-- [ ] T042 [US3] Extend format dispatch so text, YAML, and JSON feed the same validator/preview model in `src/core/batch/parse-batch.ts`
-- [ ] T043 [US3] Accept and dispatch `.txt`, `.yaml`, `.yml`, and `.json` while preserving original filename and format-specific blocking errors in `app/composables/useBatchImport.ts` and `app/pages/generate.vue`
-- [ ] T044 [US3] Keep saved-queue import/replacement isolated while batch JSON remains append-only in `app/composables/useQueueFile.ts` and `app/pages/generate.vue`
-- [ ] T045 [US3] Run the US3-focused suites until green and verify equivalent YAML/JSON normalization plus unchanged saved-queue replacement in `tests/unit/batch-json.test.ts`, `tests/unit/parse-upload.test.ts`, `tests/component/generate-next.batch-import.test.ts`, and `tests/integration/batch-import-regression.test.ts`
+- [X] T039 [US3] Implement decoded duplicate-property preflight with the `yaml` Document AST parser configured in `schema: 'json'` mode—not JSON Schema validation—followed by native strict `JSON.parse` and typed blocking errors in `src/core/batch/parse-json.ts`
+- [X] T040 [US3] Implement line-aware text preview candidates and preserve shipped blank/trailing-newline conventions in `src/core/batch/parse-text.ts`
+- [X] T041 [US3] Retain a compatibility `parseUploadText` export or migrate its callers while routing text through the unified preview contract in `src/core/batch/parse-upload.ts` and `src/core/client.ts`
+- [X] T042 [US3] Extend format dispatch so text, YAML, and JSON feed the same validator/preview model in `src/core/batch/parse-batch.ts`
+- [X] T043 [US3] Accept and dispatch `.txt`, `.yaml`, `.yml`, and `.json` while preserving original filename and format-specific blocking errors in `app/composables/useBatchImport.ts` and `app/pages/generate.vue`
+- [X] T044 [US3] Keep saved-queue import/replacement isolated while batch JSON remains append-only in `app/composables/useQueueFile.ts` and `app/pages/generate.vue`
+- [X] T045 [US3] Run the US3-focused suites until green and verify equivalent YAML/JSON normalization plus unchanged saved-queue replacement in `tests/unit/batch-json.test.ts`, `tests/unit/parse-upload.test.ts`, `tests/component/generate-next.batch-import.test.ts`, and `tests/integration/batch-import-regression.test.ts`
 
 **Checkpoint**: All four accepted extensions share one review flow, while Load queue retains its separate contract and replacement semantics.
 

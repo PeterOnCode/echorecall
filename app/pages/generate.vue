@@ -265,7 +265,7 @@ function onCancelReplace() {
   confirmReplace.value = false
 }
 
-/** Freeze current Generate values, then parse a picked YAML batch into a preview. */
+/** Freeze current Generate values, then parse a picked batch into a preview. */
 async function onBatchFileChosen(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -284,7 +284,8 @@ async function onBatchFileChosen(event: Event) {
 function onConfirmBatchImport() {
   if (!batchPreview.value?.canConfirm) return
   const filename = batchPreview.value.filename
-  const appended = appendImported(confirmedInputs(), filename, { metadataMode: 'structured' })
+  const metadataMode = batchPreview.value.format === 'text' ? 'text' : 'structured'
+  const appended = appendImported(confirmedInputs(), filename, { metadataMode })
   finishBatchImport(appended.length)
 }
 
@@ -403,7 +404,7 @@ function onCancelBatchImport() {
       ref="batchFileInput"
       data-test="batch-file-input"
       type="file"
-      accept=".yaml,.yml,application/yaml,text/yaml"
+      accept=".txt,.yaml,.yml,.json,text/plain,application/yaml,text/yaml,application/json"
       class="hidden"
       @change="onBatchFileChosen"
     >

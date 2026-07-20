@@ -50,6 +50,9 @@ export type {
   ValidImportCandidate,
 } from './batch/contract'
 export { parseBatch } from './batch/parse-batch'
+export { parseJson } from './batch/parse-json'
+export type { ParseJsonResult } from './batch/parse-json'
+export { parseText } from './batch/parse-text'
 export { parseYaml } from './batch/parse-yaml'
 export type { ParseYamlResult } from './batch/parse-yaml'
 

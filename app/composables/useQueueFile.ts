@@ -32,6 +32,8 @@ export type ImportResult =
   | { ok: true; doc: QueueFileDocument }
   | { ok: false; reason: 'schema' | 'version' | 'shape' }
 
+// This discriminator belongs only to Load queue. Batch JSON is parsed by the
+// separate batch adapter and can never enter this replacement workflow.
 const SCHEMA = 'echorecall.queue'
 const VERSION = 1
 

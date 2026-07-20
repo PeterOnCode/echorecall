@@ -23,7 +23,14 @@ export function useBatchImport() {
 
   async function selectBatchFile(file: File, base: BatchBaseInput): Promise<void> {
     const filename = file.name
-    if (!/\.ya?ml$/i.test(filename)) {
+    const format = filename.match(/\.txt$/i)
+      ? 'text'
+      : filename.match(/\.ya?ml$/i)
+        ? 'yaml'
+        : filename.match(/\.json$/i)
+          ? 'json'
+          : null
+    if (!format) {
       state.value = { status: 'blocked', filename, error: { scope: 'file', code: 'unsupportedExtension' } }
       return
     }
@@ -43,7 +50,7 @@ export function useBatchImport() {
     }
 
     state.value = { status: 'parsing', filename }
-    const result = parseBatch({ content, filename, format: 'yaml', base: frozenBase })
+    const result = parseBatch({ content, filename, format, base: frozenBase })
     state.value = result.ok
       ? { status: 'preview', preview: result.preview }
       : { status: 'blocked', filename, error: result.error }

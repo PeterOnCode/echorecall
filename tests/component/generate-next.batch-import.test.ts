@@ -36,6 +36,32 @@ items:
     { type: 'application/yaml' },
   )
 
+function structuredFile(name: string): File {
+  const content = name.endsWith('.json')
+    ? JSON.stringify({
+        schema: 'echorecall.batch',
+        version: 1,
+        items: [
+          { text: 'Valid JSON row', metadata: { artist: 'JSON artist' } },
+          { text: '', metadata: { artist: 'Rejected artist' } },
+        ],
+      })
+    : `schema: echorecall.batch
+version: 1
+items:
+  - text: ${name} row
+`
+  return new File([content], name, {
+    type: name.endsWith('.json') ? 'application/json' : 'application/yaml',
+  })
+}
+
+function textFile(): File {
+  return new File([
+    `  First text row  \n\n${'x'.repeat(4097)}\nThird text row\n`,
+  ], 'lines.txt', { type: 'text/plain' })
+}
+
 async function settle(): Promise<void> {
   for (let index = 0; index < 6; index++) await flushPromises()
 }
@@ -258,6 +284,77 @@ describe('Generate page – mixed import states and errors (008 · US2)', () => 
       'Valid imported row',
     ])
     expect(document.body.querySelector('[data-test="batch-import-preview-dialog"]')).toBeNull()
+    wrapper.unmount()
+  })
+})
+
+describe('Generate page – JSON and text batch import (008 · US3)', () => {
+  it('advertises and dispatches every supported batch extension', async () => {
+    const wrapper = await mountPage()
+    const input = wrapper.get('[data-test="batch-file-input"]')
+    expect(input.attributes('accept')).toContain('.txt')
+    expect(input.attributes('accept')).toContain('.yaml')
+    expect(input.attributes('accept')).toContain('.yml')
+    expect(input.attributes('accept')).toContain('.json')
+
+    for (const filename of ['batch.yaml', 'batch.yml', 'batch.json']) {
+      await chooseBatchFile(wrapper, structuredFile(filename))
+      const dialog = document.body.querySelector('[data-test="batch-import-preview-dialog"]')
+      expect(dialog?.textContent).toContain(filename)
+      expect(dialog?.querySelector('[data-test="batch-preview-row"]')?.textContent)
+        .toContain(filename.endsWith('.json') ? 'Valid JSON row' : `${filename} row`)
+      ;(dialog?.querySelector('[data-test="batch-preview-cancel"]') as HTMLButtonElement).click()
+      await settle()
+    }
+
+    wrapper.unmount()
+  })
+
+  it('previews JSON items and appends only valid rows with their source filename', async () => {
+    const wrapper = await mountPage()
+    wrapper.getComponent(ScriptEntryPanel).vm.$emit('add', 'Existing row')
+    await settle()
+    await chooseBatchFile(wrapper, structuredFile('narration.json'))
+
+    const dialog = document.body.querySelector('[data-test="batch-import-preview-dialog"]')
+    expect(dialog?.querySelectorAll('[data-test="batch-preview-row"]')).toHaveLength(2)
+    expect(dialog?.querySelector('[data-test="batch-preview-counts"]')?.textContent).toContain('Valid: 1')
+    expect(dialog?.querySelector('[data-test="batch-preview-counts"]')?.textContent).toContain('Rejected: 1')
+    ;(dialog?.querySelector('[data-test="batch-preview-confirm"]') as HTMLButtonElement).click()
+    await settle()
+
+    expect(queueItems(wrapper).map((item) => item.text)).toEqual(['Existing row', 'Valid JSON row'])
+    expect(queueItems(wrapper)[1]).toMatchObject({
+      source: 'upload',
+      sourceName: 'narration.json',
+      metadata: { artist: 'JSON artist' },
+      metadataEdited: true,
+    })
+    wrapper.unmount()
+  })
+
+  it('previews original text line numbers and confirms valid rows only in text mode', async () => {
+    const wrapper = await mountPage()
+    await chooseBatchFile(wrapper, textFile())
+
+    const dialog = document.body.querySelector('[data-test="batch-import-preview-dialog"]')
+    const rows = [...(dialog?.querySelectorAll('[data-test="batch-preview-row"]') ?? [])]
+    expect(rows).toHaveLength(3)
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining('Line 1'),
+      expect.stringContaining('Line 3'),
+      expect.stringContaining('Line 4'),
+    ])
+    expect(rows[1]?.getAttribute('data-valid')).toBe('false')
+    expect(dialog?.querySelector('[data-test="batch-preview-counts"]')?.textContent).toContain('Valid: 2')
+    expect(dialog?.querySelector('[data-test="batch-preview-counts"]')?.textContent).toContain('Rejected: 1')
+    expect(dialog?.querySelector('[data-test="batch-preview-counts"]')?.textContent).toContain('Blank: 1')
+
+    ;(dialog?.querySelector('[data-test="batch-preview-confirm"]') as HTMLButtonElement).click()
+    await settle()
+    expect(queueItems(wrapper).map((item) => item.text)).toEqual(['First text row', 'Third text row'])
+    expect(queueItems(wrapper).every((item) => item.sourceName === 'lines.txt')).toBe(true)
+    expect(queueItems(wrapper).every((item) => item.metadataEdited === false)).toBe(true)
     wrapper.unmount()
   })
 })

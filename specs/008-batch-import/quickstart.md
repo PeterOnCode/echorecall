@@ -239,3 +239,25 @@ Expected: all commands pass, no live network calls occur, English/Hungarian pari
 - `pnpm test:component`: 41 files, 247 assertions passed.
 - `pnpm typecheck`: passed.
 - `pnpm lint`: passed.
+
+### Phase 5 approved red checkpoint — 2026-07-20
+
+- User/reviewer explicitly approved T034–T037 before test execution.
+- Focused unit/integration run: 3 files, 23 expected failures and 2 passes. JSON and text requests
+  still returned `unsupportedExtension`; the existing saved-queue replacement behavior passed.
+- Focused component run: 1 file, 3 expected failures and 7 passes. The file input did not yet
+  advertise `.txt`/`.json`, and those formats produced no preview.
+
+This is the required US3 red checkpoint. T039–T044 may now implement only the behavior covered by
+the approved tests.
+
+### Phase 5 green verification — 2026-07-20
+
+- US3 focused core/integration tests: 3 files, 25 assertions passed.
+- US3 focused component tests: 1 file, 10 assertions passed.
+- Equivalent YAML/JSON normalization, strict JSON grammar, decoded duplicate-property rejection,
+  original text line locations, and saved-queue replacement isolation all passed.
+- `pnpm test`: 57 files, 376 assertions passed.
+- `pnpm test:component`: 41 files, 250 assertions passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.

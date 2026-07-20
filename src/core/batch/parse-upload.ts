@@ -1,4 +1,4 @@
-import { MAX_INPUT_LENGTH } from '../tts/generate'
+import { parseText } from './parse-text'
 
 /** Result of parsing an uploaded `.txt` batch into queue items. */
 export interface ParsedUpload {
@@ -17,27 +17,18 @@ export interface ParsedUpload {
  * summary. A wholly empty (or whitespace-only) document yields zero of each.
  */
 export function parseUploadText(content: string): ParsedUpload {
-  if ((content ?? '').trim().length === 0) {
-    return { items: [], added: 0, skippedBlank: 0, rejectedTooLong: 0 }
+  const result = parseText(content, {
+    filename: 'upload.txt',
+    base: { voiceId: 'alloy', model: 'tts-1', format: 'wav', metadata: {} },
+  })
+  if (!result.ok) return { items: [], added: 0, skippedBlank: 0, rejectedTooLong: 0 }
+  const items = result.preview.candidates.flatMap((candidate) =>
+    candidate.valid ? [{ text: candidate.input.text }] : [],
+  )
+  return {
+    items,
+    added: result.preview.counts.valid,
+    skippedBlank: result.preview.counts.blank,
+    rejectedTooLong: result.preview.counts.rejected,
   }
-
-  const lines = content.split(/\r?\n/)
-  // Ignore a single conventional trailing newline so a normal text file is not
-  // penalised with a phantom blank line.
-  if (lines.length > 1 && lines[lines.length - 1] === '') lines.pop()
-
-  const items: { text: string }[] = []
-  let skippedBlank = 0
-  let rejectedTooLong = 0
-  for (const raw of lines) {
-    const text = raw.trim()
-    if (text.length === 0) {
-      skippedBlank++
-    } else if (text.length > MAX_INPUT_LENGTH) {
-      rejectedTooLong++
-    } else {
-      items.push({ text })
-    }
-  }
-  return { items, added: items.length, skippedBlank, rejectedTooLong }
 }
