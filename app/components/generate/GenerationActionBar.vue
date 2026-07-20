@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // 007 · US1 (FR-007): the generation action bar — a queue summary + count badge and
-// Save queue / Load queue / Upload .txt batch / Generate. Generate is disabled when the
+// Save queue / Load queue / Import batch / Generate. Generate is disabled when the
 // queue is empty or a run is in flight. `totalUsd`/`unavailableCount` come from the
 // per-item cost estimate (US5): the queue total + a "+N unavailable" note (display-only).
 const props = withDefaults(
@@ -12,7 +12,7 @@ const props = withDefaults(
   }>(),
   { busy: false, totalUsd: 0, unavailableCount: 0 },
 )
-const emit = defineEmits<{ 'save-queue': []; 'load-queue': []; 'upload-txt': []; generate: [] }>()
+const emit = defineEmits<{ 'save-queue': []; 'load-queue': []; 'import-batch': []; generate: [] }>()
 // The first track number the derived Track counts up from (007). Session-only — owned by the
 // page, defaults to 1 (the first row is track 1, matching the prior always-1-based behavior).
 const startTrack = defineModel<number>('startTrack', { default: 1 })
@@ -82,13 +82,13 @@ const totalLabel = computed(() =>
         {{ t('generateNext.actionBar.loadQueue') }}
       </UButton>
       <UButton
-        data-test="action-upload-txt"
+        data-test="action-import-batch"
         color="neutral"
         variant="outline"
         icon="i-lucide-upload"
-        @click="emit('upload-txt')"
+        @click="emit('import-batch')"
       >
-        {{ t('generateNext.actionBar.uploadTxt') }}
+        {{ t('generateNext.actionBar.importBatch') }}
       </UButton>
       <UButton
         data-test="action-generate"

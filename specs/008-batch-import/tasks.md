@@ -45,26 +45,26 @@
 
 ### Tests for User Story 1 — write and verify red first
 
-- [ ] T004 [P] [US1] Write failing strict YAML 1.2, schema/version, precedence, multiline text, missing inheritance, null clearing, array replacement, metadata structure, order, duplicate-key, custom-tag, anchor, alias, and multi-document tests in `tests/unit/batch-yaml.test.ts`
-- [ ] T005 [P] [US1] Write failing queue append tests for resolved values, fresh IDs/status/source/filename, metadata cloning, Title retention, Track derivation compatibility, and existing-row preservation in `tests/component/QueueState.test.ts`
-- [ ] T006 [P] [US1] Write failing action-bar rename/event tests for **Import batch** in `tests/component/GenerationActionBar.test.ts`
-- [ ] T007 [P] [US1] Write failing valid-preview dialog tests for ordered one-based items, excerpts, resolved settings, counts, confirm, and cancel in `tests/component/BatchImportPreviewDialog.test.ts`
-- [ ] T008 [P] [US1] Write failing Generate-page tests for YAML selection, frozen base values, zero mutation before confirmation, append on confirmation, and same-file reselection in `tests/component/generate-next.batch-import.test.ts`
-- [ ] T009 [US1] Obtain explicit user/reviewer approval for the US1 tests from T004–T008, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
+- [X] T004 [P] [US1] Write failing strict YAML 1.2, schema/version, precedence, multiline text, missing inheritance, null clearing, array replacement, metadata structure, order, duplicate-key, custom-tag, anchor, alias, and multi-document tests in `tests/unit/batch-yaml.test.ts`
+- [X] T005 [P] [US1] Write failing queue append tests for resolved values, fresh IDs/status/source/filename, metadata cloning, Title retention, Track derivation compatibility, and existing-row preservation in `tests/component/QueueState.test.ts`
+- [X] T006 [P] [US1] Write failing action-bar rename/event tests for **Import batch** in `tests/component/GenerationActionBar.test.ts`
+- [X] T007 [P] [US1] Write failing valid-preview dialog tests for ordered one-based items, excerpts, resolved settings, counts, confirm, and cancel in `tests/component/BatchImportPreviewDialog.test.ts`
+- [X] T008 [P] [US1] Write failing Generate-page tests for YAML selection, frozen base values, zero mutation before confirmation, append on confirmation, and same-file reselection in `tests/component/generate-next.batch-import.test.ts`
+- [X] T009 [US1] Obtain explicit user/reviewer approval for the US1 tests from T004–T008, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Implement strict YAML 1.2 `parseDocument` handling, duplicate-key errors, explicit-tag rejection, unused-anchor/alias rejection, multiple-document rejection, and defensive `maxAliasCount: 0` conversion in `src/core/batch/parse-yaml.ts`
-- [ ] T011 [US1] Implement exact document/default/item/metadata validation plus base → defaults → item resolution, null clearing, array replacement, catalog checks, and normalized candidates in `src/core/batch/validate-batch.ts`
-- [ ] T012 [US1] Implement YAML format orchestration and typed blocking-versus-preview results in `src/core/batch/parse-batch.ts`
-- [ ] T013 [US1] Export the YAML parser/orchestrator functions through `src/core/client.ts`
-- [ ] T014 [US1] Add `appendImported` to deep-clone normalized inputs, mint fresh queue state, append without rewriting existing rows, mark structured metadata row-specific, and preserve Feature 007 Voice/Model/Format and Track behavior in `app/composables/useQueue.ts`
-- [ ] T015 [US1] Rename the action-bar upload event/control/test id from `.txt` upload to unified batch import in `app/components/generate/GenerationActionBar.vue`
-- [ ] T016 [US1] Create the valid-state modal shell with ordered read-only rows, one-based item labels, resolved setting display, counts, and confirm/cancel emits in `app/components/generate/BatchImportPreviewDialog.vue`
-- [ ] T017 [US1] Create the browser file adapter for extension detection, size/read handling, frozen Generate base snapshots, YAML core invocation, and idle/reading/parsing/preview state in `app/composables/useBatchImport.ts`
-- [ ] T018 [US1] Wire the unified YAML file input, import state, preview dialog, cancellation, and confirmed structured append into `app/pages/generate.vue`
-- [ ] T019 [US1] Add the initial Import batch, valid preview, confirm/cancel, resolved-setting, and success-summary copy with matching structure in `i18n/locales/en.json` and `i18n/locales/hu.json`
-- [ ] T020 [US1] Run the US1-focused tests until green, then refactor without changing the contracts in `tests/unit/batch-yaml.test.ts`, `tests/component/QueueState.test.ts`, `tests/component/GenerationActionBar.test.ts`, `tests/component/BatchImportPreviewDialog.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
+- [X] T010 [US1] Implement strict YAML 1.2 `parseDocument` handling, duplicate-key errors, explicit-tag rejection, unused-anchor/alias rejection, multiple-document rejection, and defensive `maxAliasCount: 0` conversion in `src/core/batch/parse-yaml.ts`
+- [X] T011 [US1] Implement exact document/default/item/metadata validation plus base → defaults → item resolution, null clearing, array replacement, catalog checks, and normalized candidates in `src/core/batch/validate-batch.ts`
+- [X] T012 [US1] Implement YAML format orchestration and typed blocking-versus-preview results in `src/core/batch/parse-batch.ts`
+- [X] T013 [US1] Export the YAML parser/orchestrator functions through `src/core/client.ts`
+- [X] T014 [US1] Add `appendImported` to deep-clone normalized inputs, mint fresh queue state, append without rewriting existing rows, mark structured metadata row-specific, and preserve Feature 007 Voice/Model/Format and Track behavior in `app/composables/useQueue.ts`
+- [X] T015 [US1] Rename the action-bar upload event/control/test id from `.txt` upload to unified batch import in `app/components/generate/GenerationActionBar.vue`
+- [X] T016 [US1] Create the valid-state modal shell with ordered read-only rows, one-based item labels, resolved setting display, counts, and confirm/cancel emits in `app/components/generate/BatchImportPreviewDialog.vue`
+- [X] T017 [US1] Create the browser file adapter for extension detection, size/read handling, frozen Generate base snapshots, YAML core invocation, and idle/reading/parsing/preview state in `app/composables/useBatchImport.ts`
+- [X] T018 [US1] Wire the unified YAML file input, import state, preview dialog, cancellation, and confirmed structured append into `app/pages/generate.vue`
+- [X] T019 [US1] Add the initial Import batch, valid preview, confirm/cancel, resolved-setting, and success-summary copy with matching structure in `i18n/locales/en.json` and `i18n/locales/hu.json`
+- [X] T020 [US1] Run the US1-focused tests until green, then refactor without changing the contracts in `tests/unit/batch-yaml.test.ts`, `tests/component/QueueState.test.ts`, `tests/component/GenerationActionBar.test.ts`, `tests/component/BatchImportPreviewDialog.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
 
 **Checkpoint**: A valid YAML batch can be previewed and appended; the queue remains unchanged until confirmation.
 

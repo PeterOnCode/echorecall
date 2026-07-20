@@ -412,8 +412,20 @@
       "startTrack": "First track #",
       "saveQueue": "Save queue",
       "loadQueue": "Load queue",
-      "uploadTxt": "Upload .txt",
+      "importBatch": "Import batch",
       "generate": "Generate"
+    },
+    "batchImport": {
+      "title": "Import batch preview",
+      "counts": "Valid: {valid} · Rejected: {rejected} · Blank: {blank}",
+      "item": "Item {number}",
+      "line": "Line {number}",
+      "voice": "Voice",
+      "model": "Model",
+      "format": "Format",
+      "confirm": "Add to queue",
+      "cancel": "Cancel",
+      "success": "Added {count} items from {filename}."
     },
     "queue": {
       "empty": "The queue is empty. Add a script to get started.",

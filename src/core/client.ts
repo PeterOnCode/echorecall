@@ -25,7 +25,7 @@ export type { CostEstimate } from './tts/pricing'
 // Naming rules (slug) — shared so the client preview matches the server result.
 export { slugify } from './naming/slug'
 
-// Structured batch contract — types only until the red-first parser work lands.
+// Structured batch contract and browser-safe parser.
 export type {
   BatchBaseInput,
   BatchDefaults,
@@ -49,6 +49,9 @@ export type {
   ResolvedQueueInput,
   ValidImportCandidate,
 } from './batch/contract'
+export { parseBatch } from './batch/parse-batch'
+export { parseYaml } from './batch/parse-yaml'
+export type { ParseYamlResult } from './batch/parse-yaml'
 
 // .txt batch parsing — pure, reused client-side so the upload is never persisted.
 export { parseUploadText } from './batch/parse-upload'

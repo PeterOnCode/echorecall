@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { ResolvedQueueInput } from '#core/client'
 import { useQueue } from '~/composables/useQueue'
 
 // Foundational queue state for the 005 redesign (data-model §1-2): every row
@@ -96,7 +97,10 @@ describe('useQueue – client id fallback in non-secure contexts (005 · US2)', 
       expect(a.clientId).toMatch(/^[0-9a-f-]{36}$/i)
       expect(a.clientId).not.toBe(b.clientId)
     } finally {
-      Object.defineProperty(globalThis.crypto, 'randomUUID', { value: original, configurable: true })
+      Object.defineProperty(globalThis.crypto, 'randomUUID', {
+        value: original,
+        configurable: true,
+      })
     }
   })
 })
@@ -185,5 +189,99 @@ describe('useQueue – generate target ignores search/filters (FR-005a)', () => 
     q.searchTerm.value = 'beta'
     expect(q.visibleItems.value.map((i) => i.clientId)).not.toContain(a.clientId)
     expect(q.generateTarget.value.map((i) => i.clientId)).toEqual([a.clientId])
+  })
+})
+
+describe('useQueue – confirmed structured batch append (008 · US1)', () => {
+  function inputs(): ResolvedQueueInput[] {
+    return [
+      {
+        text: 'First imported row',
+        voiceId: 'nova',
+        model: 'gpt-4o-mini-tts',
+        format: 'mp3',
+        instructions: 'Speak clearly',
+        metadata: {
+          title: 'Imported title',
+          track: '99',
+          languages: ['eng'],
+          customText: [{ description: 'Source', value: 'Batch' }],
+        },
+      },
+      {
+        text: 'Second imported row',
+        voiceId: 'echo',
+        model: 'tts-1-hd',
+        format: 'flac',
+        metadata: { artist: 'EchoRecall' },
+      },
+    ]
+  }
+
+  it('appends resolved values with fresh queue state, source, and filename', () => {
+    const q = useQueue()
+    const added = q.appendImported(inputs(), 'narráció.yaml', { metadataMode: 'structured' })
+
+    expect(added).toHaveLength(2)
+    expect(q.items.value).toEqual(added)
+    expect(new Set(added.map((item) => item.clientId)).size).toBe(2)
+    expect(added[0]).toMatchObject({
+      text: 'First imported row',
+      voiceId: 'nova',
+      model: 'gpt-4o-mini-tts',
+      format: 'mp3',
+      instructions: 'Speak clearly',
+      status: 'queued',
+      source: 'upload',
+      sourceName: 'narráció.yaml',
+      metadataEdited: true,
+    })
+    expect(added[1]).toMatchObject({
+      text: 'Second imported row',
+      voiceId: 'echo',
+      model: 'tts-1-hd',
+      format: 'flac',
+      status: 'queued',
+      source: 'upload',
+      sourceName: 'narráció.yaml',
+      metadataEdited: true,
+    })
+    expect(added.every((item) => item.error === undefined && item.result === undefined)).toBe(true)
+  })
+
+  it('deep-clones metadata and preserves every existing row and its UI state', () => {
+    const q = useQueue()
+    const existing = q.addItem('Existing row')!
+    existing.status = 'failed'
+    existing.error = 'keep this failure'
+    q.toggleChecked(existing.clientId)
+    q.activeId.value = existing.clientId
+    const existingSnapshot = { ...existing, metadata: { ...existing.metadata } }
+    const resolved = inputs()
+
+    const added = q.appendImported(resolved, 'batch.yaml', { metadataMode: 'structured' })
+
+    expect(q.items.value[0]).toBe(existing)
+    expect(q.items.value[0]).toEqual(existingSnapshot)
+    expect(q.checkedIds.value.has(existing.clientId)).toBe(true)
+    expect(q.activeId.value).toBe(existing.clientId)
+
+    resolved[0]!.metadata.languages!.push('hun')
+    resolved[0]!.metadata.customText![0]!.value = 'Mutated after append'
+    expect(added[0]!.metadata.languages).toEqual(['eng'])
+    expect(added[0]!.metadata.customText).toEqual([{ description: 'Source', value: 'Batch' }])
+  })
+
+  it('retains imported Title while Track remains derived from current queue order', () => {
+    const q = useQueue()
+    q.addItem('Existing row')
+    const [imported] = q.appendImported([inputs()[0]!], 'batch.yaml', {
+      metadataMode: 'structured',
+    })
+
+    q.stampDerivedMetadata([imported!], 5)
+
+    expect(imported!.metadata.title).toBe('Imported title')
+    expect(imported!.metadata.track).toBe('6')
   })
 })

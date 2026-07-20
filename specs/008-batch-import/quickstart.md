@@ -61,6 +61,20 @@ pnpm test:component -- tests/component/BatchImportPreviewDialog.test.ts tests/co
 pnpm test -- tests/integration/batch-import-regression.test.ts
 ```
 
+### US1 approved red run — 2026-07-20
+
+The reviewer approved T004–T008 before execution. The focused suites failed for the expected
+missing Phase 3 behavior while all previously shipped tests in those invocations remained green:
+
+- `pnpm test -- tests/unit/batch-yaml.test.ts` — failed because
+  `src/core/batch/parse-batch.ts` did not exist; the existing 337 unit/integration tests passed.
+- `pnpm test:component -- tests/component/QueueState.test.ts tests/component/GenerationActionBar.test.ts tests/component/BatchImportPreviewDialog.test.ts tests/component/generate-next.batch-import.test.ts`
+  — failed because `appendImported`, the renamed **Import batch** action/event, the preview dialog,
+  and the unified page file input did not exist; 226 existing component assertions passed.
+
+This is the required US1 red checkpoint. T010–T020 may now implement only the behavior covered by
+the approved tests.
+
 ## 5. Manual scenario A — YAML defaults and overrides
 
 1. Set known current Generate Voice, Model, Format, and metadata values.
@@ -193,3 +207,11 @@ pnpm lint
 ```
 
 Expected: all commands pass, no live network calls occur, English/Hungarian parity remains complete, and no saved-queue/generation regression appears. `pnpm test:adapters` is not required because this feature does not touch audio tagging or WASM adapters.
+
+### Phase 3 green verification — 2026-07-20
+
+- US1 focused component tests: 4 files, 30 assertions passed.
+- `pnpm test`: 54 files, 348 assertions passed.
+- `pnpm test:component`: 41 files, 236 assertions passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.

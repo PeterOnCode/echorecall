@@ -1,4 +1,4 @@
-import type { CostEstimate, Format, ListItem, Metadata, Model } from '#core/client'
+import type { CostEstimate, Format, ListItem, Metadata, Model, ResolvedQueueInput } from '#core/client'
 import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from '#core/client'
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
@@ -31,6 +31,10 @@ export interface UploadSummary {
   added: number
   skippedBlank: number
   rejectedTooLong: number
+}
+
+export interface AppendImportedOptions {
+  metadataMode: 'structured' | 'text'
 }
 
 /**
@@ -202,7 +206,7 @@ export function useQueue(options?: UseQueueOptions) {
     if (trimmed.length === 0) return null
     const item = makeItem(trimmed, 'text')
     items.value.push(item)
-    return item
+    return items.value.at(-1) ?? null
   }
 
   function addItems(texts: string[]): void {
@@ -224,6 +228,29 @@ export function useQueue(options?: UseQueueOptions) {
       skippedBlank: parsed.skippedBlank,
       rejectedTooLong: parsed.rejectedTooLong,
     }
+  }
+
+  /** Append already-normalized import inputs without disturbing existing queue state. */
+  function appendImported(
+    inputs: readonly ResolvedQueueInput[],
+    filename: string,
+    options: AppendImportedOptions,
+  ): QueueItem[] {
+    const appended = inputs.map((input): QueueItem => ({
+      clientId: newClientId(),
+      text: input.text,
+      voiceId: input.voiceId,
+      model: input.model,
+      format: input.format,
+      ...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+      metadata: cloneMetadata(input.metadata),
+      metadataEdited: options.metadataMode === 'structured',
+      status: 'queued',
+      source: 'upload',
+      sourceName: filename,
+    }))
+    items.value.push(...appended)
+    return appended
   }
 
   function removeItem(clientId: string): void {
@@ -523,6 +550,7 @@ export function useQueue(options?: UseQueueOptions) {
     addItem,
     addItems,
     addFromUpload,
+    appendImported,
     removeItem,
     removeMany,
     toggleChecked,

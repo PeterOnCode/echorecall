@@ -412,8 +412,20 @@
       "startTrack": "Első sorszám",
       "saveQueue": "Sor mentése",
       "loadQueue": "Sor betöltése",
-      "uploadTxt": ".txt feltöltése",
+      "importBatch": "Köteg importálása",
       "generate": "Generálás"
+    },
+    "batchImport": {
+      "title": "Köteg importálásának előnézete",
+      "counts": "Érvényes: {valid} · Elutasított: {rejected} · Üres: {blank}",
+      "item": "{number}. elem",
+      "line": "{number}. sor",
+      "voice": "Hang",
+      "model": "Modell",
+      "format": "Formátum",
+      "confirm": "Hozzáadás a sorhoz",
+      "cancel": "Mégse",
+      "success": "{count} elem hozzáadva ebből: {filename}."
     },
     "queue": {
       "empty": "A sor üres. Adj hozzá egy szöveget a kezdéshez.",
