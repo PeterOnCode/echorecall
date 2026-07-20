@@ -20,7 +20,7 @@
 
 **Documented TDD exemption for T001–T003**: These tasks install the constitution-approved parser and establish compile-time-only shared types/exports required for test files to load. They introduce no parsing, validation, queue, or UI behavior. All observable behavior begins in US1 only after its tests are written, approved, and confirmed red. Any observable behavior discovered in T001–T003 MUST be moved behind the US1 red gate.
 
-- [ ] T001 [US1] Add `yaml` `^2.9.0` as a direct runtime dependency and refresh the lockfile in `package.json` and `pnpm-lock.yaml` under the documented non-behavioral TDD exemption
+- [X] T001 [US1] Add `yaml` `^2.9.0` as a direct runtime dependency and refresh the lockfile in `package.json` and `pnpm-lock.yaml` under the documented non-behavioral TDD exemption
 
 ---
 
