@@ -14,7 +14,152 @@
 
 ---
 
-## Next implementation — Feature 007: Generate-tab redesign (Figma) + generation-flow enhancements
+## Next implementation — Feature 008: Structured Generate batch import
+
+> Self-contained brief for `/speckit-specify`. Replaces the current `.txt`-only upload with a
+> previewed import workflow for text and canonical YAML/JSON batch documents. Library file
+> management, XML, CLI, and Auth remain deferred.
+
+### Intent
+
+Let users prepare generation queues in human-readable files without manually adding each row.
+Replace **Upload .txt** with a unified **Import batch** workflow that accepts `.txt`, `.yaml`,
+`.yml`, and `.json`, parses files locally, previews valid rows and row-specific errors, and appends
+confirmed valid rows to the current queue.
+
+YAML is the documented, downloadable template for human authors. JSON supports scripts and
+external integrations. Both structured formats are alternate serializations of one canonical
+contract and receive identical validation after deserialization. **Save queue / Load queue**
+remains a separate queue-replacement workflow.
+
+### User journeys (priority hints for `/speckit-specify`)
+
+**P1 — Import a documented YAML batch.**
+The user downloads or writes an EchoRecall YAML template containing optional file defaults and one
+or more queue items. EchoRecall resolves current Generate values, file defaults, and per-item
+overrides, then previews the resulting queue rows before appending them.
+
+**P1 — Review valid rows and errors before import.**
+The preview identifies each candidate by item index or `.txt` line number, shows its resolved
+voice/model/format and text excerpt, and reports row-specific validation errors. One invalid item
+does not prevent the user from importing the valid items in the same file.
+
+**P2 — Import the same contract from JSON or plain text.**
+Scripts may emit the JSON equivalent of the documented YAML contract. Existing `.txt` files remain
+supported as one nonblank line per queue item and use the same preview-and-confirm workflow.
+
+**P2 — Discover and reuse the format.**
+The import UI offers a downloadable YAML example. Human-readable documentation explains every
+field, inheritance, clearing behavior, validation rule, and the equivalent JSON representation.
+
+### Canonical batch contract
+
+Primary example, `echorecall-batch-v1.yaml`:
+
+```yaml
+schema: echorecall.batch
+version: 1
+
+defaults:
+  voiceId: nova
+  model: gpt-4o-mini-tts
+  format: mp3
+  instructions: Speak clearly
+  metadata:
+    artist: EchoRecall
+    album: Example batch
+    languages:
+      - eng
+
+items:
+  - text: |-
+      The first queue item can contain
+      multiple lines of text.
+
+  - text: The second queue item.
+    voiceId: alloy
+    instructions: null
+    metadata:
+      title: Custom title
+      track: "2"
+      artist: null
+```
+
+The equivalent JSON document uses the same `schema`, `version`, `defaults`, `items`, and item
+fields. Values resolve in this order: current Generate form values, optional file-level defaults,
+then optional per-item overrides.
+
+### Functional boundaries
+
+- `text` is required, trimmed, nonblank, and limited to 4,096 characters.
+- Missing properties inherit. Explicit `null` clears optional instructions or individual metadata
+  fields. Arrays replace inherited arrays rather than concatenate.
+- Voice, model, format, instructions, and metadata use the existing domain types and validation.
+- Unknown schema versions, malformed documents, and invalid file defaults block the import.
+- Invalid individual items remain visible in preview but do not block valid items. Unknown
+  canonical fields are errors so template typos are not silently ignored.
+- Preserve document order. Imported rows receive `source: 'upload'`, the original filename, fresh
+  client IDs, and queued status. Imports append without modifying existing rows.
+- Keep the existing 5 MiB limit. Preview rows are inspectable but not editable. Duplicate text is
+  allowed.
+- Parse YAML with YAML 1.2 semantics using a direct dependency; reject duplicate keys and custom
+  tags, and disable or tightly limit aliases.
+- Keep parsing and normalization framework-independent under `src/core/batch/`. Text, YAML, and
+  JSON adapters must feed one shared validator and normalized queue-input model.
+- Add English and Hungarian UI copy, accessible status announcements, the downloadable YAML
+  example, contract documentation, and an equivalent JSON example.
+
+### Out of scope (do **not** spec here)
+
+- XML import. A future XML adapter may target the same normalized batch contract.
+- Arbitrary user-defined mappings from external JSON/YAML shapes.
+- Editing candidate rows inside the preview.
+- Replacing the current queue through batch import; **Load queue** retains that responsibility.
+- Library audio-file Copy, Move, and Import; CLI; and Auth.
+
+### Existing behavior to preserve
+
+- The saved-queue JSON contract and **Load queue** continue to replace the queue unchanged.
+- `.txt` keeps one trimmed nonblank line per candidate, including blank and oversized-line counts.
+- Current Generate defaults, pending-row behavior, generation flow, and source filename display
+  continue to behave as shipped in Feature 007.
+- Default tests make no live network calls and continue to enforce English/Hungarian parity.
+
+### Verification
+
+- Unit-test equivalent YAML and JSON producing identical normalized items, plus multiline YAML,
+  comments, scalar handling, duplicate keys, aliases, custom tags, malformed input, schema
+  versions, precedence, overrides, null clearing, array replacement, ordering, and validation.
+- Preserve `.txt` coverage for blank lines, oversized lines, ordering, and preview results.
+- Test append behavior, source filenames, fresh transient state, and preservation of existing rows.
+- Component-test every accepted extension, the size limit, preview and cancellation, valid-only
+  import, localization, and the YAML example download.
+- Verify saved-queue loading remains separate and continues to replace the queue. Run `pnpm test`,
+  `pnpm test:component`, `pnpm typecheck`, and `pnpm lint`.
+
+---
+
+## Shipped — Feature 007: Generate-tab redesign + generation-flow enhancements
+
+*(branch `007-generate-redesign`; merged to `master` via **PR #89** on 2026-07-19; merge commit
+`38e49cc`; kept below as the historical planning brief)*
+
+### Shipped outcome
+
+- `/generate` is the canonical focused queue builder; `/` redirects to it and Library remains a
+  separate `/library` surface.
+- The editor uses Script and Generation settings columns plus a full-width configurable Metadata
+  row. Voice/Model/Format changes propagate to pending rows; synthesis stays fixed at 1×.
+- Queue selection, bulk delete/clear, drag reorder, first-track configuration, derived Title/Track,
+  save/load, `.txt` upload, and selected-or-all generation are implemented.
+- Generation shows per-item cost estimates, progress, labelled failures, graceful cancellation,
+  and success-only recording-date stamping that remains accurate across retries.
+- Configured generation defaults and catalog-valid last-selected preferences persist across
+  sessions.
+- The authoritative implemented scope and verification record live in
+  [`specs/007-generate-redesign/`](./007-generate-redesign/).
+
+### Historical planning brief
 
 > Self-contained brief for `/speckit-specify`. Mirrors how 006 rebuilt the Library tab from
 > Figma. Consumes the backlog's "Generate tab redesign" item plus four Generate-tab
@@ -132,7 +277,99 @@ Figma file `LSx4m0qJpJRqvp8wCCHKTl`: entry `0-1`; screen **`112-3273`** "Generat
 
 ## Later / backlog — deferred for a future spec
 
-> Recorded so they aren't lost. **Not part of the active feature (007 above)**; each gets its own spec when picked up.
+> Recorded so they aren't lost. **Not part of the active Feature 008 above**; each gets its own
+> spec when picked up.
+
+### Feature 009 candidate — Library file management (Copy, Move, Import)
+
+Let users move recordings into and out of EchoRecall without manually manipulating the managed
+`data/` directory. Add **Copy**, **Move**, and **Import** workflows to the existing Library surface,
+while preserving the current separation between framework-agnostic domain behavior, Nitro
+adapters, and Vue UI.
+
+Copy exports selected recordings without changing the Library. Move exports them and removes the
+managed copies only after export succeeds. Import brings existing audio files into managed storage,
+reads their embedded tags, and creates Library records that behave like generated recordings.
+
+#### User journeys
+
+**P1 — Import existing recordings into the Library.**
+From the Library toolbar, the user selects one or more supported audio files. EchoRecall validates
+each file, copies it into managed storage, reads supported ID3/Vorbis metadata through the existing
+tagging adapter, creates the corresponding Library record, and refreshes the table. One invalid
+file must not prevent valid files in the same batch from importing.
+
+**P1 — Copy selected recordings out of EchoRecall.**
+The user selects Library rows, chooses **Copy**, specifies an export destination, and sees per-file
+progress and results. The Library rows and managed source files remain unchanged. Copy must never
+silently overwrite an existing destination file.
+
+**P2 — Move selected recordings out of EchoRecall.**
+The user selects rows and chooses **Move**. A confirmation explains that successful moves remove
+the Library record and managed source file. Each item follows copy-then-delete semantics: deletion
+may begin only after that item's destination copy is confirmed successful. A failed item remains
+intact and retryable in EchoRecall.
+
+**P2 — Understand batch progress and partial failure.**
+Copy, Move, and Import expose the current file, succeeded/failed counts, labelled per-file errors,
+and a completion summary. A partial failure must leave every unaffected recording in a consistent,
+explainable state.
+
+#### In scope
+
+- Library toolbar actions and selection-aware enablement for Copy, Move, and Import.
+- Destination/import selection UX appropriate to the deployed server/browser boundary, resolved
+  during clarification rather than assumed here.
+- Framework-agnostic core operations and ports for file transfer/import behavior; Nitro routes and
+  dependency wiring as adapters.
+- Safe collision handling, path validation, copy-then-delete ordering, and per-item failure
+  isolation.
+- Import-time tag reading through the existing `taglib-wasm` adapter and creation of normal
+  Library records in the existing storage model.
+- Per-file progress and completion summaries for multi-file operations.
+- Library refresh and selection cleanup after successful import or move operations.
+- New strings localized in **en/hu**; keyboard/assistive-technology support; observable-behavior
+  tests at core, server-integration, and component boundaries.
+
+#### Out of scope
+
+- CLI adapter and Auth.
+- Automatic source-text embedding for new generations or retroactive source-text backfill.
+- DB/file tag-drift detection and synchronization; imported tags should initialize the DB record,
+  but ongoing drift management remains a separate feature.
+- Arbitrary file editing outside the explicit Copy, Move, and Import workflows.
+- Redesigning the Library layout, waveform player, tag editor, or generation workflow.
+- New audio transcoding or format conversion.
+
+#### Existing behavior to preserve
+
+- Library playback, filtering, sorting, selection, tag editing, download, and deletion continue to
+  behave as shipped in Features 005–007.
+- Default tests use mocked filesystem/tagging ports and make no live network calls. Real WASM
+  coverage remains in `pnpm test:adapters`.
+- Runtime database and audio files remain under ignored `data/`; tests must use isolated temporary
+  storage and must not mutate a developer's real library.
+- A file operation must not leave a database row pointing at a missing managed file.
+
+#### Open questions
+
+- **[NEEDS CLARIFICATION]** Destination selection — typed server path, administrator-configured
+  export locations, browser download, or a combination? What restrictions prevent exporting
+  outside allowed roots?
+- **[NEEDS CLARIFICATION]** Import source — browser multi-file upload, server-side source path, or
+  both? Which audio formats are accepted initially?
+- **[NEEDS CLARIFICATION]** Directory structure — preserve EchoRecall's relative folders, flatten
+  the selection, or let the user choose?
+- **[NEEDS CLARIFICATION]** Collision policy — rename, skip, replace with confirmation, or a
+  user-selected policy for the batch?
+- **[NEEDS CLARIFICATION]** Move recovery — what happens when copying succeeds but database/file
+  deletion fails? Is a compensating destination delete allowed?
+- **[NEEDS CLARIFICATION]** Import duplicates — detect by path, content hash, metadata, or allow
+  duplicates?
+- **[NEEDS CLARIFICATION]** Tag mapping — how should unsupported, malformed, or repeatable imported
+  tags map into `Metadata`, `tags_extra`, and `skippedTags`?
+- **[NEEDS CLARIFICATION]** Progress cancellation — graceful stop between files, no cancellation,
+  or request-level abort where supported?
 
 ### CLI adapter
 
@@ -148,26 +385,6 @@ Figma file `LSx4m0qJpJRqvp8wCCHKTl`: entry `0-1`; screen **`112-3273`** "Generat
 - The README explicitly notes there's no built-in authentication; only relevant if this ever
   goes multi-user.
 
-### Library file management: Copy, Move, Import
-
-Bundled feature candidate. Suggested as a later feature (008+).
-
-- **Copy** — toolbar action to copy selected recordings' audio files to a user-specified
-  destination folder. Library records and working-folder files untouched. Opens a modal for
-  destination + options.
-- **Move** — same copy, then remove the recordings: database record deleted *and* working-folder
-  file deleted. Guarded by a confirmation.
-- **Import** — toolbar action to bring existing mp3 files into the project: copy into working
-  folder, read existing tags via `taglib-wasm` to populate the library record, appear in the
-  file table.
-- [NEEDS CLARIFICATION] Destination folder specification (browser can't browse server; typed
-  path? pre-configured export locations?).
-- [NEEDS CLARIFICATION] Import mechanism (browser upload `UFileUpload` vs. server-side folder
-  path, or both?).
-- [NEEDS CLARIFICATION] Collision handling (overwrite / rename / skip).
-- [NEEDS CLARIFICATION] Move atomicity (failure recovery if copy succeeds but delete fails).
-- [NEEDS CLARIFICATION] Multi-file progress/error reporting.
-
 ### Embed source text into the audio file's tags at generation time
 
 Idea: when a recording is generated, automatically save `GenerationInput.text` (the
@@ -177,7 +394,7 @@ mechanism already used for entries like the existing "chapter" custom text. Toda
 source text lives only in the `Generation.text` DB column (surfaced read-only in the
 006 inspector's new Source-text field, FR-018a); it is **not** embedded in the file's
 own ID3/Vorbis tags, so it's lost if the file is copied/exported outside the app or
-re-imported elsewhere (see the Copy/Move/Import backlog item above — likely related).
+re-imported elsewhere (see the Feature 009 candidate above — likely related).
 
 - [NEEDS CLARIFICATION] Automatic for every generation, or an opt-in Settings toggle?
 - [NEEDS CLARIFICATION] Exact custom-text `description` label ("Audio text" as named,
@@ -206,7 +423,7 @@ it in either direction.
 Today the app's own edit path (`PATCH /api/generations/:id` → `LibraryService.update`)
 already retags the file and updates the DB row **atomically in one request**, so drift
 shouldn't occur from normal in-app edits — it would come from the file being edited
-directly on disk outside the app, or (see the Import backlog item above) an imported
+directly on disk outside the app, or (see the Feature 009 candidate above) an imported
 file whose tags don't match what gets written to the DB row at import time. Likely
 related/sequenced with that Import feature.
 

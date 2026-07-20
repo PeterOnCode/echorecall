@@ -33,7 +33,7 @@ export const FORMATS: readonly FormatInfo[] = [
   { id: 'pcm', ext: 'pcm', taggable: 'none' },
 ] as const
 
-/** Maximum size of an uploaded `.txt` batch file. */
+/** Shared maximum size for every supported batch-import file. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 export function isKnownVoice(voiceId: string): boolean {

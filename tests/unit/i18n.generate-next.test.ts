@@ -47,7 +47,57 @@ const NEW_NAMESPACES = [
   'generateNext.progress.confirm',
   'generateNext.progress.summary',
   'generateNext.cost',
+  'generateNext.batchImport',
   'settings.generationDefaults',
+] as const
+
+/** Every user-visible leaf added by Feature 008. */
+const BATCH_IMPORT_PATHS = [
+  'generateNext.actionBar.importBatch',
+  'generateNext.actionBar.downloadBatchExample',
+  'generateNext.actionBar.batchDocumentation',
+  'generateNext.batchImport.title',
+  'generateNext.batchImport.counts',
+  'generateNext.batchImport.item',
+  'generateNext.batchImport.line',
+  'generateNext.batchImport.voice',
+  'generateNext.batchImport.model',
+  'generateNext.batchImport.format',
+  'generateNext.batchImport.valid',
+  'generateNext.batchImport.invalid',
+  'generateNext.batchImport.ready',
+  'generateNext.batchImport.confirm',
+  'generateNext.batchImport.confirmCount',
+  'generateNext.batchImport.cancel',
+  'generateNext.batchImport.previous',
+  'generateNext.batchImport.next',
+  'generateNext.batchImport.page',
+  'generateNext.batchImport.noValid',
+  'generateNext.batchImport.parsing',
+  'generateNext.batchImport.success',
+  'generateNext.batchImport.error.unsupportedExtension',
+  'generateNext.batchImport.error.tooLarge',
+  'generateNext.batchImport.error.readFailed',
+  'generateNext.batchImport.error.malformed',
+  'generateNext.batchImport.error.duplicateKey',
+  'generateNext.batchImport.error.duplicateProperty',
+  'generateNext.batchImport.error.customTag',
+  'generateNext.batchImport.error.anchor',
+  'generateNext.batchImport.error.alias',
+  'generateNext.batchImport.error.unknownField',
+  'generateNext.batchImport.error.schema',
+  'generateNext.batchImport.error.version',
+  'generateNext.batchImport.error.invalidRoot',
+  'generateNext.batchImport.error.invalidDefaults',
+  'generateNext.batchImport.issue.missingField',
+  'generateNext.batchImport.issue.unknownField',
+  'generateNext.batchImport.issue.wrongType',
+  'generateNext.batchImport.issue.emptyText',
+  'generateNext.batchImport.issue.textTooLong',
+  'generateNext.batchImport.issue.invalidVoice',
+  'generateNext.batchImport.issue.invalidModel',
+  'generateNext.batchImport.issue.invalidFormat',
+  'generateNext.batchImport.issue.invalidMetadata',
 ] as const
 
 function subtree(tree: Tree, path: string): Tree {
@@ -82,6 +132,19 @@ describe('i18n parity — Generate redesign (007)', () => {
           expect((huVal as string).length, `hu empty: ${path}`).toBeGreaterThan(0)
         }
       }
+    }
+  })
+})
+
+describe('i18n parity — batch import (008)', () => {
+  it('has every Feature 008 leaf as non-empty English and Hungarian copy', () => {
+    for (const path of BATCH_IMPORT_PATHS) {
+      const enValue = subtreeValue(enTree, path)
+      const huValue = subtreeValue(huTree, path)
+      expect(typeof enValue, `en missing: ${path}`).toBe('string')
+      expect(typeof huValue, `hu missing: ${path}`).toBe('string')
+      expect((enValue as string).trim().length, `en empty: ${path}`).toBeGreaterThan(0)
+      expect((huValue as string).trim().length, `hu empty: ${path}`).toBeGreaterThan(0)
     }
   })
 })

@@ -1,5 +1,6 @@
-import type { CostEstimate, Format, ListItem, Metadata, Model } from '#core/client'
+import type { CostEstimate, Format, ListItem, Metadata, Model, ResolvedQueueInput } from '#core/client'
 import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from '#core/client'
+import { toRaw } from 'vue'
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
 import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
@@ -31,6 +32,10 @@ export interface UploadSummary {
   added: number
   skippedBlank: number
   rejectedTooLong: number
+}
+
+export interface AppendImportedOptions {
+  metadataMode: 'structured' | 'text'
 }
 
 /**
@@ -202,7 +207,7 @@ export function useQueue(options?: UseQueueOptions) {
     if (trimmed.length === 0) return null
     const item = makeItem(trimmed, 'text')
     items.value.push(item)
-    return item
+    return items.value.at(-1) ?? null
   }
 
   function addItems(texts: string[]): void {
@@ -224,6 +229,29 @@ export function useQueue(options?: UseQueueOptions) {
       skippedBlank: parsed.skippedBlank,
       rejectedTooLong: parsed.rejectedTooLong,
     }
+  }
+
+  /** Append already-normalized import inputs without disturbing existing queue state. */
+  function appendImported(
+    inputs: readonly ResolvedQueueInput[],
+    filename: string,
+    options: AppendImportedOptions,
+  ): QueueItem[] {
+    const appended = inputs.map((input): QueueItem => ({
+      clientId: newClientId(),
+      text: input.text,
+      voiceId: input.voiceId,
+      model: input.model,
+      format: input.format,
+      ...(input.instructions === undefined ? {} : { instructions: input.instructions }),
+      metadata: cloneMetadata(input.metadata),
+      metadataEdited: options.metadataMode === 'structured',
+      status: 'queued',
+      source: 'upload',
+      sourceName: filename,
+    }))
+    items.value.push(...appended)
+    return appended
   }
 
   function removeItem(clientId: string): void {
@@ -520,9 +548,11 @@ export function useQueue(options?: UseQueueOptions) {
     selectNext,
     serialize,
     loadDocument,
+    projectMetadata,
     addItem,
     addItems,
     addFromUpload,
+    appendImported,
     removeItem,
     removeMany,
     toggleChecked,
@@ -549,7 +579,18 @@ function deriveTitle(text: string): string {
 
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
 function cloneMetadata(metadata: Metadata): Metadata {
-  return JSON.parse(JSON.stringify(metadata)) as Metadata
+  return structuredClone(deepToRaw(metadata)) as Metadata
+}
+
+/** Recursively remove Vue proxies so the platform clone algorithm can consume nested arrays. */
+function deepToRaw(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value
+  const raw = toRaw(value)
+  if (Array.isArray(raw)) return raw.map(deepToRaw)
+  return Object.fromEntries(
+    Object.entries(raw as Record<string, unknown>)
+      .map(([key, entry]) => [key, deepToRaw(entry)]),
+  )
 }
 
 /**

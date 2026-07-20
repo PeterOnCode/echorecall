@@ -6,7 +6,7 @@ text, pick a voice and format, and generate a whole batch at once — every
 successful clip is saved so you can replay, retag, download, or delete it later
 without regenerating.
 
-- **Generation workspace** — a single scrolling queue builder: type a script or upload a `.txt`, choose Voice/Model/Format and visible metadata fields, then select, reorder, bulk-delete, save/load, and generate pending rows. Generation targets checked rows (or all rows), reports per-item progress, cost, and failures, supports graceful cancellation, and removes successful rows while keeping failures for retry.
+- **Generation workspace** — a single scrolling queue builder: type a script or preview and import `.txt`, YAML, or JSON batches, choose Voice/Model/Format and visible metadata fields, then select, reorder, bulk-delete, save/load, and generate pending rows. A downloadable YAML example and [batch format guide](docs/batch-import.md) make the structured contract reusable. Generation targets checked rows (or all rows), reports per-item progress, cost, and failures, supports graceful cancellation, and removes successful rows while keeping failures for retry.
 - **Voices, models & formats** — choose a voice and model, and render to MP3, WAV, FLAC, Opus, AAC, or PCM.
 - **Standards-based metadata** — attach title, artist, album, genre, comment, languages, a recording date, and repeatable custom text/URL tags, written as ID3v2.4 / Vorbis comments where the format supports them.
 - **Persistent library** — every generation is stored (SQLite + on-disk audio under `data/`) and survives restarts; replay makes no new provider call. Files are saved with human-readable, title-slugged names under a `YYYY/MM/DD` folder.
@@ -22,7 +22,7 @@ reverse proxy, or VPN).
 
 TypeScript (strict) on Node.js · Nuxt 4 (Vue 3 + Nitro) · `@nuxt/ui` v4 (+ color-mode,
 dashboard primitives) · `@nuxtjs/i18n` (en/hu) · `wavesurfer.js` (Library waveform review,
-display/playback only) · OpenAI TTS · multi-format audio with ID3/Vorbis tagging via
+display/playback only) · `yaml` (strict YAML 1.2 and JSON duplicate-property checks) · OpenAI TTS · multi-format audio with ID3/Vorbis tagging via
 `taglib-wasm` (pure WASM — no system binary) · SQLite (`better-sqlite3`) + filesystem
 audio under `data/` · Vitest + `@nuxt/test-utils` · Docker Compose. A framework-agnostic
 core lives in `src/core/`; the Nuxt server (`server/`) and UI (`app/`) are adapters over it.
@@ -96,9 +96,11 @@ Stop with `docker compose down`.
 ## Project layout
 
 ```
-src/core/      framework-agnostic domain: tts/, library/, settings/, shared/ (ports + use-cases)
+src/core/      framework-agnostic domain: batch/, tts/, library/, settings/, shared/
 server/        Nitro API routes (server/api/, incl. settings/) + DI container & error mapping
 app/           Nuxt UI: components/ (generate, library, settings, common), composables/, pages/
+public/        static browser assets, including the canonical batch YAML example
+docs/          user-facing author guides, including the batch import contract
 i18n/locales/  en.json · hu.json
 tests/         unit/ · integration/ · component/ · adapters/ (gated)
 data/          runtime SQLite DB + audio/ (gitignored; Docker volume)
@@ -107,12 +109,13 @@ specs/         feature specs, plans, data models, API contracts, quickstarts
 
 ## Documentation
 
-The latest feature — the **dashboard redesign** (a shared resizable two-pane workspace for
-Generate and Library, queue search/filters/columns/multi-select, local save/open of the
-queue, the Library waveform review player, and Settings in a modal) — is specified in
-[`specs/005-dashboard-redesign/`](specs/005-dashboard-redesign/) (see its
-[`quickstart.md`](specs/005-dashboard-redesign/quickstart.md) for end-to-end validation
-steps). The batch studio, formats, tagging, library, settings, defaults, and versioning are
+The current feature — preview-first **structured batch import** for text, YAML, and JSON — is
+documented in the [batch format guide](docs/batch-import.md) and specified in
+[`specs/008-batch-import/`](specs/008-batch-import/) (see its
+[`quickstart.md`](specs/008-batch-import/quickstart.md) for end-to-end validation steps).
+The dashboard redesign is specified in
+[`specs/005-dashboard-redesign/`](specs/005-dashboard-redesign/). The batch studio, formats,
+tagging, library, settings, defaults, and versioning are
 specified in [`specs/002-studio-enhancements/`](specs/002-studio-enhancements/); the original
 single-generation baseline lives in
 [`specs/001-tts-generation-library/`](specs/001-tts-generation-library/).

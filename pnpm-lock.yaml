@@ -50,6 +50,9 @@ importers:
       wavesurfer.js:
         specifier: ^7.12.8
         version: 7.12.8
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       '@iconify-json/lucide':
         specifier: ^1.2.116

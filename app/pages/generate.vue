@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { Format, Metadata, Model } from '#core/client'
-import { MAX_UPLOAD_BYTES } from '#core/client'
+import type { BatchBaseInput, Format, Metadata, Model } from '#core/client'
 
 // 007 · The Generate surface (FR-002 cutover). Single vertically-scrolling page — page intro →
 // two-column editor (Script / Generation settings) with a full-width Metadata row below →
@@ -24,8 +23,9 @@ const {
   queueCost,
   serialize,
   loadDocument,
+  projectMetadata,
   addItem,
-  addFromUpload,
+  appendImported,
   removeItem,
   removeMany,
   toggleChecked,
@@ -41,7 +41,40 @@ const {
 const { voices, generating, progress, loadVoices, generateAll, requestCancel, reset } =
   useGeneration()
 const { exportQueue, importQueue } = useQueueFile()
+const {
+  state: batchImportState,
+  preview: batchPreview,
+  error: batchImportError,
+  selectBatchFile,
+  cancelBatchImport,
+  confirmedInputs,
+  finishBatchImport,
+  downloadBatchExample,
+} = useBatchImport()
 const { t } = useI18n()
+const batchStatusMessage = computed(() => {
+  if (batchImportState.value.status === 'reading' || batchImportState.value.status === 'parsing') {
+    return t('generateNext.batchImport.parsing', { filename: batchImportState.value.filename })
+  }
+  if (batchImportState.value.status === 'preview') {
+    return t('generateNext.batchImport.ready', {
+      valid: batchImportState.value.preview.counts.valid,
+      rejected: batchImportState.value.preview.counts.rejected,
+    })
+  }
+  return ''
+})
+const batchErrorMessage = computed(() => {
+  if (!batchImportError.value) return ''
+  const error = batchImportError.value
+  const message = t(`generateNext.batchImport.error.${error.code}`)
+  const location = [
+    error.path,
+    error.line === undefined ? undefined : `line ${error.line}`,
+    error.column === undefined ? undefined : `column ${error.column}`,
+  ].filter(Boolean).join(' · ')
+  return location ? `${message} (${location})` : message
+})
 
 // The first track number the derived Track counts up from (session-only, defaults to 1). Set
 // in the action bar; passed to stampDerivedMetadata so row 1 gets this number and later rows
@@ -113,9 +146,9 @@ function onResetSetting(field: GenSettingField) {
   else format.value = (cd.format ?? 'mp3') as Format
 }
 
-// Hidden inputs: `.json` saved-queue load (Load queue) and `.txt` batch (Upload .txt).
+// Hidden inputs: `.json` saved-queue load and the unified batch picker.
 const queueFileInput = ref<HTMLInputElement | null>(null)
-const txtFileInput = ref<HTMLInputElement | null>(null)
+const batchFileInput = ref<HTMLInputElement | null>(null)
 const pendingDoc = ref<ReturnType<typeof serialize> | null>(null)
 const confirmReplace = ref(false)
 const importError = ref<string | null>(null)
@@ -199,8 +232,8 @@ function onLoadQueue() {
   queueFileInput.value?.click()
 }
 
-function onUploadTxt() {
-  txtFileInput.value?.click()
+function onImportBatch() {
+  batchFileInput.value?.click()
 }
 
 /** Validate a picked `.json` queue file and replace the queue with its rows. */
@@ -234,19 +267,35 @@ function onCancelReplace() {
   confirmReplace.value = false
 }
 
-/** Read a picked `.txt` batch and append its parsed rows to the queue (FR-007). */
-async function onTxtFileChosen(event: Event) {
+/** Freeze current Generate values, then parse a picked batch into a preview. */
+async function onBatchFileChosen(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
-  if (file.size > MAX_UPLOAD_BYTES) {
-    importError.value = t('generateNext.upload.tooLarge')
-    return
-  }
-  const content = await file.text()
   importError.value = null
-  addFromUpload(content, file.name)
+  const base: BatchBaseInput = {
+    voiceId: voiceId.value,
+    model: model.value,
+    format: format.value,
+    metadata: projectMetadata(metadata.value),
+  }
+  await selectBatchFile(file, base)
+}
+
+function onConfirmBatchImport() {
+  if (!batchPreview.value?.canConfirm) return
+  const filename = batchPreview.value.filename
+  const metadataMode = batchPreview.value.format === 'text' ? 'text' : 'structured'
+  const appended = appendImported(confirmedInputs(), filename, { metadataMode })
+  finishBatchImport(appended.length)
+}
+
+function onCancelBatchImport() {
+  cancelBatchImport()
+  nextTick(() => {
+    document.querySelector<HTMLButtonElement>('[data-test="action-import-batch"]')?.focus()
+  })
 }
 </script>
 
@@ -295,7 +344,8 @@ async function onTxtFileChosen(event: Event) {
         :unavailable-count="queueCost.unavailableCount"
         @save-queue="onSaveQueue"
         @load-queue="onLoadQueue"
-        @upload-txt="onUploadTxt"
+        @import-batch="onImportBatch"
+        @download-batch-example="downloadBatchExample"
         @generate="onGenerate"
       />
       <QueuePanel
@@ -312,10 +362,39 @@ async function onTxtFileChosen(event: Event) {
       <p v-if="importError" data-test="queue-import-error" role="alert" class="text-sm text-error">
         {{ importError }}
       </p>
+      <p
+        v-if="batchStatusMessage"
+        data-test="batch-import-status"
+        role="status"
+        aria-live="polite"
+        class="sr-only"
+      >
+        {{ batchStatusMessage }}
+      </p>
+      <p
+        v-if="batchImportError"
+        data-test="batch-import-error"
+        role="alert"
+        class="text-sm text-error"
+      >
+        {{ batchErrorMessage }}
+      </p>
+      <p
+        v-if="batchImportState.status === 'imported'"
+        data-test="batch-import-success"
+        role="status"
+        class="text-sm text-success"
+      >
+        {{ t('generateNext.batchImport.success', {
+          added: batchImportState.added,
+          rejected: batchImportState.rejected,
+          filename: batchImportState.filename,
+        }) }}
+      </p>
     </section>
 
-    <!-- Hidden file inputs (display:none keeps them out of the tab order / a11y tree;
-         the action-bar buttons are the accessible triggers). -->
+    <!-- Hidden saved-queue and unified batch inputs (display:none keeps them out of the
+         tab order / a11y tree; the action-bar buttons are the accessible triggers). -->
     <input
       ref="queueFileInput"
       data-test="queue-file-input"
@@ -325,13 +404,21 @@ async function onTxtFileChosen(event: Event) {
       @change="onQueueFileChosen"
     >
     <input
-      ref="txtFileInput"
-      data-test="txt-file-input"
+      ref="batchFileInput"
+      data-test="batch-file-input"
       type="file"
-      accept=".txt,text/plain"
+      accept=".txt,.yaml,.yml,.json,text/plain,application/yaml,text/yaml,application/json"
       class="hidden"
-      @change="onTxtFileChosen"
+      @change="onBatchFileChosen"
     >
+
+    <BatchImportPreviewDialog
+      v-if="batchPreview"
+      :open="true"
+      :preview="batchPreview"
+      @confirm="onConfirmBatchImport"
+      @cancel="onCancelBatchImport"
+    />
 
     <ConfirmDialog
       :open="confirmReplace"

@@ -25,6 +25,37 @@ export type { CostEstimate } from './tts/pricing'
 // Naming rules (slug) — shared so the client preview matches the server result.
 export { slugify } from './naming/slug'
 
-// .txt batch parsing — pure, reused client-side so the upload is never persisted.
+// Structured batch contract and browser-safe parser.
+export type {
+  BatchBaseInput,
+  BatchDefaults,
+  BatchDocumentError,
+  BatchDocumentErrorCode,
+  BatchDocumentErrorScope,
+  BatchDocumentV1,
+  BatchFormat,
+  BatchIssue,
+  BatchIssueCode,
+  BatchItem,
+  BatchParseResult,
+  BatchPreview,
+  BatchPreviewCounts,
+  BatchSourceLocation,
+  CandidateDisplay,
+  ImportCandidate,
+  InvalidImportCandidate,
+  MetadataPatch,
+  ParseBatchRequest,
+  ResolvedQueueInput,
+  ValidImportCandidate,
+} from './batch/contract'
+export { parseBatch } from './batch/parse-batch'
+export { parseJson } from './batch/parse-json'
+export type { ParseJsonResult } from './batch/parse-json'
+export { parseText } from './batch/parse-text'
+export { parseYaml } from './batch/parse-yaml'
+export type { ParseYamlResult } from './batch/parse-yaml'
+
+// Legacy line-import summary; unified callers should use parseBatch/parseText above.
 export { parseUploadText } from './batch/parse-upload'
 export type { ParsedUpload } from './batch/parse-upload'
