@@ -41,7 +41,7 @@ export function useBatchImport() {
       return
     }
 
-    const frozenBase = JSON.parse(JSON.stringify(base)) as BatchBaseInput
+    const frozenBase = structuredClone(base)
     state.value = { status: 'reading', filename }
     let content: string
     try {

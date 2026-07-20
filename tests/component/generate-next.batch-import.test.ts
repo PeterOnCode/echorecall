@@ -36,6 +36,11 @@ items:
     { type: 'application/yaml' },
   )
 
+const METADATA_FIELDS_KEY = 'echorecall:viewprefs:metadataFields'
+const METADATA_FIELD_IDS = [
+  'artist', 'album', 'genre', 'recordedAt', 'comment', 'languages', 'customText', 'customUrl',
+] as const
+
 function structuredFile(name: string): File {
   const content = name.endsWith('.json')
     ? JSON.stringify({
@@ -99,6 +104,24 @@ afterEach(async () => {
 })
 
 describe('Generate page – YAML batch import (008 · US1)', () => {
+  it('does not inherit metadata fields hidden from direct queue rows', async () => {
+    localStorage.setItem(
+      METADATA_FIELDS_KEY,
+      JSON.stringify(METADATA_FIELD_IDS.map((id) => ({ id, visible: id !== 'artist' }))),
+    )
+    const wrapper = await mountPage()
+
+    await chooseBatchFile(wrapper, yamlFile())
+    ;(
+      document.body.querySelector('[data-test="batch-preview-confirm"]') as HTMLButtonElement
+    ).click()
+    await settle()
+
+    expect(queueItems(wrapper)).toHaveLength(2)
+    expect(queueItems(wrapper).every((item) => item.metadata.artist === undefined)).toBe(true)
+    wrapper.unmount()
+  })
+
   it('freezes Generate values at selection and appends only after confirmation', async () => {
     const wrapper = await mountPage()
     const input = wrapper.find('[data-test="batch-file-input"]')

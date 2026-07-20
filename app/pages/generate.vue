@@ -23,6 +23,7 @@ const {
   queueCost,
   serialize,
   loadDocument,
+  projectMetadata,
   addItem,
   appendImported,
   removeItem,
@@ -277,7 +278,7 @@ async function onBatchFileChosen(event: Event) {
     voiceId: voiceId.value,
     model: model.value,
     format: format.value,
-    metadata: JSON.parse(JSON.stringify(metadata.value)) as Metadata,
+    metadata: projectMetadata(metadata.value),
   }
   await selectBatchFile(file, base)
 }

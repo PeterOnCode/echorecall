@@ -1,5 +1,6 @@
 import type { CostEstimate, Format, ListItem, Metadata, Model, ResolvedQueueInput } from '#core/client'
 import { MAX_INPUT_LENGTH, estimateItemCost, formatInfo, parseUploadText } from '#core/client'
+import { toRaw } from 'vue'
 // Types only (imported by relative path per the repo typecheck gotcha): the saved-
 // queue document `serialize`/`loadDocument` round-trip through (005 · US2 / FR-013).
 import type { QueueFileDocument, QueueFileItem } from './useQueueFile'
@@ -547,6 +548,7 @@ export function useQueue(options?: UseQueueOptions) {
     selectNext,
     serialize,
     loadDocument,
+    projectMetadata,
     addItem,
     addItems,
     addFromUpload,
@@ -577,7 +579,18 @@ function deriveTitle(text: string): string {
 
 /** Deep copy of a Metadata value (JSON-safe: plain strings/arrays only). */
 function cloneMetadata(metadata: Metadata): Metadata {
-  return JSON.parse(JSON.stringify(metadata)) as Metadata
+  return structuredClone(deepToRaw(metadata)) as Metadata
+}
+
+/** Recursively remove Vue proxies so the platform clone algorithm can consume nested arrays. */
+function deepToRaw(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value
+  const raw = toRaw(value)
+  if (Array.isArray(raw)) return raw.map(deepToRaw)
+  return Object.fromEntries(
+    Object.entries(raw as Record<string, unknown>)
+      .map(([key, entry]) => [key, deepToRaw(entry)]),
+  )
 }
 
 /**

@@ -19,6 +19,29 @@ function issues(candidate: ImportCandidate | undefined): BatchIssue[] {
 }
 
 describe('batch preview – mixed item validation (008 · US2)', () => {
+  it('rejects candidates that inherit invalid required generation settings', () => {
+    const result = parseBatch({
+      content: 'schema: echorecall.batch\nversion: 1\nitems:\n  - text: Inherited settings\n',
+      filename: 'uninitialized.yaml',
+      format: 'yaml',
+      base: {
+        voiceId: '',
+        model: '' as BatchBaseInput['model'],
+        format: '' as BatchBaseInput['format'],
+        metadata: {},
+      },
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error(`Expected preview, received ${result.error.code}`)
+    expect(result.preview.counts).toEqual({ valid: 0, rejected: 1, blank: 0 })
+    expect(issues(result.preview.candidates[0])).toEqual(expect.arrayContaining([
+      { code: 'invalidVoice', path: 'items[0].voiceId' },
+      { code: 'invalidModel', path: 'items[0].model' },
+      { code: 'invalidFormat', path: 'items[0].format' },
+    ]))
+  })
+
   it('keeps valid siblings and duplicate text while collecting every row issue', () => {
     const oversized = 'x'.repeat(4097)
     const result = parse(`

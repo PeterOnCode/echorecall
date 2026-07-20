@@ -69,9 +69,8 @@ function applyMetadata(
   current: Metadata,
   raw: unknown,
   path: string,
-): { metadata: Metadata; issues: BatchIssue[] } {
-  let metadata = structuredClone(current)
-  if (!isRecord(raw)) return { metadata, issues: [issue('invalidMetadata', path)] }
+): BatchIssue[] {
+  if (!isRecord(raw)) return [issue('invalidMetadata', path)]
 
   const issues: BatchIssue[] = []
   for (const [key, value] of Object.entries(raw)) {
@@ -81,20 +80,20 @@ function applyMetadata(
       continue
     }
     if (value === null) {
-      metadata = Object.fromEntries(Object.entries(metadata).filter(([field]) => field !== key)) as Metadata
+      Reflect.deleteProperty(current, key)
       continue
     }
     if (TEXT_METADATA_FIELDS.has(key)) {
       if (typeof value !== 'string') issues.push(issue('invalidMetadata', fieldPath))
-      else if (key === 'title' && value.trim().length === 0) delete metadata.title
-      else Object.assign(metadata, { [key]: value })
+      else if (key === 'title' && value.trim().length === 0) delete current.title
+      else Object.assign(current, { [key]: value })
       continue
     }
     if (key === 'languages') {
       if (!Array.isArray(value)) {
         issues.push(issue('invalidMetadata', fieldPath))
       } else if (value.length === 0) {
-        delete metadata.languages
+        delete current.languages
       } else {
         const languages: string[] = []
         value.forEach((entry, index) => {
@@ -102,7 +101,7 @@ function applyMetadata(
             issues.push(issue('invalidMetadata', `${fieldPath}[${index}]`))
           } else languages.push(entry.trim())
         })
-        if (languages.length === value.length) metadata.languages = languages
+        if (languages.length === value.length) current.languages = languages
       }
       continue
     }
@@ -141,27 +140,42 @@ function applyMetadata(
         }
       })
       if (value.length === 0) {
-        if (key === 'customText') delete metadata.customText
-        else delete metadata.customUrl
+        if (key === 'customText') delete current.customText
+        else delete current.customUrl
       } else if (entries.length === value.length) {
-        if (key === 'customText') metadata.customText = entries as NonNullable<Metadata['customText']>
-        else metadata.customUrl = entries as NonNullable<Metadata['customUrl']>
+        if (key === 'customText') current.customText = entries as NonNullable<Metadata['customText']>
+        else current.customUrl = entries as NonNullable<Metadata['customUrl']>
       }
       continue
     }
     if (key === 'bpm') {
       if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
         issues.push(issue('invalidMetadata', fieldPath))
-      } else metadata.bpm = value
+      } else current.bpm = value
       continue
     }
     if (key === 'rating') {
       if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 5) {
         issues.push(issue('invalidMetadata', fieldPath))
-      } else metadata.rating = value
+      } else current.rating = value
     }
   }
-  return { metadata, issues }
+  return issues
+}
+
+function validateResolvedSettings(
+  value: BatchBaseInput,
+  path: string,
+  issues: BatchIssue[],
+): void {
+  const required: [BatchIssue['code'], string, boolean][] = [
+    ['invalidVoice', `${path}.voiceId`, isKnownVoice(value.voiceId)],
+    ['invalidModel', `${path}.model`, isKnownModel(value.model)],
+    ['invalidFormat', `${path}.format`, isKnownFormat(value.format)],
+  ]
+  for (const [code, fieldPath, valid] of required) {
+    if (!valid && !issues.some((entry) => entry.path === fieldPath)) issues.push(issue(code, fieldPath))
+  }
 }
 
 function applyOverrides(
@@ -193,9 +207,7 @@ function applyOverrides(
     else value.instructions = raw.instructions
   }
   if ('metadata' in raw) {
-    const result = applyMetadata(value.metadata, raw.metadata, `${path}.metadata`)
-    value.metadata = result.metadata
-    issues.push(...result.issues)
+    issues.push(...applyMetadata(value.metadata, raw.metadata, `${path}.metadata`))
   }
   return { value, issues }
 }
@@ -248,6 +260,7 @@ export function validateBatch(
     }
 
     const resolved = applyOverrides(inherited, raw, path)
+    validateResolvedSettings(resolved.value, path, resolved.issues)
     for (const key of Object.keys(raw)) {
       if (!ITEM_FIELDS.has(key)) resolved.issues.push(issue('unknownField', `${path}.${key}`))
     }
