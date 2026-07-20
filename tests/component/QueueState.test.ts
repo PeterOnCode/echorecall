@@ -285,3 +285,60 @@ describe('useQueue – confirmed structured batch append (008 · US1)', () => {
     expect(imported!.metadata.track).toBe('6')
   })
 })
+
+describe('useQueue – mixed preview append hardening (008 · US2)', () => {
+  const validInputs: ResolvedQueueInput[] = [
+    {
+      text: 'First valid row',
+      voiceId: 'nova',
+      model: 'gpt-4o-mini-tts',
+      format: 'mp3',
+      metadata: { title: 'Imported title', artist: 'File artist' },
+    },
+    {
+      text: 'Second valid row',
+      voiceId: 'echo',
+      model: 'tts-1-hd',
+      format: 'flac',
+      metadata: { languages: ['eng'] },
+    },
+  ]
+
+  it('appends only normalized valid inputs after a concurrent queue addition', () => {
+    const q = useQueue()
+    const original = q.addItem('Existing before preview')!
+    original.status = 'failed'
+    original.error = 'preserve me'
+    q.toggleChecked(original.clientId)
+    q.activeId.value = original.clientId
+
+    const concurrent = q.addItem('Added while preview is open')!
+    const existingReferences = [...q.items.value]
+    const appended = q.appendImported(validInputs, 'mixed.yaml', { metadataMode: 'structured' })
+
+    expect(q.items.value.slice(0, 2)).toEqual([original, concurrent])
+    expect(q.items.value[0]).toBe(existingReferences[0])
+    expect(q.items.value[1]).toBe(existingReferences[1])
+    expect(q.items.value.slice(2).map((item) => item.text)).toEqual(['First valid row', 'Second valid row'])
+    expect(appended).toHaveLength(2)
+    expect(q.checkedIds.value).toEqual(new Set([original.clientId]))
+    expect(q.activeId.value).toBe(original.clientId)
+    expect(appended.every((item) => item.error === undefined && item.result === undefined)).toBe(true)
+  })
+
+  it('keeps structured metadata row-specific while text-mode metadata remains live', async () => {
+    const q = useQueue()
+    q.metadata.value = { artist: 'Form artist' }
+    const [structured] = q.appendImported([validInputs[0]!], 'mixed.yaml', { metadataMode: 'structured' })
+    const [text] = q.appendImported([validInputs[1]!], 'lines.txt', { metadataMode: 'text' })
+
+    q.metadata.value = { artist: 'Updated form artist' }
+    await nextTick()
+    q.applyMetadataToPending()
+
+    expect(structured?.metadata).toEqual({ title: 'Imported title', artist: 'File artist' })
+    expect(structured?.metadataEdited).toBe(true)
+    expect(text?.metadata).toEqual({ artist: 'Updated form artist' })
+    expect(text?.metadataEdited).toBe(false)
+  })
+})

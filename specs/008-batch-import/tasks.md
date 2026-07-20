@@ -78,22 +78,22 @@
 
 ### Tests for User Story 2 — write and verify red first
 
-- [ ] T021 [P] [US2] Write failing mixed-item tests for multiple issue codes/paths, exact unknown fields, wrong types, empty/oversized text, invalid catalogs/metadata, invalid blocking defaults, best-effort display, duplicate text, and valid sibling preservation in `tests/unit/batch-preview.test.ts`
-- [ ] T022 [P] [US2] Extend failing queue tests for valid-only append, structured metadata preservation, concurrent queue additions, existing object identity/order/selection/active state, and absent transient error/result state in `tests/component/QueueState.test.ts`
-- [ ] T023 [P] [US2] Extend failing dialog tests for invalid indicators, associated issue lists, zero-valid disabled confirmation, 100-row pagination, all-page confirmation counts, keyboard/focus behavior, status announcements, and alert semantics in `tests/component/BatchImportPreviewDialog.test.ts`
-- [ ] T024 [P] [US2] Extend failing page tests for oversized/unsupported/unreadable files, blocking document errors, mixed valid-only confirmation, cancellation, parsing/ready/success announcements, and a queue changed while preview is open in `tests/component/generate-next.batch-import.test.ts`
-- [ ] T025 [US2] Obtain explicit user/reviewer approval for the US2 tests from T021–T024, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
+- [X] T021 [P] [US2] Write failing mixed-item tests for multiple issue codes/paths, exact unknown fields, wrong types, empty/oversized text, invalid catalogs/metadata, invalid blocking defaults, best-effort display, duplicate text, and valid sibling preservation in `tests/unit/batch-preview.test.ts`
+- [X] T022 [P] [US2] Extend failing queue tests for valid-only append, structured metadata preservation, concurrent queue additions, existing object identity/order/selection/active state, and absent transient error/result state in `tests/component/QueueState.test.ts`
+- [X] T023 [P] [US2] Extend failing dialog tests for invalid indicators, associated issue lists, zero-valid disabled confirmation, 100-row pagination, all-page confirmation counts, keyboard/focus behavior, status announcements, and alert semantics in `tests/component/BatchImportPreviewDialog.test.ts`
+- [X] T024 [P] [US2] Extend failing page tests for oversized/unsupported/unreadable files, blocking document errors, mixed valid-only confirmation, cancellation, parsing/ready/success announcements, and a queue changed while preview is open in `tests/component/generate-next.batch-import.test.ts`
+- [X] T025 [US2] Obtain explicit user/reviewer approval for the US2 tests from T021–T024, then run the approved focused unit and component tests and record the expected failures before implementation in `specs/008-batch-import/quickstart.md`
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Complete stable document/candidate issue-code creation with source paths, one-based locations, line/column details, multiple row errors, and best-effort displays in `src/core/batch/validate-batch.ts`
-- [ ] T027 [US2] Complete preview invariants, valid/rejected/blank counts, duplicate retention, zero-valid confirmation guard, and blocking scope mapping in `src/core/batch/parse-batch.ts`
-- [ ] T028 [US2] Harden `appendImported` for valid normalized inputs, existing-row identity/order/state preservation, concurrent additions, and structured-versus-text metadata modes in `app/composables/useQueue.ts`
-- [ ] T029 [US2] Add invalid-row details, localized issue association, disabled zero-valid confirm, 100-row pagination, all-page counts, modal focus behavior, polite status, and blocking alerts in `app/components/generate/BatchImportPreviewDialog.vue`
-- [ ] T030 [US2] Complete blocked/imported/cancelled state transitions, actionable file errors, and valid-candidate extraction across all preview pages in `app/composables/useBatchImport.ts`
-- [ ] T031 [US2] Wire valid-only confirmation, cancel/dismiss cleanup, concurrent append behavior, and accessible status/alert regions into `app/pages/generate.vue`
-- [ ] T032 [US2] Add every blocking and row issue message, pagination label, valid/rejected/blank count, disabled-confirm explanation, and status announcement in `i18n/locales/en.json` and `i18n/locales/hu.json`
-- [ ] T033 [US2] Run the US2-focused tests until green and verify the 100-candidate preview target plus an accepted greater-than-100 paged preview in `tests/unit/batch-preview.test.ts`, `tests/component/BatchImportPreviewDialog.test.ts`, `tests/component/QueueState.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
+- [X] T026 [US2] Complete stable document/candidate issue-code creation with source paths, one-based locations, line/column details, multiple row errors, and best-effort displays in `src/core/batch/validate-batch.ts`
+- [X] T027 [US2] Complete preview invariants, valid/rejected/blank counts, duplicate retention, zero-valid confirmation guard, and blocking scope mapping in `src/core/batch/parse-batch.ts`
+- [X] T028 [US2] Harden `appendImported` for valid normalized inputs, existing-row identity/order/state preservation, concurrent additions, and structured-versus-text metadata modes in `app/composables/useQueue.ts`
+- [X] T029 [US2] Add invalid-row details, localized issue association, disabled zero-valid confirm, 100-row pagination, all-page counts, modal focus behavior, polite status, and blocking alerts in `app/components/generate/BatchImportPreviewDialog.vue`
+- [X] T030 [US2] Complete blocked/imported/cancelled state transitions, actionable file errors, and valid-candidate extraction across all preview pages in `app/composables/useBatchImport.ts`
+- [X] T031 [US2] Wire valid-only confirmation, cancel/dismiss cleanup, concurrent append behavior, and accessible status/alert regions into `app/pages/generate.vue`
+- [X] T032 [US2] Add every blocking and row issue message, pagination label, valid/rejected/blank count, disabled-confirm explanation, and status announcement in `i18n/locales/en.json` and `i18n/locales/hu.json`
+- [X] T033 [US2] Run the US2-focused tests until green and verify the 100-candidate preview target plus an accepted greater-than-100 paged preview in `tests/unit/batch-preview.test.ts`, `tests/component/BatchImportPreviewDialog.test.ts`, `tests/component/QueueState.test.ts`, and `tests/component/generate-next.batch-import.test.ts`
 
 **Checkpoint**: One bad item never hides valid siblings; confirmation appends all and only valid candidates across the complete preview.
 

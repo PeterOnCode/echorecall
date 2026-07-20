@@ -50,6 +50,29 @@ const {
   finishBatchImport,
 } = useBatchImport()
 const { t } = useI18n()
+const batchStatusMessage = computed(() => {
+  if (batchImportState.value.status === 'reading' || batchImportState.value.status === 'parsing') {
+    return t('generateNext.batchImport.parsing', { filename: batchImportState.value.filename })
+  }
+  if (batchImportState.value.status === 'preview') {
+    return t('generateNext.batchImport.ready', {
+      valid: batchImportState.value.preview.counts.valid,
+      rejected: batchImportState.value.preview.counts.rejected,
+    })
+  }
+  return ''
+})
+const batchErrorMessage = computed(() => {
+  if (!batchImportError.value) return ''
+  const error = batchImportError.value
+  const message = t(`generateNext.batchImport.error.${error.code}`)
+  const location = [
+    error.path,
+    error.line === undefined ? undefined : `line ${error.line}`,
+    error.column === undefined ? undefined : `column ${error.column}`,
+  ].filter(Boolean).join(' · ')
+  return location ? `${message} (${location})` : message
+})
 
 // The first track number the derived Track counts up from (session-only, defaults to 1). Set
 // in the action bar; passed to stampDerivedMetadata so row 1 gets this number and later rows
@@ -259,7 +282,7 @@ async function onBatchFileChosen(event: Event) {
 }
 
 function onConfirmBatchImport() {
-  if (!batchPreview.value) return
+  if (!batchPreview.value?.canConfirm) return
   const filename = batchPreview.value.filename
   const appended = appendImported(confirmedInputs(), filename, { metadataMode: 'structured' })
   finishBatchImport(appended.length)
@@ -267,6 +290,9 @@ function onConfirmBatchImport() {
 
 function onCancelBatchImport() {
   cancelBatchImport()
+  nextTick(() => {
+    document.querySelector<HTMLButtonElement>('[data-test="action-import-batch"]')?.focus()
+  })
 }
 </script>
 
@@ -333,12 +359,21 @@ function onCancelBatchImport() {
         {{ importError }}
       </p>
       <p
+        v-if="batchStatusMessage"
+        data-test="batch-import-status"
+        role="status"
+        aria-live="polite"
+        class="sr-only"
+      >
+        {{ batchStatusMessage }}
+      </p>
+      <p
         v-if="batchImportError"
         data-test="batch-import-error"
         role="alert"
         class="text-sm text-error"
       >
-        {{ batchImportError.code }}
+        {{ batchErrorMessage }}
       </p>
       <p
         v-if="batchImportState.status === 'imported'"
@@ -346,7 +381,11 @@ function onCancelBatchImport() {
         role="status"
         class="text-sm text-success"
       >
-        {{ t('generateNext.batchImport.success', { count: batchImportState.count, filename: batchImportState.filename }) }}
+        {{ t('generateNext.batchImport.success', {
+          added: batchImportState.added,
+          rejected: batchImportState.rejected,
+          filename: batchImportState.filename,
+        }) }}
       </p>
     </section>
 

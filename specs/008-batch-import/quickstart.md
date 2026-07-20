@@ -75,6 +75,20 @@ missing Phase 3 behavior while all previously shipped tests in those invocations
 This is the required US1 red checkpoint. T010–T020 may now implement only the behavior covered by
 the approved tests.
 
+### US2 approved red run — 2026-07-20
+
+The reviewer approved T021–T024 before execution. The focused suites isolated the expected Phase 4
+gaps while preserving the Phase 3 behavior:
+
+- `pnpm exec vitest run tests/unit/batch-preview.test.ts` — 1 expected failure for precise nested
+  metadata issue paths; 6 new preview/default invariants passed.
+- `pnpm exec vitest run --config vitest.nuxt.config.ts tests/component/QueueState.test.ts tests/component/BatchImportPreviewDialog.test.ts tests/component/generate-next.batch-import.test.ts`
+  — 8 expected failures for invalid-row semantics, zero-valid explanation, 100-row pagination,
+  live status, and localized file errors; 24 assertions, including queue hardening, passed.
+
+This is the required US2 red checkpoint. T026–T033 may now implement only the behavior covered by
+the approved tests.
+
 ## 5. Manual scenario A — YAML defaults and overrides
 
 1. Set known current Generate Voice, Model, Format, and metadata values.
@@ -213,5 +227,15 @@ Expected: all commands pass, no live network calls occur, English/Hungarian pari
 - US1 focused component tests: 4 files, 30 assertions passed.
 - `pnpm test`: 54 files, 348 assertions passed.
 - `pnpm test:component`: 41 files, 236 assertions passed.
+- `pnpm typecheck`: passed.
+- `pnpm lint`: passed.
+
+### Phase 4 green verification — 2026-07-20
+
+- US2 focused core tests: 1 file, 7 assertions passed.
+- US2 focused component tests: 3 files, 32 assertions passed.
+- The 205-candidate fixture rendered pages of 100, 100, and 5 rows while preserving global counts.
+- `pnpm test`: 55 files, 355 assertions passed.
+- `pnpm test:component`: 41 files, 247 assertions passed.
 - `pnpm typecheck`: passed.
 - `pnpm lint`: passed.

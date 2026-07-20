@@ -65,35 +65,6 @@ function cloneBase(base: BatchBaseInput): BatchBaseInput {
   }
 }
 
-function validateEntryArray(
-  value: unknown,
-  path: string,
-  valueKey: 'value' | 'url',
-): { valid: true; value: { description: string; value?: string; url?: string }[] } | { valid: false } {
-  if (!Array.isArray(value)) return { valid: false }
-  const normalized: { description: string; value?: string; url?: string }[] = []
-  for (let index = 0; index < value.length; index++) {
-    const entry = value[index]
-    if (!isRecord(entry)) return { valid: false }
-    if (Object.keys(entry).some((key) => key !== 'description' && key !== valueKey)) {
-      return { valid: false }
-    }
-    const description = entry.description
-    const entryValue = entry[valueKey]
-    if (
-      typeof description !== 'string' ||
-      description.trim().length === 0 ||
-      typeof entryValue !== 'string' ||
-      entryValue.trim().length === 0
-    ) {
-      return { valid: false }
-    }
-    normalized.push({ description: description.trim(), [valueKey]: entryValue.trim() })
-  }
-  void path
-  return { valid: true, value: normalized }
-}
-
 function applyMetadata(
   current: Metadata,
   raw: unknown,
@@ -115,27 +86,67 @@ function applyMetadata(
     }
     if (TEXT_METADATA_FIELDS.has(key)) {
       if (typeof value !== 'string') issues.push(issue('invalidMetadata', fieldPath))
+      else if (key === 'title' && value.trim().length === 0) delete metadata.title
       else Object.assign(metadata, { [key]: value })
       continue
     }
     if (key === 'languages') {
-      if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string' || entry.trim().length === 0)) {
+      if (!Array.isArray(value)) {
         issues.push(issue('invalidMetadata', fieldPath))
       } else if (value.length === 0) {
         delete metadata.languages
       } else {
-        metadata.languages = value.map((entry) => (entry as string).trim())
+        const languages: string[] = []
+        value.forEach((entry, index) => {
+          if (typeof entry !== 'string' || entry.trim().length === 0) {
+            issues.push(issue('invalidMetadata', `${fieldPath}[${index}]`))
+          } else languages.push(entry.trim())
+        })
+        if (languages.length === value.length) metadata.languages = languages
       }
       continue
     }
     if (key === 'customText' || key === 'customUrl') {
       const valueKey = key === 'customText' ? 'value' : 'url'
-      const entries = validateEntryArray(value, fieldPath, valueKey)
-      if (!entries.valid) issues.push(issue('invalidMetadata', fieldPath))
-      else if (key === 'customText' && entries.value.length === 0) delete metadata.customText
-      else if (key === 'customUrl' && entries.value.length === 0) delete metadata.customUrl
-      else if (key === 'customText') metadata.customText = entries.value as NonNullable<Metadata['customText']>
-      else metadata.customUrl = entries.value as NonNullable<Metadata['customUrl']>
+      if (!Array.isArray(value)) {
+        issues.push(issue('invalidMetadata', fieldPath))
+        continue
+      }
+      const entries: { description: string; value?: string; url?: string }[] = []
+      value.forEach((entry, index) => {
+        const entryPath = `${fieldPath}[${index}]`
+        if (!isRecord(entry)) {
+          issues.push(issue('invalidMetadata', entryPath))
+          return
+        }
+        for (const nestedKey of Object.keys(entry)) {
+          if (nestedKey !== 'description' && nestedKey !== valueKey) {
+            issues.push(issue('unknownField', `${entryPath}.${nestedKey}`))
+          }
+        }
+        const description = entry.description
+        const entryValue = entry[valueKey]
+        if (typeof description !== 'string' || description.trim().length === 0) {
+          issues.push(issue('invalidMetadata', `${entryPath}.description`))
+        }
+        if (typeof entryValue !== 'string' || entryValue.trim().length === 0) {
+          issues.push(issue('invalidMetadata', `${entryPath}.${valueKey}`))
+        }
+        if (
+          typeof description === 'string' && description.trim().length > 0 &&
+          typeof entryValue === 'string' && entryValue.trim().length > 0 &&
+          Object.keys(entry).every((nestedKey) => nestedKey === 'description' || nestedKey === valueKey)
+        ) {
+          entries.push({ description: description.trim(), [valueKey]: entryValue.trim() })
+        }
+      })
+      if (value.length === 0) {
+        if (key === 'customText') delete metadata.customText
+        else delete metadata.customUrl
+      } else if (entries.length === value.length) {
+        if (key === 'customText') metadata.customText = entries as NonNullable<Metadata['customText']>
+        else metadata.customUrl = entries as NonNullable<Metadata['customUrl']>
+      }
       continue
     }
     if (key === 'bpm') {

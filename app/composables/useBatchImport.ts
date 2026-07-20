@@ -12,7 +12,8 @@ export type BatchImportState =
   | { status: 'parsing'; filename: string }
   | { status: 'preview'; preview: BatchPreview }
   | { status: 'blocked'; filename: string; error: BatchDocumentError }
-  | { status: 'imported'; filename: string; count: number }
+  | { status: 'imported'; filename: string; added: number; rejected: number }
+  | { status: 'cancelled' }
 
 /** Browser file adapter around the pure batch parser. */
 export function useBatchImport() {
@@ -49,7 +50,7 @@ export function useBatchImport() {
   }
 
   function cancelBatchImport(): void {
-    state.value = { status: 'idle' }
+    state.value = { status: 'cancelled' }
   }
 
   function confirmedInputs(): ResolvedQueueInput[] {
@@ -57,9 +58,15 @@ export function useBatchImport() {
     return state.value.preview.candidates.flatMap((candidate) => candidate.valid ? [candidate.input] : [])
   }
 
-  function finishBatchImport(count: number): void {
+  function finishBatchImport(added: number): void {
     if (state.value.status !== 'preview') return
-    state.value = { status: 'imported', filename: state.value.preview.filename, count }
+    if (!state.value.preview.canConfirm || added === 0) return
+    state.value = {
+      status: 'imported',
+      filename: state.value.preview.filename,
+      added,
+      rejected: state.value.preview.counts.rejected,
+    }
   }
 
   return { state, preview, error, selectBatchFile, cancelBatchImport, confirmedInputs, finishBatchImport }
